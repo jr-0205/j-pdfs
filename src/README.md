@@ -50,6 +50,7 @@ A few app tests open WPF windows. Run them on an unlocked desktop and follow the
 - [Engine documentation](engine/README.md)
 - [Engine changelog](engine/CHANGELOG.md)
 - [Translation guide](TRANSLATING.md)
+- [Layered architecture and migration plan](docs/architecture/LAYERED-ARCHITECTURE.md)
 
 ## License
 
