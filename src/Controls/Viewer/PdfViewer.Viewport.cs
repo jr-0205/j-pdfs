@@ -1149,8 +1149,8 @@ namespace KillerPDF.Controls
             // Re-assert the grid's ScrollViewer overrides on every tile layout. RefreshPageView is
             // where they normally land, but an unfocused pane's ApplyZoom SKIPS RefreshPageView (the
             // focus check guarding the tile-stream churn), so a grid entered in an unfocused pane
-            // kept the 12px surround padding and Auto scrollbars: the panel overflowed by the
-            // padding + vertical scrollbar width and a horizontal scrollbar appeared under the grid.
+            // could keep Auto scrollbars and grow a horizontal one under the tiles. Grid's zoom
+            // reserves both the 12px gutter and the vertical scrollbar, so this pair is stable.
             if (_viewMode == ViewMode.Grid)
             {
                 PagePreviewPanel.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
