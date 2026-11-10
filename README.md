@@ -30,6 +30,12 @@ This repository contains the application source code and the Windows scripts use
 
 See the [application README](src/README.md) for screenshots, the complete feature list, known limitations, documentation and license information.
 
+## Architecture
+
+The codebase is being organized as a **layered modular monolith**. The PDF engine is maintained as an independent component, while the WPF application is progressively separated into Presentation, Application, Domain and Infrastructure responsibilities.
+
+Read the [layered architecture and migration plan](src/docs/architecture/LAYERED-ARCHITECTURE.md) for the current structure, dependency rules and migration stages. The document distinguishes existing projects and folders from the target architecture; the full project-level separation is not yet complete.
+
 ## Download
 
 For normal use, download a ready-to-install or portable build from the [official JPDFs website](https://jpdfs.net) or the [GitHub releases page](https://github.com/JPDFs/JPDFs/releases).
@@ -83,10 +89,17 @@ j-pdfs/
 ├── Build-JPDFs-Installer.ps1   # PowerShell installer build
 ├── Compilar-J-PDFs.cmd         # Windows double-click build entry point
 └── src/
-    ├── JPDFs.csproj            # Main application project
-    ├── build/                  # Build and packaging scripts
-    ├── docs/                   # README images and documentation assets
-    └── README.md               # Application features, development and license
+    ├── JPDFs.csproj            # Main WPF application (current structure)
+    ├── engine/                 # Independent PDF engine and tests
+    ├── Features/               # Feature coordinators and workflows
+    ├── Models/                 # Shared and view-related models
+    ├── Services/               # Application services and platform adapters
+    ├── Shell/                  # Main WPF shell
+    ├── Controls/               # Reusable WPF controls and dialogs
+    ├── Packaging/              # Installer and launcher integration
+    ├── tests/                  # Smoke and integration tests
+    ├── third_party/            # Vendored dependencies
+    └── docs/architecture/      # Architecture decisions and migration plan
 ```
 
 ## License
