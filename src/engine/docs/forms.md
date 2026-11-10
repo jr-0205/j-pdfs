@@ -1,0 +1,242 @@
+# AcroForm values and interchange
+
+This guide covers the 1.9 API for reading widgets and exchanging
+field values. The engine supplies PDF data and editing operations; the host owns
+the form UI, file selection, review, and save destination.
+
+The examples below use unencrypted, unsigned PDFs. Consult the
+[security guide](security.md) before designing a protected-document workflow.
+The form importer currently reopens intermediate output without a password
+callback, so these examples are not an authenticated import recipe.
+
+## Read, export, preview, and apply
+
+Use fully qualified field names when matching values. A field can have multiple
+widgets across pages, so widget count is not necessarily field count.
+`ReadPage` uses a zero-based page index and exposes inherited field state,
+current and default values, choice export/display pairs, widget geometry, and
+page rotation. Keep those values separate from your UI's screen coordinates.
+
+The following functions can live in a host service. Add the namespace imports
+and use normal .NET implicit usings:
+
+```csharp
+using KillerPdf.Engine.Documents;
+
+static IReadOnlyList<PdfFormWidgetInfo> ReadWidgets(byte[] pdf)
+{
+    PdfDocument document = PdfDocument.Open(pdf);
+    return Enumerable.Range(0, PdfDocumentInformation.Read(document).PageCount)
+        .SelectMany(page => PdfFormWidgetReader.ReadPage(document, page)).ToArray();
+}
+
+static byte[] ExportValues(byte[] pdf)
+{
+    PdfFormDataSet data = PdfFormDataExporter.Export(
+        PdfDocument.Open(pdf), includeAnnotations: false);
+    return PdfXfdfFormData.Write(data);
+}
+
+static byte[] ImportReviewedValues(byte[] pdf, byte[] xfdf)
+{
+    PdfDocument document = PdfDocument.Open(pdf);
+    PdfFormDataSet incoming = PdfXfdfFormData.Read(xfdf);
+    if (incoming.ContainsJavaScript || incoming.ContainsSignature
+        || incoming.ContainsIncrementalDifferences)
+        throw new InvalidOperationException("Review active or signed interchange data separately.");
+    var fieldsOnly = new PdfFormDataSet { Fields = incoming.Fields };
+    IReadOnlyList<PdfFormDataMatch> matches = PdfFormDataImporter.Preview(document, fieldsOnly);
+    if (matches.Count == 0 || matches.Any(match => match.Status != PdfFormDataMatchStatus.Matched))
+        throw new InvalidOperationException("Every supplied field must match an editable field.");
+    return PdfFormDataImporter.Apply(document, fieldsOnly);
+}
+```
+
+`ExportValues` deliberately exports field data without annotations or a source
+file path. By default, the exporter excludes fields marked NoExport and returns
+one entry per distinct field name. Set `includeNoExportFields: true` only when
+the host intends to include them. NoExport is an export flag, not an encryption
+boundary or a rule preventing later field edits.
+
+The import example copies only fields into a fresh data set. It does not use an
+incoming source path to choose a PDF or import incoming annotations. The host
+supplies the destination PDF explicitly and reviews the requested values before
+calling the function. The example rejects every nonmatching field instead of
+allowing partial application.
+
+## Understand the preview
+
+`PdfFormDataImporter.Preview` reports one result per supplied field:
+
+| Status | Meaning |
+| --- | --- |
+| Matched | The field name and supplied value can be applied. |
+| Unmatched | No destination widget has this name. |
+| ReadOnly | The destination field is marked read-only. |
+| Incompatible | The field type cannot accept these imported values. |
+| InvalidValue | The value fails the destination field's constraints. |
+
+Matching uses ordinal, case-sensitive names. Duplicate or empty input names
+throw. The preview reports required and NoExport flags, but it is not a complete
+form submission validator. The host still decides which required fields must be
+filled and which changes the user accepts.
+
+`CreateReport` provides aggregate counts without field values. Use the preview
+for individual decisions and the report for a summary that does not expose
+entered data.
+
+## Saving and flattening
+
+The default `Apply` overload retains editable form fields. It applies matched
+text, choice, checkbox, and radio-button values; it skips other preview statuses.
+If neither field values nor annotations can be applied, it throws. The example
+checks all statuses first to avoid silently skipping requested values.
+
+Field updates use an incremental revision that preserves the original byte
+prefix. Imported annotations can add another revision. Select
+`PdfFormDataImportOutputMode.Flattened` only when the host intends to paint
+field appearances into page content and remove the fields. Review the rendered
+result and retain the original file if future form editing matters. A preserved
+byte prefix does not by itself establish signature validity.
+
+## Direct field edits
+
+For host-owned editing without interchange data, create a
+`KillerPdf.Engine.Editing.PdfIncrementalPageEditor` from the opened document.
+Use fully qualified field names from the widget reader and queue the intended
+changes before calling `Build()` once. The returned PDF bytes contain the
+incremental revision; the host chooses where to save them.
+
+| Method | Value contract |
+| --- | --- |
+| `SetTextFieldValue` | Sets text and regenerates widget appearances. Optional embedded font and positive font-size arguments control the generated text. |
+| `SetChoiceFieldValue` | Sets one combo-box or single-select list-box export value. |
+| `SetChoiceFieldValues` | Supplies distinct export values for a multiselect list box. |
+| `SetCheckBoxValue` | Selects the existing on or off state using a Boolean. |
+| `SetRadioButtonValue` | Selects a group value; null requests a cleared selection. An empty string is not a clear operation. |
+| `ResetFormField` | Restores the field's default value and matching appearance. |
+
+Choice values are export values, not display labels. A noneditable choice
+requires a declared option; an editable combo box can accept another value.
+Single-select fields require exactly one selected value. The multiselect API
+rejects duplicate or null values. Empty selections and defaults are subject to
+the field's type and reset rules.
+
+The setters queue changes, so validation is not finished when a setter returns.
+`Build()` checks the document and field constraints, enforces password
+permissions, and currently rejects documents with a certification permission.
+It also rejects an empty update. Handle failures before writing the destination
+file. After a successful build, reopen the returned bytes and inspect both field
+values and rendered appearances. The original `PdfDocument` still represents
+the original input.
+
+## Detect, lay out, and flatten fields
+
+`PdfFormRecognizer.Recognize` finds conservative rectangular field candidates on
+the pages and returns a `PdfFormRecognitionReview`. It
+does not modify the source. Every proposal stays pending until the host calls
+`Accept` or `Reject`, so no field is created without an explicit decision. `Accept`
+can also adjust the name, kind, bounds, tooltip, options, and value. The review
+also offers `Align`, `Distribute`, and `Duplicate` for proposals, and it exports
+as text or JSON. Proposals respect nonzero page-box origins and skip existing
+widgets.
+
+`PdfTextFieldPresetCollection` keeps named text-field sizes and styles that
+a host can reuse and save as JSON. For fields that already exist,
+`PdfFormLayoutEditor.Align` and `Distribute` move widgets by object number as an
+incremental edit.
+
+`PdfFormFlattener.Flatten` paints each widget's selected normal appearance into
+the page and removes the editable fields. It generates a missing text
+appearance, keeps hidden fields hidden, and retains print-only appearances as
+annotations. It handles checkboxes with an omitted unchecked appearance. A
+flattened form can no longer be edited, so keep the original.
+
+`PdfFormActionInspector.Inspect` lists the actions attached to fields without
+running them, and `PdfFormCalculation.Evaluate` evaluates supported calculation,
+format, and validation scripts in order. Neither runs arbitrary JavaScript.
+
+## Values and rendered appearances
+
+A field's current value and its saved widget appearance are separate PDF data.
+`PdfFormWidgetReader` reports field values; the renderer paints saved normal
+appearances from `/AP /N`. A normal appearance can be a stream or a dictionary
+of states selected by the widget's `/AS` name. A missing appearance, or a state
+dictionary without a matching selected state, contributes no painted widget.
+
+Enable `PdfRenderOptions.IncludeFormFields` to include widget appearances.
+`IncludeAnnotations` independently controls non-widget annotations. These
+options do not create an interactive form UI.
+
+When AcroForm `/NeedAppearances` is true, the renderer regenerates single-line
+text and combo-box text in a saved `/Tx` marked-content section. It reads
+inherited values and defaults, uses the AcroForm font resource, maps choice
+exports to display labels, and clips text to the field interior. Existing
+appearance geometry and artwork outside the text section remain in place.
+The generated stream is temporary; rendering does not edit the document.
+
+Comb text fields with a simple font use `/MaxLen` equal-width character cells.
+The inherited alignment selects the starting cell, and each character is centered
+within its cell. The cell count must be between 1 and 32,768. Values longer than
+the declared cell count are clipped to that many characters for display with a
+diagnostic; the stored field value remains unchanged. Missing appearances use
+the same geometry and styling path as ordinary text fields.
+
+Text alignment, automatic width fitting, and clipping use the `/BS` border
+width as the interior inset, defaulting to one point. Beveled and inset styles
+reserve twice that width when replacing text in an existing appearance.
+Negative widths or borders that leave no interior retain the saved appearance
+with a diagnostic. Font descriptor values and selected fallback metrics govern
+vertical centering; see the [font guide](fonts.md).
+
+An existing appearance requires valid bounds and a balanced text section.
+When the appearance is absent, the renderer creates temporary geometry from
+the widget rectangle and quarter-turn rotation. It paints declared background
+colors and solid, dashed, or underline borders from appearance characteristics
+and border-style settings. New appearances respect invisible, hidden, and
+NoView widget flags. Empty fields can paint their border and background without
+a default text appearance.
+
+Nonempty text requires a simple font that can encode every displayed character.
+Field text is limited to 32,768 UTF-16 code units, default appearance data to
+65,536 bytes, and field inheritance to 256 dictionaries. Cancellation remains
+available during inheritance, font encoding, and instruction processing.
+Unsupported cases retain their saved appearances with a diagnostic. Recovery
+mode also retains the saved appearance when regeneration data is malformed;
+strict mode keeps validation failures.
+
+Regenerated appearances cover single-line, multiline, and comb text, combo boxes
+with reserved arrow space, list boxes with their selection, composite fonts that
+map the displayed characters, legacy `/Border` arrays, and beveled and inset
+borders. A multiline comb field, a field with excessive options or selections,
+and an unmapped character keep the saved appearance with a diagnostic.
+Remaining font shape and layout differences need further corpus validation.
+Successful rendering does not establish that every visible
+field matches its value. Check diagnostics and compare reopened values with
+the rendered page before accepting or flattening a form.
+
+For deliberate edits, `PdfIncrementalPageEditor` exposes `SetTextFieldValue`,
+`SetChoiceFieldValues`, `SetCheckBoxValue`, and `SetRadioButtonValue`; the
+interchange importer above uses the editing path for matched fields. Those
+operations change document data and must be saved explicitly. They are separate
+from read-only page rendering. Review both the reopened field values and the
+rendered appearances before accepting or flattening an edited form.
+
+## Interchange boundaries
+
+`PdfXfdfFormData.Read` disables XML external resolution and prohibits DTDs,
+with a 16 MiB character limit. Parsing identifies script elements without
+executing them. The host should inspect interchange flags and choose the
+supported data it intends to apply.
+
+`PdfFdfFormData` provides the related FDF reader and writer.
+`PdfFormDataSet.SelectFields` selects field names but retains annotations;
+selecting fields alone is not a field-only export. The exporter option used above
+avoids that ambiguity. Annotation import, source-PDF resolution, XFA conversion,
+form layout changes, and action inspection are separate APIs and are not covered
+by these examples.
+
+The three functions were compiled and executed against the current engine.
+Validation covered widget counts, NoExport filtering, XFDF round-trip values,
+updated field values, preservation of the original PDF prefix, and rejection of
+an unknown destination field.

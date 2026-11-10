@@ -1,0 +1,142 @@
+version: 1
+scripts:
+  release_desktop_runner_tests:
+    path: build/Test-ReleaseDesktopRunner.ps1
+    purpose: Verify fresh CLI payload selection, stale-version rejection, host window exclusions and restored caller state.
+    inputs: Fresh EvidenceRoot outside the repository; modeled dotnet test boundary.
+    outputs: Synthetic executable metadata and behavioral assertions without app startup.
+    failure_behavior: Throw on a stale target, wrong test selection, ignored failure or changed caller environment.
+    mutates: temporary-fixture-files-only
+  release_validation:
+    path: build/release-validation.ps1
+    purpose: Record full signed dry-run validation and reject stale or incomplete release reuse.
+    inputs: Clean source commit, version, exact packages, source archive, checksums and engine/desktop TRX files.
+    outputs: Atomic release-validation.json in the publish directory.
+    failure_behavior: Throw on changed bytes, source/version mismatch, missing files or incomplete test results.
+    mutates: build-output-only
+  release_dry_run_tests:
+    path: build/Test-ReleaseDryRun.ps1
+    purpose: Exercise signed dry-run reuse and stale, failed, unsigned and interrupted result rejection offline.
+    inputs: Fresh EvidenceRoot outside the repository.
+    outputs: Synthetic files and behavioral assertions.
+    failure_behavior: Throw on an incorrect reuse or rejection.
+    mutates: temporary-fixture-files-only
+  release_options_tests:
+    path: build/Test-ReleaseOptions.ps1
+    purpose: Execute release reuse and Store-skip flow against synthetic packages and modeled external boundaries.
+    inputs: Fresh EvidenceRoot and optional RequireStore default-preflight control.
+    outputs: Synthetic fixture and external-boundary event log; no live publishing or Store calls.
+    failure_behavior: Throw if tests rerun, required validation disappears, Store skip fails or default Store preflight is bypassed.
+    mutates: temporary-fixture-files-only
+  release_store_listing_tests:
+    path: build/Test-ReleaseStoreListing.ps1
+    purpose: Exercise the stale-renderer listing guard without release or Store actions.
+    inputs: Current release script and Store CSV, plus synthetic text fixtures.
+    outputs: Assertions and exit status.
+    failure_behavior: Throw when stale PDFium text is accepted or current listing text is refused.
+    mutates: none
+  release_readme_tests:
+    path: build/Test-ReleaseReadme.ps1
+    purpose: Exercise the release README guard without invoking release actions.
+    inputs: Current release script and README, plus synthetic text fixtures.
+    outputs: Assertions and exit status.
+    failure_behavior: Throw on stale development text or an absent or inconsistent source archive link.
+    mutates: none
+  winget_release_notes_tests:
+    path: build/Test-WinGetReleaseNotes.ps1
+    purpose: Exercise the WinGet manifest's release-notes shaping without GitHub or WinGet calls.
+    inputs: Current New-WinGetManifest.ps1 and CHANGELOG.md, plus synthetic text fixtures.
+    outputs: Assertions and exit status.
+    failure_behavior: Throw when notes exceed 10,000 characters, lose whole lines or order, lack the full-notes pointer, or change notes already within the limit.
+    mutates: none
+  payload_security:
+    path: build/payload-security.ps1
+    purpose: Select exact owned binaries, validate Authenticode, and generate final-byte manifests.
+    inputs: Prepared payload directory or final managed launcher.
+    outputs: Validation errors or manifest; temporary extracted owned binaries.
+    failure_behavior: Throw on missing or invalid first-party signatures.
+    mutates: build-output-and-temporary-files-only
+  gui_startup:
+    path: build/Test-GuiStartup.ps1
+    purpose: Exercise real MainWindow startup in an isolated process with bounded exit.
+    inputs: App or portable EXE, timeout, optional fresh evidence directory.
+    outputs: Retained temporary startup, stdout, and stderr logs.
+    failure_behavior: Throw on nonzero exit, timeout, failure report, or incomplete milestones.
+    mutates: temporary-files-and-test-owned-process-only
+  payload_security_tests:
+    path: build/Test-PayloadSecurity.ps1
+    purpose: Verify signature targets, negative gates, manifest bytes, and release ordering without signing.
+    inputs: Current packaging scripts.
+    outputs: Assertions and exit status.
+    failure_behavior: Throw on an incorrect acceptance or rejection.
+    mutates: temporary-fixture-files-only
+  gui_startup_runner_tests:
+    path: build/Test-GuiStartupRunner.ps1
+    purpose: Verify exit, proof, contradiction, and timeout handling using a disposable executable.
+    inputs: Windows PowerShell 5.1 and the GUI runner.
+    outputs: Assertions and retained fixture diagnostics.
+    failure_behavior: Throw on an incorrect runner result.
+    mutates: temporary-files-and-test-owned-process-only
+  preset_selection_smoke:
+    path: tests/KillerPDF.UiSmoke/PresetSelectionSmoke.cs
+    purpose: Verify populated preset selected and unselected text through real WPF controls in 13 themes.
+    inputs: Built app DLL, matching App.xaml, fresh evidence directory and --startup-smoke.
+    outputs: PNGs and a result containing the tested assembly hash.
+    failure_behavior: Return nonzero on mismatched colors, missing resources or invalid fixture inputs.
+    mutates: temporary-fixture-files-and-test-owned-windows-only
+
+  crash_dialog_smoke:
+    path: build/Test-CrashDialog.ps1
+    purpose: Check crash report controls, caption fit, scrolling and recovery in 13 themes.
+    inputs: Built app DLL, fresh evidence directory, PowerShell 7 on .NET 10 and --startup-smoke.
+    outputs: Synthetic offscreen PNGs and 104 case results.
+    failure_behavior: Throw on preference isolation, layout, palette, hover, scrolling or recovery failure.
+    mutates: temporary-fixture-files-and-test-owned-windows-only
+
+  window_lifecycle_smoke:
+    path: tests/KillerPDF.UiSmoke/WindowLifecycleSmoke.cs
+    purpose: Verify closing one document window promotes a surviving primary window and preserves its real Save As workflow and document identity.
+    inputs: Built app DLL, matching App.xaml, fresh evidence directory and --startup-smoke.
+    outputs: Stage diagnostics and a result containing the tested assembly hash.
+    failure_behavior: Return nonzero on an incorrect primary window, missing working files, wrong saved page identity or changed source files.
+    mutates: temporary-fixture-files-and-test-owned-windows-only
+  window_session_smoke:
+    path: tests/KillerPDF.UiSmoke/WindowSessionSmoke.cs
+    purpose: Verify combined document restoration, original-window geometry, manually closed tabs and remembered-file privacy across document windows.
+    inputs: Built app DLL, matching App.xaml, fresh evidence directory and --session-isolation on an owned UI VM.
+    outputs: Stage diagnostics and a result containing the tested assembly hash.
+    failure_behavior: Return nonzero on incorrect restored documents, geometry, privacy or changed source files.
+    mutates: temporary-fixture-files-and-test-owned-windows-only
+  print_cancellation_smoke:
+    path: tests/KillerPDF.DocumentStateSmoke/Program.cs
+    purpose: Exercise real print cancellation before preparation, during rendering and at the virtual printer output picker.
+    inputs: Test-owned loose app DLL and matching engine, App.xaml, fresh evidence folder, print-cancel case and --startup-smoke; native case also requires an interactive VM operator.
+    outputs: Console milestones, result.txt and tested app identity.
+    failure_behavior: Return nonzero on progress after close request, an error dialog, missing trigger or deadline (45 seconds automated, 120 seconds for the native picker).
+    mutates: temporary-fixture-files-test-owned-windows-processes-and-virtual-print-job-only
+
+  session_ending_smoke:
+    path: tests/KillerPDF.UiSmoke/SessionEndingSmoke.cs
+    purpose: Verify dirty secondary-window Cancel and Save behavior plus later-window cancellation and tray-safe approved closure.
+    inputs: Built app DLL, matching App.xaml, fresh evidence directory and --session-isolation on an owned UI VM.
+    outputs: Stage diagnostics, result.txt with app hash, and the external runner process receipt.
+    failure_behavior: Return nonzero on missing prompts, wrong cancellation, lost edits, incorrect saved rotation or changed discarded sources.
+    mutates: temporary-fixture-files-and-test-owned-windows-only
+
+  reference_repair_notice_smoke:
+    path: tests/KillerPDF.UiSmoke/ReferenceRepairNoticeSmoke.cs
+    purpose: Verify that successful protection reports broken-reference repairs and omits the notice for pristine input.
+    inputs: Built app DLL, matching App.xaml, fresh evidence directory and --startup-smoke on an owned UI VM.
+    outputs: Detector controls, modal text, result.txt with app hash and external process receipt.
+    failure_behavior: Return nonzero on missing controls, incorrect notice, failed encryption, lost live text, changed sources or deadline.
+    mutates: temporary-fixture-files-and-test-owned-windows-only
+
+  reduction_repair_notice_smoke:
+    path: tests/KillerPDF.UiSmoke/ReductionRepairNoticeSmoke.cs
+    purpose: Verify repair notices through the real Reduce File Size menu, options, picker and success status.
+    inputs: Built app DLL, matching App.xaml, fresh evidence directory and --startup-smoke on an owned UI VM.
+    outputs: Detector controls, workflow logs, status text, result.txt with app hash and external process receipt.
+    failure_behavior: Return nonzero on incorrect notice, size, saved text, source preservation, controls or deadline.
+    mutates: temporary-fixture-files-and-test-owned-windows-only
+
+documentation: docs/startup-packaging.md

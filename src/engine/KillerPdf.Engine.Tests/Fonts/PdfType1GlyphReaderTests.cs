@@ -1,0 +1,296 @@
+using System.Text;
+using KillerPdf.Engine.Authoring;
+using KillerPdf.Engine.Documents;
+using KillerPdf.Engine.Fonts;
+using KillerPdf.Engine.Objects;
+using Xunit;
+
+namespace KillerPdf.Engine.Tests.Fonts;
+
+public sealed class PdfType1GlyphReaderTests
+{
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(4)]
+    public void ReadsEncryptedOrPlainCharstringsWithExactLineBounds(int lenIv)
+    {
+        byte[] program = [.. Number(0), .. Number(600), 13, .. Number(20), .. Number(0), 21,
+            .. Number(0), .. Number(700), 5, .. Number(500), .. Number(0), 5,
+            .. Number(0), .. Number(-700), 5, 9, 14];
+        var font = Font(program, lenIv);
+        Assert.Equal(new PdfGlyphBounds(20, 0, 520, 700), font.GetGlyphBounds(65));
+        PdfGlyphContour contour = Assert.Single(Assert.IsType<PdfGlyphOutline>(
+            font.GetGlyphOutline(65)).Contours);
+        Assert.Equal([
+            new PdfGlyphPoint(20, 0, true),
+            new PdfGlyphPoint(20, 700, true),
+            new PdfGlyphPoint(520, 700, true),
+            new PdfGlyphPoint(520, 0, true)], contour.Points);
+    }
+
+    [Fact]
+    public async Task ConcurrentColdGlyphLookupsKeepType1BoundsAndOutlines()
+    {
+        const int horizontalSegments = 5000;
+        byte[] Program(int height)
+        {
+            var program = new List<byte>([.. Number(0), .. Number(600), 13,
+                .. Number(0), .. Number(0), 21]);
+            for (int segment = 0; segment < horizontalSegments; segment++)
+                program.AddRange([.. Number(1), .. Number(0), 5]);
+            program.AddRange([.. Number(0), .. Number(height), 5,
+                .. Number(-horizontalSegments), .. Number(0), 5,
+                .. Number(0), .. Number(-height), 5, 9, 14]);
+            return [.. program];
+        }
+
+        var glyphs = new[]
+        {
+            (Name: "A", Program: Program(200), Bounds: new PdfGlyphBounds(0, 0, horizontalSegments, 200)),
+            (Name: "B", Program: Program(210), Bounds: new PdfGlyphBounds(0, 0, horizontalSegments, 210)),
+            (Name: "C", Program: Program(220), Bounds: new PdfGlyphBounds(0, 0, horizontalSegments, 220)),
+            (Name: "D", Program: Program(230), Bounds: new PdfGlyphBounds(0, 0, horizontalSegments, 230)),
+            (Name: "E", Program: Program(240), Bounds: new PdfGlyphBounds(0, 0, horizontalSegments, 240)),
+            (Name: "F", Program: Program(250), Bounds: new PdfGlyphBounds(0, 0, horizontalSegments, 250)),
+            (Name: "G", Program: Program(260), Bounds: new PdfGlyphBounds(0, 0, horizontalSegments, 260)),
+            (Name: "H", Program: Program(270), Bounds: new PdfGlyphBounds(0, 0, horizontalSegments, 270))
+        };
+        PdfExtractionFont font = Font(glyphs[0].Program, glyphName: glyphs[0].Name,
+            additionalGlyphs: glyphs[1..].Select(glyph => (glyph.Name, glyph.Program)).ToArray());
+        using var start = new Barrier(glyphs.Length);
+        Task<(int Index, PdfGlyphBounds? Bounds, PdfGlyphOutline? Outline)>[] requests =
+            [.. glyphs.Select((_, index) => Task.Factory.StartNew(() =>
+            {
+                if (!start.SignalAndWait(TimeSpan.FromSeconds(10)))
+                    throw new TimeoutException("Concurrent Type1 glyph readers did not start.");
+                uint code = (uint)(65 + index);
+                return (index, font.GetGlyphBounds(code), font.GetGlyphOutline(code));
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default))];
+
+        foreach (var result in await Task.WhenAll(requests))
+        {
+            Assert.Equal(glyphs[result.Index].Bounds, result.Bounds);
+            PdfGlyphContour contour = Assert.Single(Assert.IsType<PdfGlyphOutline>(result.Outline).Contours);
+            Assert.Equal(horizontalSegments + 4, contour.Points.Count);
+            Assert.Equal(new PdfGlyphPoint(0, 0, true), contour.Points[0]);
+            Assert.Equal(new PdfGlyphPoint(0, 0, true), contour.Points[^1]);
+        }
+    }
+
+    [Fact]
+    public void FindsActualBezierExtremaInsteadOfControlPointBounds()
+    {
+        byte[] program = [.. Number(0), .. Number(600), 13, .. Number(0), .. Number(0), 21,
+            .. Number(0), .. Number(100), .. Number(100), .. Number(0), .. Number(0), .. Number(-100), 8, 14];
+        PdfExtractionFont font = Font(program);
+        Assert.Equal(new PdfGlyphBounds(0, 0, 100, 75), font.GetGlyphBounds(65));
+        PdfGlyphContour contour = Assert.Single(Assert.IsType<PdfGlyphOutline>(
+            font.GetGlyphOutline(65)).Contours);
+        Assert.Equal([
+            new PdfGlyphPoint(0, 0, true),
+            new PdfGlyphPoint(0, 100, false, true),
+            new PdfGlyphPoint(100, 100, false, true),
+            new PdfGlyphPoint(100, 0, true)], contour.Points);
+    }
+
+    [Fact]
+    public void FollowsSubroutinesAndBoundsRecursiveSubroutines()
+    {
+        byte[] main = [.. Number(0), .. Number(600), 13, .. Number(0), 10, 14];
+        byte[] subr = [.. Number(10), .. Number(20), 21, .. Number(100), .. Number(200), 5, 11];
+        Assert.Equal(new PdfGlyphBounds(10, 20, 110, 220), Font(main, subroutine: subr).GetGlyphBounds(65));
+        Assert.Null(Font(main, subroutine: [.. Number(0), 10, 11]).GetGlyphBounds(65));
+    }
+
+    [Fact]
+    public void KeepsTheFirstDefinitionOfARepeatedSubroutine()
+    {
+        byte[] main = [.. Number(0), .. Number(600), 13, .. Number(0), 10, 14];
+        byte[] drawing = [.. Number(10), .. Number(20), 21, .. Number(100), .. Number(200), 5, 11];
+        Assert.Equal(new PdfGlyphBounds(10, 20, 110, 220),
+            Font(main, subroutine: [11], firstSubroutine: drawing).GetGlyphBounds(65));
+    }
+
+    [Fact]
+    public void ClosePathPreservesCurrentPointForTheNextContour()
+    {
+        byte[] program = [.. Number(0), .. Number(600), 13, .. Number(0), .. Number(0), 21,
+            .. Number(100), .. Number(100), 5, 9, .. Number(50), .. Number(50), 21,
+            .. Number(100), .. Number(100), 5, 14];
+        Assert.Equal(new PdfGlyphBounds(0, 0, 250, 250), Font(program).GetGlyphBounds(65));
+    }
+
+    [Fact]
+    public void ComposesSeacBaseAndAccentOutlines()
+    {
+        byte[] composite = [.. Number(0), .. Number(600), 13, .. Number(0),
+            .. Number(200), .. Number(500), .. Number(65), .. Number(194), 12, 6, 14];
+        byte[] baseGlyph = [.. Number(0), .. Number(600), 13,
+            .. Number(0), .. Number(0), 21, .. Number(400), .. Number(0), 5,
+            .. Number(0), .. Number(400), 5, 9, 14];
+        byte[] accentGlyph = [.. Number(0), .. Number(200), 13,
+            .. Number(0), .. Number(0), 21, .. Number(100), .. Number(100), 5, 9, 14];
+        PdfExtractionFont font = Font(composite,
+            encoding: "/Encoding 256 array 0 1 255 {1 index exch /.notdef put} for dup 65 /Aacute put readonly def",
+            glyphName: "Aacute", additionalGlyphs: [("A", baseGlyph), ("acute", accentGlyph)]);
+
+        PdfGlyphOutline outline = Assert.IsType<PdfGlyphOutline>(font.GetGlyphOutline(65));
+        Assert.Equal(2, outline.Contours.Count);
+        Assert.Equal(new PdfGlyphPoint(0, 0, true), outline.Contours[0].Points[0]);
+        Assert.Equal(new PdfGlyphPoint(200, 500, true), outline.Contours[1].Points[0]);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FlexUsesOriginalStartAndPreservesItsContour(bool continueAfterFlex)
+    {
+        var program = new List<byte>();
+        program.AddRange([.. Number(0), .. Number(600), 13, .. Number(100), .. Number(-10), 21,
+            .. Number(0), .. Number(1), 12, 16]);
+        foreach (var (x, y) in new[] { (50, 0), (-35, 0), (10, 10), (25, 0), (25, 0), (10, -10), (15, 0) })
+            program.AddRange([.. Number(x), .. Number(y), 21, .. Number(0), .. Number(2), 12, 16]);
+        program.AddRange([.. Number(50), .. Number(200), .. Number(-10), .. Number(3), .. Number(0),
+            12, 16, 12, 17, 12, 17, 12, 33]);
+        if (continueAfterFlex)
+            program.AddRange([.. Number(0), .. Number(110), 5, .. Number(-100), .. Number(0), 5]);
+        program.Add(14);
+        var font = Font([.. program]);
+        Assert.Equal(new PdfGlyphBounds(100, -10, 200, continueAfterFlex ? 100 : 0), font.GetGlyphBounds(65));
+        var contour = Assert.Single(Assert.IsType<PdfGlyphOutline>(font.GetGlyphOutline(65)).Contours);
+        Assert.Equal(continueAfterFlex ? 9 : 7, contour.Points.Count);
+        Assert.Equal(new PdfGlyphPoint(100, -10, true), contour.Points[0]);
+    }
+
+    [Fact]
+    public void ReadsPostScriptDashPipeBinaryReaderToken()
+    {
+        byte[] program = [.. Number(0), .. Number(600), 13, .. Number(10), .. Number(20), 21,
+            .. Number(100), .. Number(200), 5, 14];
+        Assert.Equal(new PdfGlyphBounds(10, 20, 110, 220), Font(program, 0, reader: "-|").GetGlyphBounds(65));
+    }
+
+    [Fact]
+    public void UsesEmbeddedEncodingWhenPdfResourceOmitsEncoding()
+    {
+        var font = Font([14], encoding: "/Encoding 256 array 0 1 255 {1 index exch /.notdef put} for dup 11 /ff put dup 12 /fi put dup 16 /zeta put readonly def");
+        Assert.Equal("ff", Assert.Single(font.Decode(new byte[] { 11 })).Text.Normalize(NormalizationForm.FormKC));
+        Assert.Equal("fi", Assert.Single(font.Decode(new byte[] { 12 })).Text.Normalize(NormalizationForm.FormKC));
+        Assert.Equal("\u03b6", Assert.Single(font.Decode(new byte[] { 16 })).Text);
+    }
+
+    [Fact]
+    public void IgnoresPostScriptScientificNumbersOutsideCharstrings()
+    {
+        byte[] program = [.. Number(0), .. Number(600), 13, .. Number(10), .. Number(20), 21,
+            .. Number(100), .. Number(200), 5, 14];
+
+        Assert.Equal(new PdfGlyphBounds(10, 20, 110, 220),
+            Font(program, privatePrefix: "/BlueScale 1e-05 def ").GetGlyphBounds(65));
+    }
+
+    [Theory]
+    [InlineData(long.MaxValue, null)]
+    [InlineData(null, long.MaxValue)]
+    [InlineData(0L, long.MaxValue)]
+    public void RecoveryFindsEncryptedFontBoundaryWithInvalidLengths(long? length1, long? length2)
+    {
+        byte[] program = [.. Number(0), .. Number(600), 13, .. Number(20), .. Number(0), 21,
+            .. Number(0), .. Number(700), 5, .. Number(500), .. Number(0), 5, 14];
+        Assert.Throws<OverflowException>(() => Font(program, length1: length1, length2: length2));
+        PdfExtractionFont recovered = Font(program, length1: length1, length2: length2, recovery: true,
+            encoding: "% currentfile eexec\n(currentfile eexec) pop");
+        Assert.Equal(new PdfGlyphBounds(20, 0, 520, 700), recovered.GetGlyphBounds(65));
+        Assert.NotNull(recovered.GetGlyphOutline(65));
+        Assert.Equal("Invalid Type 1 font lengths were recovered from the embedded program.",
+            Assert.Single(recovered.Diagnostics));
+    }
+
+    [Theory]
+    [InlineData("currentfile eexec binary")]
+    [InlineData("% currentfile eexec\nnot-a-font")]
+    [InlineData("(currentfile eexec)\nnot-a-font")]
+    public void LengthRecoveryRejectsUnusableFontBoundaries(string source)
+    {
+        Assert.Null(PdfType1GlyphReader.TryReadWithRecoveredLengths(Encoding.ASCII.GetBytes(source)));
+    }
+
+    [Fact]
+    public void LengthRecoveryBoundsItsHeaderScan()
+    {
+        byte[] source = Encoding.ASCII.GetBytes("%" + new string('x', 1_048_576)
+            + "\ncurrentfile eexec\nnot-a-font");
+        Assert.Null(PdfType1GlyphReader.TryReadWithRecoveredLengths(source));
+    }
+
+    private static PdfExtractionFont Font(byte[] program, int lenIv = -1,
+        byte[]? subroutine = null, string reader = "RD", string encoding = "",
+        string glyphName = "A",
+        IReadOnlyList<(string Name, byte[] Program)>? additionalGlyphs = null,
+        string privatePrefix = "", long? length1 = null, long? length2 = null, bool recovery = false,
+        byte[]? firstSubroutine = null)
+    {
+        byte[] header = Encoding.ASCII.GetBytes($"%!PS\n/FontMatrix [0.001 0 0 0.001 0 0] def {encoding} currentfile eexec\n");
+        using var plain = new MemoryStream();
+        plain.Write(new byte[4]);
+        plain.Write(Encoding.ASCII.GetBytes($"{privatePrefix}/lenIV {lenIv} def "));
+        if (firstSubroutine is not null)
+        {
+            byte[] encoded = lenIv == -1 ? firstSubroutine : Encrypt([.. new byte[lenIv], .. firstSubroutine], 4330);
+            plain.Write(Encoding.ASCII.GetBytes($"/Subrs 1 array dup 0 {encoded.Length} {reader} "));
+            plain.Write(encoded);
+            plain.Write(" NP noaccess put "u8);
+        }
+        plain.Write("/Subrs 1 array "u8);
+        if (subroutine is not null)
+        {
+            byte[] encoded = lenIv == -1 ? subroutine : Encrypt([.. new byte[lenIv], .. subroutine], 4330);
+            plain.Write(Encoding.ASCII.GetBytes($"dup 0 {encoded.Length} {reader} "));
+            plain.Write(encoded);
+            plain.Write(" NP "u8);
+        }
+        var glyphs = new List<(string Name, byte[] Program)> { (glyphName, program) };
+        if (additionalGlyphs is not null) glyphs.AddRange(additionalGlyphs);
+        plain.Write(Encoding.ASCII.GetBytes($"/CharStrings {glyphs.Count} dict dup begin "));
+        foreach ((string name, byte[] source) in glyphs)
+        {
+            byte[] glyph = lenIv == -1 ? source : Encrypt([.. new byte[lenIv], .. source], 4330);
+            plain.Write(Encoding.ASCII.GetBytes($"/{name} {glyph.Length} {reader} "));
+            plain.Write(glyph);
+            plain.Write(" ND "u8);
+        }
+        plain.Write("end currentfile closefile"u8);
+        byte[] cipher = Encrypt(plain.ToArray(), 55665);
+        var file = new PdfStream(D(("Length1", new PdfInteger(length1 ?? header.Length)),
+            ("Length2", new PdfInteger(length2 ?? cipher.Length))), [.. header, .. cipher]);
+        var dictionary = D(("Subtype", new PdfName("Type1"u8)), ("BaseFont", new PdfName("Test"u8)),
+            ("FontDescriptor", D(("FontFile", file))));
+        byte[] pdf = new PdfDocumentBuilder().AddBlankPage().Build();
+        return PdfFontResourceReader.Read(recovery ? PdfDocument.OpenWithCompatibilityRecovery(pdf)
+            : PdfDocument.Open(pdf), dictionary);
+    }
+
+    private static byte[] Encrypt(byte[] source, int seed)
+    {
+        byte[] result = new byte[source.Length];
+        for (int i = 0; i < source.Length; i++)
+        {
+            byte value = (byte)(source[i] ^ (seed >> 8));
+            result[i] = value;
+            seed = ((value + seed) * 52845 + 22719) & 65535;
+        }
+        return result;
+    }
+
+    private static byte[] Number(int value)
+    {
+        if (value is >= -107 and <= 107) return [(byte)(value + 139)];
+        if (value is >= 108 and <= 1131) return [(byte)((value - 108) / 256 + 247), (byte)((value - 108) % 256)];
+        if (value is >= -1131 and <= -108) return [(byte)((-value - 108) / 256 + 251), (byte)((-value - 108) % 256)];
+        return [255, (byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value];
+    }
+
+    private static PdfDictionary D(params (string Key, PdfObject Value)[] pairs) =>
+        new(pairs.Select(p => new KeyValuePair<PdfName, PdfObject>(new PdfName(Encoding.ASCII.GetBytes(p.Key)), p.Value)));
+}

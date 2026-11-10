@@ -1,0 +1,1898 @@
+using System.Security.Cryptography;
+using System.Numerics;
+using KillerPdf.Engine.Authoring;
+using KillerPdf.Engine.Documents;
+using KillerPdf.Engine.Editing;
+using KillerPdf.Engine.Fonts;
+using KillerPdf.Engine.Rendering;
+using KillerPdf.Engine.Tests.Fonts;
+using Xunit;
+
+namespace KillerPdf.Engine.Tests.Documents;
+
+public sealed class PdfOcrRecognitionTests
+{
+    [Fact]
+    public void TrainingPartitionHoldsOutWholeDocumentsDeterministically()
+    {
+        bool selected = PdfOcrTrainingPartition.IsHoldout("Folder\\Document.pdf", 10);
+
+        Assert.Equal(selected,
+            PdfOcrTrainingPartition.IsHoldout("folder/document.PDF", 10));
+        int heldOut = Enumerable.Range(0, 1000).Count(index =>
+            PdfOcrTrainingPartition.IsHoldout($"document-{index}.pdf", 10));
+        Assert.InRange(heldOut, 75, 125);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            PdfOcrTrainingPartition.IsHoldout("document.pdf", 0));
+    }
+
+    [Fact]
+    public void TrainerBuildsDeterministicSerializableClassifier()
+    {
+        PdfOcrTrainingSample[] samples =
+        [
+            new("A", new float[] { 1, 0 }),
+            new("A", new float[] { 0.8f, 0 }),
+            new("B", new float[] { 0, 1 }),
+            new("B", new float[] { 0, 0.8f })
+        ];
+
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(2, 1, samples);
+        PdfOcrRecognitionModel restored = PdfOcrRecognitionModel.Load(model.Save());
+
+        Assert.Equal(["A", "B"], model.Labels);
+        Assert.Equal(model.Labels, restored.Labels);
+        Assert.Equal((2, 1), (restored.Width, restored.Height));
+        Assert.Equal(model.Save(),
+            PdfOcrModelTrainer.Train(2, 1, samples.Reverse()).Save());
+    }
+
+    [Fact]
+    public void TrainerKeepsDistinctShapePrototypesForOneLabel()
+    {
+        float[] narrow =
+        [
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0
+        ];
+        float[] wide =
+        [
+            0, 0, 0,
+            1, 1, 1,
+            0, 0, 0
+        ];
+        float[] diagonal =
+        [
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, 1
+        ];
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(3, 3,
+        [
+            new("A", narrow),
+            new("A", wide),
+            new("B", diagonal)
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+        [
+            new("A", narrow),
+            new("A", wide),
+            new("B", diagonal)
+        ]);
+
+        Assert.Equal(["A", "B"], model.Labels);
+        Assert.Equal(1, evaluation.Accuracy);
+        Assert.Equal(model.Save(), PdfOcrRecognitionModel.Load(model.Save()).Save());
+    }
+
+    [Fact]
+    public void ClassifierComparesGlyphsWithMatchingPrototypeShapes()
+    {
+        float[] narrow =
+        [
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0
+        ];
+        float[] wide =
+        [
+            1, 1, 1,
+            1, 1, 1,
+            1, 1, 1
+        ];
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(3, 3,
+        [
+            new("narrow", narrow),
+            .. Enumerable.Repeat(new PdfOcrTrainingSample("wide", wide), 100)
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("narrow", narrow)]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+        Assert.Equal(model.Save(), PdfOcrRecognitionModel.Load(model.Save()).Save());
+    }
+
+    private static readonly int[] SourceArray = [3, 5, 8, 12, 18];
+
+    [Fact]
+    public void ShapeBucketsSeparateCommonGlyphProportions()
+    {
+        int[] buckets = [.. SourceArray.Select(glyphWidth => PdfOcrRecognitionModel.ShapeBucket(
+                Glyph(glyphWidth), 20, 10))];
+
+        Assert.Equal(5, buckets.Distinct().Count());
+
+        static float[] Glyph(int glyphWidth)
+        {
+            var features = new float[20 * 10];
+            for (int y = 0; y < 10; y++)
+                for (int x = 0; x < glyphWidth; x++)
+                    features[y * 20 + x] = 1;
+            return features;
+        }
+    }
+
+    [Fact]
+    public void ShapeBucketsDistinguishDisconnectedGlyphParts()
+    {
+        float[] connected =
+        [
+            1, 1, 1,
+            0, 1, 0,
+            0, 1, 0
+        ];
+        float[] disconnected =
+        [
+            1, 0, 1,
+            0, 0, 0,
+            1, 1, 1
+        ];
+
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(3, 3,
+        [
+            .. Enumerable.Repeat(
+                new PdfOcrTrainingSample("connected", connected), 100),
+            new("disconnected", disconnected)
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("disconnected", disconnected)]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    [Fact]
+    public void ShapeBucketsDistinguishEnclosedCounters()
+    {
+        float[] closed =
+        [
+            1, 1, 1, 1, 1,
+            1, 0, 0, 0, 1,
+            1, 0, 0, 0, 1,
+            1, 0, 0, 0, 1,
+            1, 1, 1, 1, 1
+        ];
+        float[] open =
+        [
+            1, 1, 1, 1, 1,
+            1, 0, 0, 0, 0,
+            1, 0, 0, 0, 0,
+            1, 0, 0, 0, 0,
+            1, 1, 1, 1, 1
+        ];
+
+        Assert.NotEqual(
+            PdfOcrRecognitionModel.ShapeBucket(closed, 5, 5),
+            PdfOcrRecognitionModel.ShapeBucket(open, 5, 5));
+    }
+
+    [Fact]
+    public void VisualSimilarityCanOverrideAStrayPixelShapeMismatch()
+    {
+        float[] narrow =
+        [
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0
+        ];
+        float[] normal =
+        [
+            1, 1, 0,
+            1, 0, 0,
+            0, 0, 0
+        ];
+        float[] noisyNarrow =
+        [
+            0, 1, 0,
+            0.2f, 1, 0,
+            0, 1, 0
+        ];
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(3, 3,
+        [
+            new("correct", narrow),
+            new("wrong", normal)
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("correct", noisyNarrow)]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    [Fact]
+    public void TrainerKeepsRepresentativeVariantsWithinOneShapeBucket()
+    {
+        float[] left =
+        [
+            1, 0, 0,
+            1, 0, 0,
+            1, 0, 0
+        ];
+        float[] right =
+        [
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1
+        ];
+
+        PdfOcrRecognitionModel one = PdfOcrModelTrainer.Train(3, 3,
+            [new("A", left)]);
+        PdfOcrRecognitionModel variants = PdfOcrModelTrainer.Train(3, 3,
+            [new("A", left), new("A", right)]);
+
+        Assert.True(variants.Save().Length > one.Save().Length);
+        Assert.Equal(variants.Save(), PdfOcrModelTrainer.Train(3, 3,
+            [new("A", right), new("A", left)]).Save());
+    }
+
+    [Fact]
+    public void TrainerRetainsMoreThanTwelveVariantsPerShape()
+    {
+        PdfOcrTrainingSample[] samples = [.. Enumerable.Range(0, 13).Select(index =>
+        {
+            var features = new float[16];
+            features[index] = 1;
+            return new PdfOcrTrainingSample("A", features);
+        })];
+
+        PdfOcrRecognitionModel twelve = PdfOcrModelTrainer.Train(4, 4, samples[..12]);
+        PdfOcrRecognitionModel thirteen = PdfOcrModelTrainer.Train(4, 4, samples);
+
+        Assert.True(thirteen.Save().Length > twelve.Save().Length);
+    }
+
+    [Fact]
+    public void TrainerRetainsMoreThanFortyEightVariantsPerShape()
+    {
+        PdfOcrTrainingSample[] samples = [.. Enumerable.Range(0, 49).Select(index =>
+        {
+            var features = new float[64];
+            features[index] = 1;
+            return new PdfOcrTrainingSample("A", features);
+        })];
+
+        PdfOcrRecognitionModel fortyEight = PdfOcrModelTrainer.Train(
+            8, 8, samples[..48]);
+        PdfOcrRecognitionModel fortyNine = PdfOcrModelTrainer.Train(8, 8, samples);
+
+        Assert.True(fortyNine.Save().Length > fortyEight.Save().Length);
+    }
+
+    [Fact]
+    public void TrainerGeneralizesAcrossHeldOutStandardFontStyles()
+    {
+        string[] labels = [.. "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+            .Select(character => character.ToString())];
+        IReadOnlyList<PdfOcrTrainingSample> samples =
+            PdfOcrModelTrainer.CreateStandardFontSamples(labels, 24, 24);
+        int samplesPerStyle = samples.Count / 12;
+        Assert.True(samplesPerStyle > 0);
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(24, 24,
+            samples.Take(samplesPerStyle * 8));
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            samples.Skip(samplesPerStyle * 8));
+
+        Assert.InRange(evaluation.Accuracy, 0.83, 1);
+    }
+
+    [Fact]
+    public void TrainerCentroidGeneralizesBetweenVariants()
+    {
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(2, 2,
+        [
+            new("A", new float[] { 1, 0, 0, 0 }),
+            new("A", new float[] { 0, 0, 0, 1 }),
+            new("B", new float[] { 0.6f, 0, 0, 0.6f })
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("A", new float[] { 0.5f, 0, 0, 0.5f })]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+        Assert.Equal(model.Save(), PdfOcrModelTrainer.Train(2, 2,
+        [
+            new("B", new float[] { 0.6f, 0, 0, 0.6f }),
+            new("A", new float[] { 0, 0, 0, 1 }),
+            new("A", new float[] { 1, 0, 0, 0 })
+        ]).Save());
+    }
+
+    [Fact]
+    public void TrainerUsesLabelFrequencyToResolveIdenticalShapes()
+    {
+        PdfOcrTrainingSample[] samples =
+        [
+            new("Arare", new float[] { 1 }),
+            .. Enumerable.Repeat(new PdfOcrTrainingSample(
+                "Zcommon", new float[] { 1 }), 9)
+        ];
+
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(1, 1, samples);
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("Zcommon", new float[] { 1 })]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+        Assert.Equal(model.Save(), PdfOcrModelTrainer.Train(
+            1, 1, samples.Reverse()).Save());
+    }
+
+    private static readonly float[] CommonPrototypeFeatures = [0.5f];
+
+    [Fact]
+    public void TrainerDoesNotLetFrequencyOverrideAClearerPrototype()
+    {
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(1, 1,
+        [
+            .. Enumerable.Repeat(
+                new PdfOcrTrainingSample("common", CommonPrototypeFeatures), 100),
+            new("rare", new float[] { 1 })
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("rare", new float[] { 1 })]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    private static readonly float[] RepeatedSupportFeatures = [0.01f, 0.99f];
+
+    [Fact]
+    public void TrainerPrefersRepeatedSupportOverOneOffPrototypeNoise()
+    {
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(2, 1,
+        [
+            new("A", new float[] { 0, 1 }),
+            .. Enumerable.Repeat(
+                new PdfOcrTrainingSample("A", new float[] { 1, 0 }), 9),
+            .. Enumerable.Repeat(
+                new PdfOcrTrainingSample("B", RepeatedSupportFeatures), 10)
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("B", new float[] { 0, 1 })]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    private static readonly float[] SupportedShapeFeatures = [0.9f, 0.1f];
+    private static readonly float[] SupportedLabelFeatures = [0.1f, 0.9f];
+
+    [Fact]
+    public void TrainerDoesNotLetOneMislabeledPrototypeOverrideSupportedShape()
+    {
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(2, 1,
+        [
+            new("A", new float[] { 0, 1 }),
+            new("A", new float[] { 1, 0 }),
+            new("A", SupportedShapeFeatures),
+            new("B", new float[] { 0, 1 }),
+            new("B", SupportedLabelFeatures)
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("B", new float[] { 0, 1 })]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    private static readonly float[] AntialiasVariantFeatures = [0.50343f, 0.00197f];
+
+    [Fact]
+    public void TrainerAveragesAntialiasVariantsWithTheSamePrototypeHash()
+    {
+        PdfOcrTrainingSample[] samples =
+        [
+            new("A", new float[] { 0.5001f, 0 }),
+            .. Enumerable.Repeat(new PdfOcrTrainingSample(
+                "A", new float[] { 0.5038f, 0 }), 9),
+            new("B", AntialiasVariantFeatures)
+        ];
+
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(2, 1, samples);
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("A", new float[] { 0.50343f, 0 })]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+        Assert.Equal(model.Save(), PdfOcrModelTrainer.Train(
+            2, 1, samples.Reverse()).Save());
+    }
+
+    private static readonly float[] NearTieFeatures = [0.9f];
+
+    [Fact]
+    public void TrainerUsesVisualEvidenceToResolveANearTie()
+    {
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(1, 1,
+        [
+            .. Enumerable.Repeat(
+                new PdfOcrTrainingSample("common", NearTieFeatures), 100),
+            new("rare", new float[] { 1 })
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("rare", new float[] { 1 })]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    [Fact]
+    public void TrainerRejectsInvalidFeaturesAndHonorsCancellation()
+    {
+        Assert.Throws<ArgumentException>(() => PdfOcrModelTrainer.Train(1, 1,
+            [new PdfOcrTrainingSample("A", new float[] { float.NaN })]));
+        Assert.Throws<ArgumentException>(() => PdfOcrModelTrainer.Train(1, 1,
+            [new PdfOcrTrainingSample("A", new float[] { 2 })]));
+        Assert.Throws<ArgumentException>(() => PdfOcrModelTrainer.Train(1, 1,
+            [new PdfOcrTrainingSample("\uFFFD", new float[] { 1 })]));
+        Assert.Throws<ArgumentException>(() => PdfOcrModelTrainer.Train(1, 1,
+            [new PdfOcrTrainingSample("A\n", new float[] { 1 })]));
+        Assert.Throws<ArgumentException>(() => PdfOcrModelTrainer.Train(1, 1,
+            [new PdfOcrTrainingSample("A B", new float[] { 1 })]));
+        using var canceled = new CancellationTokenSource();
+        canceled.Cancel();
+        Assert.Throws<OperationCanceledException>(() => PdfOcrModelTrainer.Train(1, 1,
+            [new PdfOcrTrainingSample("A", new float[] { 1 })], canceled.Token));
+    }
+
+    [Fact]
+    public void TrainerEvaluatesAccuracyConfidenceAndConfusion()
+    {
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(2, 1,
+        [
+            new("A", new float[] { 1, 0 }),
+            new("B", new float[] { 0, 1 })
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+        [
+            new("A", new float[] { 1, 0 }),
+            new("B", new float[] { 0, 1 }),
+            new("B", new float[] { 1, 0 })
+        ]);
+
+        Assert.Equal(3, evaluation.SampleCount);
+        Assert.Equal(2, evaluation.CorrectCount);
+        Assert.Equal(2d / 3, evaluation.Accuracy, 12);
+        Assert.InRange(evaluation.AverageConfidence, 0.78, 0.83);
+        Assert.InRange(evaluation.CalibrationError, 0.13, 0.15);
+        Assert.InRange(evaluation.BrierScore, 0.2, 0.3);
+        PdfOcrScriptAccuracy latin = Assert.Single(evaluation.Scripts);
+        Assert.Equal(("Latin", 3, 2),
+            (latin.Script, latin.SampleCount, latin.CorrectCount));
+        Assert.Equal([
+            new PdfOcrConfusion("A", "A", 1),
+            new PdfOcrConfusion("B", "A", 1),
+            new PdfOcrConfusion("B", "B", 1)
+        ], evaluation.Confusion);
+    }
+
+    [Fact]
+    public void TrainerReportsAccuracyForEachExpectedUnicodeScript()
+    {
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(2, 1,
+        [
+            new("A", new float[] { 1, 0 }),
+            new("Α", new float[] { 0, 1 })
+        ]);
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+        [
+            new("A", new float[] { 1, 0 }),
+            new("Α", new float[] { 0, 1 }),
+            new("Α", new float[] { 1, 0 })
+        ]);
+
+        Assert.Equal([("Greek", 2, 1), ("Latin", 1, 1)], evaluation.Scripts
+            .Select(script => (script.Script, script.SampleCount, script.CorrectCount)));
+    }
+
+    [Fact]
+    public void TrainerLearnsLabeledGlyphsFromPreparedPagePixels()
+    {
+        PdfOcrPreparedImage image = Prepared(8, 6,
+        [
+            "........",
+            "#...#...",
+            "#...#...",
+            "#...##..",
+            "#...##..",
+            "........"
+        ]);
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(4, 4, image,
+        [
+            new("I", new PdfOcrImageRegion(0, 1, 1, 5)),
+            new("L", new PdfOcrImageRegion(4, 1, 6, 5))
+        ]);
+
+        PdfOcrRecognizedWord word = Assert.Single(PdfOcrRecognizer.Recognize(
+            image, PdfOcrLayoutAnalyzer.Analyze(image), model));
+
+        Assert.Equal("IL", word.Text);
+        Assert.Throws<ArgumentException>(() => PdfOcrModelTrainer.Train(4, 4, image,
+            [new PdfOcrLabeledGlyph("I", new PdfOcrImageRegion(-1, 0, 1, 1))]));
+    }
+
+    [Fact]
+    public void RecognizerUsesLanguageContextForAmbiguousGlyphs()
+    {
+        PdfOcrPreparedImage image = Prepared(8, 6,
+        [
+            "........",
+            "#...#...",
+            "#...#...",
+            "#...##..",
+            "#...##..",
+            "........"
+        ]);
+        PdfOcrPageLayout layout = PdfOcrLayoutAnalyzer.Analyze(image);
+        Assert.Single(Assert.Single(layout.Lines).Words);
+        PdfOcrRecognitionModel recognition = PdfOcrRecognitionModel.Create(4, 4,
+            ["0", "O"], new float[32], new float[] { 0.1f, 0 });
+        PdfOcrLanguageModel language = PdfOcrLanguageModel.Train(
+            Enumerable.Repeat("OO", 20));
+
+        PdfOcrRecognizedWord visual = Assert.Single(PdfOcrRecognizer.Recognize(
+            image, layout, recognition));
+        PdfOcrRecognizedWord contextual = Assert.Single(PdfOcrRecognizer.Recognize(
+            image, layout, recognition, language));
+
+        Assert.Equal("00", visual.Text);
+        Assert.Equal("OO", contextual.Text);
+        Assert.True(contextual.Confidence > 0.5);
+        Assert.True(visual.Confidence > 0.5);
+    }
+
+    [Fact]
+    public void LanguageContextRejectsUnobservedLatinCyrillicMixingWithinAWord()
+    {
+        PdfOcrLanguageModel language = PdfOcrLanguageModel.Train(["AA", "ББ"]);
+        IReadOnlyList<string> decoded = language.Decode([
+            [new PdfOcrLanguageCandidate("A", 4), new PdfOcrLanguageCandidate("Б", 0)],
+            [new PdfOcrLanguageCandidate("Б", 0)]
+        ]);
+
+        Assert.Equal(["Б", "Б"], decoded);
+    }
+
+    [Fact]
+    public void LanguageContextRejectsUnobservedCaseMixingWithinAWord()
+    {
+        PdfOcrLanguageModel language = PdfOcrLanguageModel.Train(["AAA", "Ббб"]);
+        IReadOnlyList<string> decoded = language.Decode([
+            [new PdfOcrLanguageCandidate("Б", 0)],
+            [new PdfOcrLanguageCandidate("б", 0)],
+            [new PdfOcrLanguageCandidate("Б", 2), new PdfOcrLanguageCandidate("б", 0)]
+        ]);
+
+        Assert.Equal(["Б", "б", "б"], decoded);
+    }
+
+    [Fact]
+    public void RecognizerLetsLanguageContextRecoverATwelfthVisualCandidate()
+    {
+        PdfOcrPreparedImage image = Prepared(8, 6,
+        [
+            "........",
+            "#...#...",
+            "#...#...",
+            "#...##..",
+            "#...##..",
+            "........"
+        ]);
+        PdfOcrPageLayout layout = PdfOcrLayoutAnalyzer.Analyze(image);
+        string[] labels = [.. Enumerable.Range(0, 12)
+            .Select(index => ((char)('A' + index)).ToString())];
+        float[] biases = [.. Enumerable.Range(0, 12)
+            .Select(index => (11 - index) / 20f)];
+        PdfOcrRecognitionModel recognition = PdfOcrRecognitionModel.Create(4, 4,
+            labels, new float[labels.Length * 16], biases);
+        PdfOcrLanguageModel language = PdfOcrLanguageModel.Train(
+            Enumerable.Repeat("LL", 20));
+
+        PdfOcrRecognizedWord contextual = Assert.Single(PdfOcrRecognizer.Recognize(
+            image, layout, recognition, language));
+
+        Assert.Equal("LL", contextual.Text);
+    }
+
+    [Fact]
+    public void CandidateRankingKeepsBoundedDeterministicTopScores()
+    {
+        string[] labels = [.. Enumerable.Range(0, 100)
+            .Select(index => $"L{index:D2}")];
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Create(
+            1, 1, labels, new float[labels.Length], new float[labels.Length]);
+        double[] scores = [.. Enumerable.Range(0, labels.Length)
+            .Select(index => index == 98 ? 99d : index)];
+        model.RankCandidates(scores, 16);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+
+        IReadOnlyList<PdfOcrLanguageCandidate>? ranked = null;
+        for (int iteration = 0; iteration < 1_000; iteration++)
+            ranked = model.RankCandidates(scores, 16);
+
+        Assert.Equal(16, ranked!.Count);
+        Assert.Equal(["L98", "L99", "L97"], ranked.Take(3)
+            .Select(candidate => candidate.Label));
+        Assert.InRange(GC.GetAllocatedBytesForCurrentThread() - before,
+            0, 1_000_000);
+    }
+
+    [Theory]
+    [InlineData(0, 200, 160)]
+    [InlineData(90, 160, 200)]
+    public void TrainerCreatesSamplesFromExistingPdfTextLayers(
+        int rotation, int pixelWidth, int pixelHeight)
+    {
+        var builder = new PdfDocumentBuilder()
+            .AddPage(100, 80, new PdfContentStreamBuilder()
+                .BeginText().SetFont(PdfStandardFont.Helvetica, 40)
+                .SetTextMatrix(1, 0, 0, 1, 10, 20)
+                .ShowLatin1Text("AB").EndText())
+            .SetPageRotation(0, rotation);
+        PdfDocument document = PdfDocument.Open(builder.Build());
+        var options = new PdfOcrOptions(["en"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        IReadOnlyList<PdfOcrTrainingSample> samples =
+            PdfOcrModelTrainer.CreatePageSamples(document, 0,
+                new PdfRenderOptions(pixelWidth, pixelHeight, includeAnnotations: false,
+                    includeFormFields: false), options, 16, 16);
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(16, 16, samples);
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model, samples);
+
+        Assert.Equal(["A", "B"], samples.Select(sample => sample.Label));
+        Assert.All(samples, sample => Assert.Contains(
+            sample.Features.ToArray(), value => value > 0));
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    [Fact]
+    public void TrainerSkipsNonUprightTextUntilItsPixelsAreReoriented()
+    {
+        foreach ((double a, double b, double c, double d) matrix in new[]
+                 { (0d, 1d, -1d, 0d), (0.8d, 0.6d, -0.6d, 0.8d) })
+        {
+            PdfDocument document = PdfDocument.Open(new PdfDocumentBuilder()
+                .AddPage(100, 80, new PdfContentStreamBuilder()
+                    .BeginText().SetFont(PdfStandardFont.Helvetica, 40)
+                    .SetTextMatrix(matrix.a, matrix.b, matrix.c, matrix.d, 50, 10)
+                    .ShowLatin1Text("A").EndText()).Build());
+            var options = new PdfOcrOptions(["en"], deskew: false,
+                correctOrientation: false, removeBackground: false, removeNoise: false,
+                detectPageSegments: false);
+
+            IReadOnlyList<PdfOcrTrainingSample> samples =
+                PdfOcrModelTrainer.CreatePageSamples(document, 0,
+                    new PdfRenderOptions(200, 160, includeAnnotations: false,
+                        includeFormFields: false), options, 16, 16);
+
+            Assert.Empty(samples);
+        }
+    }
+
+    [Fact]
+    public void TrainerSkipsTextGlyphsClippedByTheVisiblePage()
+    {
+        PdfDocument document = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddPage(100, 80, new PdfContentStreamBuilder()
+                .BeginText().SetFont(PdfStandardFont.Helvetica, 40)
+                .SetTextMatrix(1, 0, 0, 1, -20, 20)
+                .ShowLatin1Text("A").EndText()).Build());
+        var options = new PdfOcrOptions(["en"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        IReadOnlyList<PdfOcrTrainingSample> samples =
+            PdfOcrModelTrainer.CreatePageSamples(document, 0,
+                new PdfRenderOptions(200, 160, includeAnnotations: false,
+                    includeFormFields: false), options, 16, 16);
+
+        Assert.Empty(samples);
+    }
+
+    [Fact]
+    public void TextLayerTrainingHonorsPageSegmentation()
+    {
+        var content = new PdfContentStreamBuilder()
+            .BeginText().SetFont(PdfStandardFont.Helvetica, 12)
+            .SetTextMatrix(1, 0, 0, 1, 10, 65).ShowLatin1Text("A")
+            .SetTextMatrix(1, 0, 0, 1, 10, 15).ShowLatin1Text("A").EndText()
+            .BeginText().SetFont(PdfStandardFont.Helvetica, 30)
+            .SetTextMatrix(1, 0, 0, 1, 130, 55).ShowLatin1Text("B")
+            .SetTextMatrix(1, 0, 0, 1, 130, 5).ShowLatin1Text("B").EndText();
+        PdfDocument document = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddPage(200, 100, content).Build());
+        var segmented = new PdfOcrOptions(["en"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: true);
+        var unsegmented = new PdfOcrOptions(["en"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        IReadOnlyList<PdfOcrTrainingSample> separated =
+            PdfOcrModelTrainer.CreatePageSamples(document, 0,
+                new PdfRenderOptions(400, 200, includeAnnotations: false,
+                    includeFormFields: false), segmented, 16, 16);
+        IReadOnlyList<PdfOcrTrainingSample> combined =
+            PdfOcrModelTrainer.CreatePageSamples(document, 0,
+                new PdfRenderOptions(400, 200, includeAnnotations: false,
+                    includeFormFields: false), unsegmented, 16, 16);
+
+        Assert.Equal(["A", "A", "B", "B"], separated.Select(sample => sample.Label));
+        Assert.Equal(separated.Select(sample => sample.Label),
+            combined.Select(sample => sample.Label));
+        Assert.NotEqual(separated[0].Features.ToArray(), combined[0].Features.ToArray());
+    }
+
+    [Fact]
+    public void StandardFontTrainingCoversEveryRequestedUnicodeLabelAcrossBundledFaces()
+    {
+        string[] labels = ["!", "7", "A", "g", "Ж"];
+
+        PdfOcrTrainingSample[] samples = [..
+            PdfOcrModelTrainer.StreamStandardFontSamples(labels, 16, 16)];
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(16, 16, samples);
+
+        Assert.Equal(labels, model.Labels.Order(StringComparer.Ordinal));
+        Assert.All(labels, label => Assert.Equal(60,
+            samples.Count(sample => sample.Label == label)));
+        Assert.True(PdfOcrModelTrainer.SupportsStandardFontLabel("Ж"));
+        Assert.Throws<ArgumentException>(() =>
+            PdfOcrModelTrainer.CreateStandardFontSamples(["AB"], 16, 16));
+    }
+
+    [Fact]
+    public void EmbeddedFontTrainingCreatesUnicodeGlyphSamplesAtFiveScales()
+    {
+        TrueTypeFont font = TrueTypeFont.Load(
+            TrueTypeFontTests.BuildTestFont(format12: true, includeOutlines: true));
+
+        IReadOnlyList<PdfOcrTrainingSample> samples =
+            PdfOcrModelTrainer.CreateEmbeddedFontSamples(font, ["😀"], 16, 16);
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(16, 16, samples);
+
+        Assert.Equal(5, samples.Count);
+        Assert.All(samples, sample =>
+        {
+            Assert.Equal("😀", sample.Label);
+            Assert.Contains(sample.Features.ToArray(), value => value > 0);
+        });
+        Assert.Equal(["😀"], model.Labels);
+    }
+
+    [Fact]
+    public void EmbeddedFontTrainingRejectsMissingAndRestrictedGlyphs()
+    {
+        TrueTypeFont font = TrueTypeFont.Load(
+            TrueTypeFontTests.BuildTestFont(format12: false));
+        TrueTypeFont restricted = TrueTypeFont.Load(
+            TrueTypeFontTests.BuildTestFont(format12: false, embeddingFlags: 0x0002));
+
+        Assert.Throws<ArgumentException>(() =>
+            PdfOcrModelTrainer.CreateEmbeddedFontSamples(font, ["B"], 16, 16));
+        Assert.Throws<ArgumentException>(() =>
+            PdfOcrModelTrainer.CreateEmbeddedFontSamples(font, ["AA"], 16, 16));
+        Assert.Throws<ArgumentException>(() =>
+            PdfOcrModelTrainer.CreateEmbeddedFontSamples(restricted, ["A"], 16, 16));
+    }
+
+    [Fact]
+    public void StandardFontTrainingGeneralizesToHeldOutFaces()
+    {
+        string[] labels = ["!", "0", "1", "2", "5", "8", "A", "B", "E", "I", "O", "S"];
+        IReadOnlyList<PdfOcrTrainingSample> samples =
+            PdfOcrModelTrainer.CreateStandardFontSamples(labels, 16, 16);
+        Assert.Equal(labels.Length * 12 * 5, samples.Count);
+        PdfOcrTrainingSample[] training = [.. samples.Where((_, index) =>
+            index / (labels.Length * 5) < 9)];
+        PdfOcrTrainingSample[] holdout = [.. samples.Where((_, index) =>
+            index / (labels.Length * 5) >= 9)];
+
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(16, 16, training);
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model, holdout);
+
+        Assert.True(evaluation.Accuracy >= 0.85,
+            $"Held-out standard-font accuracy was {evaluation.Accuracy:P2}: "
+            + string.Join(", ", evaluation.Confusion.Select(item =>
+                $"{item.Expected}->{item.Predicted} ({item.Count})")));
+        Assert.All(evaluation.Confusion.Where(item =>
+                !string.Equals(item.Expected, item.Predicted, StringComparison.Ordinal)),
+            item => Assert.Contains((item.Expected, item.Predicted),
+                new[] { ("I", "1"), ("O", "0"), ("0", "O"), ("B", "8"), ("8", "B") }));
+    }
+
+    [Fact]
+    public void TextLayerTrainingKeepsLabelsWhoseRenderedGlyphsTouch()
+    {
+        var builder = new PdfDocumentBuilder()
+            .AddPage(100, 80, new PdfContentStreamBuilder()
+                .BeginText().SetFont(PdfStandardFont.Helvetica, 40)
+                .SetCharacterSpacing(-20)
+                .SetTextMatrix(1, 0, 0, 1, 10, 20)
+                .ShowLatin1Text("AB").EndText());
+        PdfDocument document = PdfDocument.Open(builder.Build());
+        var options = new PdfOcrOptions(["en"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        IReadOnlyList<PdfOcrTrainingSample> samples =
+            PdfOcrModelTrainer.CreatePageSamples(document, 0,
+                new PdfRenderOptions(200, 160, includeAnnotations: false,
+                    includeFormFields: false), options, 16, 16);
+
+        Assert.Equal(["A", "B"], samples.Select(sample => sample.Label));
+        Assert.All(samples, sample => Assert.Contains(
+            sample.Features.ToArray(), value => value > 0));
+    }
+
+    [Fact]
+    public void TextLayerTrainingDeduplicatesExactOverprintedLabels()
+    {
+        var content = new PdfContentStreamBuilder()
+            .BeginText().SetFont(PdfStandardFont.Helvetica, 40)
+            .SetTextMatrix(1, 0, 0, 1, 10, 20)
+            .ShowLatin1Text("A").EndText()
+            .BeginText().SetFont(PdfStandardFont.Helvetica, 40)
+            .SetTextMatrix(1, 0, 0, 1, 10, 20)
+            .ShowLatin1Text("A").EndText();
+        PdfDocument document = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddPage(100, 80, content).Build());
+        var options = new PdfOcrOptions(["en"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        IReadOnlyList<PdfOcrTrainingSample> samples =
+            PdfOcrModelTrainer.CreatePageSamples(document, 0,
+                new PdfRenderOptions(200, 160, includeAnnotations: false,
+                    includeFormFields: false), options, 16, 16);
+
+        Assert.Equal("A", Assert.Single(samples).Label);
+    }
+
+    [Fact]
+    public void TextLayerTrainingAssignsOverlapsToOneDeterministicOwner()
+    {
+        PdfOcrImageRegion component = new(16, 10, 19, 20);
+        PdfOcrImageRegion[] labels =
+        [
+            new(0, 0, 20, 30),
+            new(15, 0, 35, 30)
+        ];
+
+        IReadOnlyList<IReadOnlyList<PdfOcrImageRegion>> assignments =
+            PdfOcrModelTrainer.AssignComponentsToLabels([component], labels);
+
+        Assert.Equal([component], assignments[0]);
+        Assert.Empty(assignments[1]);
+    }
+
+    [Fact]
+    public void TextLayerTrainingSharesComponentsThatContainAdjacentLabelCenters()
+    {
+        PdfOcrImageRegion component = new(5, 10, 30, 20);
+        PdfOcrImageRegion[] labels =
+        [
+            new(0, 0, 20, 30),
+            new(15, 0, 35, 30)
+        ];
+
+        IReadOnlyList<IReadOnlyList<PdfOcrImageRegion>> assignments =
+            PdfOcrModelTrainer.AssignComponentsToLabels([component], labels);
+
+        Assert.Equal([component], assignments[0]);
+        Assert.Equal([component], assignments[1]);
+    }
+
+    [Fact]
+    public void TextLayerTrainingRejectsGraphicsSpanningManyLabels()
+    {
+        PdfOcrImageRegion component = new(0, 0, 60, 30);
+        PdfOcrImageRegion[] labels = [.. Enumerable.Range(0, 5)
+            .Select(index => new PdfOcrImageRegion(index * 10, 0, index * 10 + 10, 30))];
+
+        IReadOnlyList<IReadOnlyList<PdfOcrImageRegion>> assignments =
+            PdfOcrModelTrainer.AssignComponentsToLabels([component], labels);
+
+        Assert.All(assignments, Assert.Empty);
+    }
+
+    [Fact]
+    public void TextLayerTrainingRejectsComponentsThatDwarfTheirLabels()
+    {
+        PdfOcrImageRegion label = new(10, 10, 20, 30);
+
+        Assert.True(PdfOcrModelTrainer.IsPlausibleSampleBounds(
+            label, new PdfOcrImageRegion(9, 9, 21, 31)));
+        Assert.False(PdfOcrModelTrainer.IsPlausibleSampleBounds(
+            label, new PdfOcrImageRegion(0, 0, 40, 40)));
+        Assert.False(PdfOcrModelTrainer.IsPlausibleSampleBounds(
+            label, new PdfOcrImageRegion(19, 10, 29, 30)));
+        Assert.False(PdfOcrModelTrainer.IsPlausibleSampleBounds(
+            label, new PdfOcrImageRegion(14, 18, 16, 20)));
+        Assert.False(PdfOcrModelTrainer.IsPlausibleSampleBounds(
+            label, new PdfOcrImageRegion(10, 10, 11, 30)));
+        Assert.False(PdfOcrModelTrainer.IsPlausibleSampleBounds(
+            label, new PdfOcrImageRegion(10, 10, 20, 13)));
+    }
+
+    [Fact]
+    public void TextLayerTrainingDoesNotShareExclusiveRegionEdges()
+    {
+        PdfOcrImageRegion component = new(0, 0, 5, 10);
+        PdfOcrImageRegion[] labels =
+        [
+            new(0, 0, 5, 10),
+            new(4, 0, 6, 10)
+        ];
+
+        IReadOnlyList<IReadOnlyList<PdfOcrImageRegion>> assignments =
+            PdfOcrModelTrainer.AssignComponentsToLabels([component], labels);
+
+        Assert.Equal([component], assignments[0]);
+        Assert.Empty(assignments[1]);
+    }
+
+    [Fact]
+    public void TextLayerTrainingRejectsBoundsWithConflictingLabels()
+    {
+        PdfOcrImageRegion shared = new(0, 0, 10, 10);
+        PdfOcrImageRegion repeated = new(20, 0, 30, 10);
+        PdfOcrImageRegion offset = new(41, 40, 61, 60);
+        PdfOcrImageRegion nearOffset = new(42, 40, 62, 60);
+
+        IReadOnlySet<PdfOcrImageRegion> ambiguous =
+            PdfOcrModelTrainer.FindAmbiguousSampleBounds(
+            [
+                ("A", shared),
+                ("B", shared),
+                ("C", repeated),
+                ("C", repeated),
+                ("D", offset),
+                ("E", nearOffset)
+            ]);
+
+        Assert.Equal([shared, offset, nearOffset], ambiguous
+            .OrderBy(bounds => bounds.Left));
+    }
+
+    [Fact]
+    public void ModelRoundTripsWithHashVerificationAndRecognizesGlyphs()
+    {
+        PdfOcrRecognitionModel created = RecognitionModel();
+        byte[] bytes = created.Save();
+        string hash = Convert.ToHexString(SHA256.HashData(bytes));
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Load(bytes, hash);
+        PdfOcrPreparedImage image = Prepared(8, 6,
+        [
+            "........",
+            "#...#...",
+            "#...#...",
+            "#...##..",
+            "#...##..",
+            "........"
+        ]);
+        PdfOcrPageLayout layout = PdfOcrLayoutAnalyzer.Analyze(image);
+
+        IReadOnlyList<PdfOcrRecognizedWord> words = PdfOcrRecognizer.Recognize(image, layout, model);
+
+        Assert.Equal(["IL"], words.Select(word => word.Text));
+        Assert.All(words, word => Assert.InRange(word.Confidence, 0.5, 1));
+        Assert.Throws<CryptographicException>(() => PdfOcrRecognitionModel.Load(bytes, new string('0', 64)));
+        bytes[5] = (byte)'1';
+        Assert.Throws<FormatException>(() => PdfOcrRecognitionModel.Load(bytes));
+    }
+
+    [Fact]
+    public void ModelLoadsLegacyFilesWithoutSeparatedPriors()
+    {
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Load(
+            PreviousModelBytes("KPOCR2\0", includePriors: false));
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new("E", new float[] { 1 })]);
+
+        Assert.Equal(["E"], model.Labels);
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    [Fact]
+    public void ModelLoadsPreviousFloatWeightFiles()
+    {
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Load(
+            PreviousModelBytes("KPOCR3\0", includePriors: true));
+
+        Assert.Equal(["E"], model.Labels);
+        Assert.Equal(1, PdfOcrModelTrainer.Evaluate(model,
+            [new("E", new float[] { 1 })]).Accuracy);
+    }
+
+    [Fact]
+    public void PrototypeModelsUseCompactWeightsWithoutChangingRecognition()
+    {
+        PdfOcrRecognitionModel model = PdfOcrModelTrainer.Train(2, 2,
+            [new("A", new float[] { 1, 0.5f, 0.25f, 0 })]);
+        byte[] compact = model.Save();
+        int floatFormatLength = 7 + sizeof(int) * 3 + 2
+            + sizeof(float) * 6;
+
+        Assert.True(compact.Length < floatFormatLength);
+        Assert.Equal("A", Assert.Single(PdfOcrModelTrainer.Evaluate(
+            PdfOcrRecognitionModel.Load(compact),
+            [new("A", new float[] { 1, 0.5f, 0.25f, 0 })]).Confusion).Predicted);
+        Assert.Equal(compact, PdfOcrRecognitionModel.Load(compact).Save());
+    }
+
+    private static readonly float[] Biases = [0.25f];
+
+    [Fact]
+    public void SignedLinearModelsRetainExactFloatWeights()
+    {
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Create(
+            2, 1, ["A"], new float[] { -0.1234567f, 0.7654321f },
+            Biases);
+        byte[] saved = model.Save();
+
+        Assert.Equal(saved, PdfOcrRecognitionModel.Load(saved).Save());
+        Assert.Equal(7 + sizeof(int) * 3 + 2 + 1 + sizeof(float) * 4,
+            saved.Length);
+    }
+
+    [Fact]
+    public void CompatibleLanguageModelsCombineWithoutLosingPrototypes()
+    {
+        PdfOcrRecognitionModel english = PdfOcrRecognitionModel.Create(
+            2, 1, ["A"], new float[] { 1, 0 }, new float[] { 0 });
+        PdfOcrRecognitionModel spanish = PdfOcrRecognitionModel.Create(
+            2, 1, ["N", "Ñ"], new float[] { 0, 1, -1, 0 }, new float[] { 0, 0 });
+
+        PdfOcrRecognitionModel combined = PdfOcrRecognitionModel.Combine(
+            [english, spanish]);
+
+        Assert.Equal(["A", "N", "Ñ"], combined.Labels);
+        Assert.Equal((english.Width, english.Height), (combined.Width, combined.Height));
+        Assert.Equal(combined.Save(), PdfOcrRecognitionModel.Load(combined.Save()).Save());
+        Assert.Throws<ArgumentException>(() => PdfOcrRecognitionModel.Combine(
+            [english, TinyModel("X")]));
+        Assert.Throws<ArgumentException>(() => PdfOcrRecognitionModel.Combine([]));
+    }
+
+    [Fact]
+    public void TrainingModelMergeDropsDuplicateCanonicalPrototypes()
+    {
+        PdfOcrRecognitionModel initial = PdfOcrModelTrainer.Train(2, 2,
+        [
+            new("A", new float[] { 1, 0.5f, 0.25f, 0 }),
+            new("B", new float[] { 0, 0.25f, 0.5f, 1 })
+        ]);
+        PdfOcrRecognitionModel restored = PdfOcrRecognitionModel.Load(initial.Save());
+
+        PdfOcrRecognitionModel merged = PdfOcrRecognitionModel.MergeTrainingModels(
+            [initial, restored]);
+
+        Assert.Equal(initial.LabelCount, merged.LabelCount);
+        Assert.Equal(1, PdfOcrModelTrainer.Evaluate(merged,
+        [
+            new("A", new float[] { 1, 0.5f, 0.25f, 0 }),
+            new("B", new float[] { 0, 0.25f, 0.5f, 1 })
+        ]).Accuracy);
+        Assert.Equal(merged.Save(), PdfOcrRecognitionModel.Load(merged.Save()).Save());
+    }
+
+    [Fact]
+    public void TrainingModelMergeRetainsNewPrototypeShapes()
+    {
+        PdfOcrRecognitionModel initial = PdfOcrModelTrainer.Train(2, 2,
+        [
+            new("A", new float[] { 1, 0, 0, 0 }),
+            new("B", new float[] { 0, 0, 0, 1 })
+        ]);
+        PdfOcrRecognitionModel update = PdfOcrModelTrainer.Train(2, 2,
+            [new("A", new float[] { 0, 1, 1, 0 })]);
+
+        PdfOcrRecognitionModel merged = PdfOcrRecognitionModel.MergeTrainingModels(
+            [initial, update]);
+
+        Assert.Equal(initial.LabelCount + update.LabelCount, merged.LabelCount);
+        Assert.Equal(1, PdfOcrModelTrainer.Evaluate(merged,
+        [
+            new("A", new float[] { 1, 0, 0, 0 }),
+            new("A", new float[] { 0, 1, 1, 0 }),
+            new("B", new float[] { 0, 0, 0, 1 })
+        ]).Accuracy);
+    }
+
+    [Fact]
+    public void TrainingModelMergeKeepsACompactPrototypeBudget()
+    {
+        const int width = 128, height = 128, models = 16, labelsPerModel = 17;
+        PdfOcrRecognitionModel[] inputs = [.. Enumerable.Range(0, models)
+            .Select(model =>
+            {
+                string[] labels = [.. Enumerable.Range(0, labelsPerModel)
+                    .Select(label => $"L{model}_{label}")];
+                return PdfOcrRecognitionModel.Create(width, height, labels,
+                    new float[labels.Length * width * height],
+                    new float[labels.Length]);
+            })];
+
+        PdfOcrRecognitionModel merged = PdfOcrRecognitionModel.MergeTrainingModels(
+            inputs, PdfOcrRecognitionModel.MaximumTrainingModelValues);
+
+        Assert.Equal(PdfOcrRecognitionModel.MaximumTrainingModelValues
+            / (width * height), merged.LabelCount);
+    }
+
+    [Fact]
+    public void CombiningModelsRejectsOversizedOutputBeforeAllocatingIt()
+    {
+        const int labelCount = 1_024;
+        string[] labels = [.. Enumerable.Range(0, labelCount)
+            .Select(index => $"L{index}")];
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Create(
+            64, 64, labels, new float[labelCount * 64 * 64],
+            new float[labelCount]);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+
+        Assert.Throws<ArgumentException>(() =>
+            PdfOcrRecognitionModel.Combine(Enumerable.Repeat(model, 16)));
+
+        Assert.InRange(GC.GetAllocatedBytesForCurrentThread() - before, 0, 2_000_000);
+    }
+
+    [Fact]
+    public void RecognitionModelSizeCalculationIsBoundedWithoutAllocating()
+    {
+        const int labels = 4;
+        long fixedBytes = 7 + sizeof(int) * 3L + labels + labels * 2L * sizeof(float);
+        long maximumWeights = (PdfOcrRecognitionModel.MaximumModelBytes - fixedBytes)
+            / sizeof(float);
+
+        Assert.True(PdfOcrRecognitionModel.FitsSerializedSize(
+            labels, labels, maximumWeights));
+        Assert.False(PdfOcrRecognitionModel.FitsSerializedSize(
+            labels, labels, maximumWeights + 1));
+        Assert.False(PdfOcrRecognitionModel.FitsSerializedSize(
+            long.MaxValue, labels, maximumWeights));
+    }
+
+    [Fact]
+    public void RawBgraRecognitionRunsTheCompleteEnginePipeline()
+    {
+        string[] rows =
+        [
+            "........",
+            "#...#...",
+            "#...#...",
+            "#...##..",
+            "#...##..",
+            "........"
+        ];
+        byte[] bgra = new byte[8 * 6 * 4];
+        for (int y = 0; y < rows.Length; y++)
+            for (int x = 0; x < rows[y].Length; x++)
+            {
+                byte value = rows[y][x] == '#' ? (byte)0 : (byte)255;
+                int offset = (y * 8 + x) * 4;
+                bgra[offset] = bgra[offset + 1] = bgra[offset + 2] = value;
+                bgra[offset + 3] = 255;
+            }
+
+        PdfOcrResult result = PdfOcrRecognizer.RecognizeBgra(bgra, 8, 6,
+            RecognitionModel(), new PdfOcrOptions(["eng"], deskew: false,
+                correctOrientation: false, removeBackground: false,
+                removeNoise: false, detectPageSegments: false));
+
+        PdfOcrPixelWord word = Assert.Single(result.Words);
+        Assert.Equal("IL", result.Text);
+        Assert.Equal("IL", word.Text);
+        Assert.Equal((0, 1, 6, 5), (word.Left, word.Top, word.Right, word.Bottom));
+        Assert.InRange(result.MeanConfidence, 0.5f, 1f);
+    }
+
+    [Fact]
+    public void RawBgraConfidenceIsWeightedByRecognizedCharacters()
+    {
+        float confidence = PdfOcrRecognizer.CalculateMeanConfidence(
+        [
+            new PdfOcrRecognizedWord("A", 0.2, new PdfOcrImageRegion(0, 0, 1, 1)),
+            new PdfOcrRecognizedWord("BBBB", 0.8, new PdfOcrImageRegion(2, 0, 6, 1))
+        ]);
+
+        Assert.Equal(0.68f, confidence, 5);
+        Assert.Equal(0.6f, PdfOcrRecognizer.CalculateMeanConfidence(
+        [
+            new PdfOcrRecognizedWord("\U0001F600", 0.2,
+                new PdfOcrImageRegion(0, 0, 1, 1)),
+            new PdfOcrRecognizedWord("BB", 0.8,
+                new PdfOcrImageRegion(2, 0, 4, 1))
+        ]), 5);
+        Assert.Equal(0, PdfOcrRecognizer.CalculateMeanConfidence([]));
+    }
+
+    [Fact]
+    public void RawBgraRecognitionHonorsCancellationAcrossTheCompletePipeline()
+    {
+        using var canceled = new CancellationTokenSource();
+        canceled.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfOcrRecognizer.RecognizeBgra(new byte[4], 1, 1, TinyModel("A"),
+                new PdfOcrOptions(["eng"]), canceled.Token));
+    }
+
+    [Fact]
+    public void RawBgraRecognitionRestoresDeskewedBoundsToSourcePixels()
+    {
+        const int width = 41, height = 21;
+        byte[] bgra = [.. Enumerable.Repeat(byte.MaxValue, width * height * 4)];
+        for (int x = 0; x < 24; x++)
+            foreach (int baseline in new[] { 5, 12 })
+            {
+                int y = baseline + x / 10;
+                int offset = (y * width + x) * 4;
+                bgra[offset] = bgra[offset + 1] = bgra[offset + 2] = 0;
+            }
+        var options = new PdfOcrOptions(["eng"], deskew: true,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+        PdfOcrPreparedImage prepared = PdfOcrImagePreprocessor.PrepareBgra(
+            bgra, width, height, options);
+        PdfOcrPageLayout layout = PdfOcrLayoutAnalyzer.Analyze(prepared, false);
+        Assert.NotEmpty(layout.Words);
+        PdfOcrImageRegion[] expected = [.. layout.Words.Select(word =>
+            PdfOcrImagePreprocessor.RestoreDeskewedBounds(
+                word.Bounds, prepared.DeskewDegrees, width, height))];
+
+        PdfOcrResult result = PdfOcrRecognizer.RecognizeBgra(
+            bgra, width, height, TinyModel("E"), options);
+
+        Assert.Equal(expected.Length, result.Words.Count);
+        for (int index = 0; index < expected.Length; index++)
+            Assert.Equal((expected[index].Left, expected[index].Top,
+                expected[index].Right, expected[index].Bottom),
+                (result.Words[index].Left, result.Words[index].Top,
+                    result.Words[index].Right, result.Words[index].Bottom));
+    }
+
+    [Fact]
+    public void RawBgraRecognitionSelectsAndMapsRightAngleOrientation()
+    {
+        string[] upright =
+        [
+            "........",
+            "..#.....",
+            "..#.....",
+            "..#.....",
+            "..####..",
+            "........"
+        ];
+        PdfOcrRecognitionModel model = OrientationModel(upright);
+        string[] rotated = RotateRowsClockwise(upright);
+        byte[] bgra = BgraImage(rotated);
+
+        PdfOcrResult result = PdfOcrRecognizer.RecognizeBgra(
+            bgra, rotated[0].Length, rotated.Length, model,
+            new PdfOcrOptions(["eng"], deskew: false, correctOrientation: true,
+                removeBackground: false, removeNoise: false,
+                detectPageSegments: false));
+
+        PdfOcrPixelWord word = Assert.Single(result.Words);
+        Assert.Equal("L", word.Text);
+        Assert.Equal((1, 2, 5, 6), (word.Left, word.Top, word.Right, word.Bottom));
+    }
+
+    [Fact]
+    public void RawBgraRecognitionRestrictsResultsToACharacterWhitelist()
+    {
+        PdfOcrPreparedImage image = Prepared(4, 4,
+        [
+            "....",
+            ".##.",
+            ".##.",
+            "...."
+        ]);
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Create(
+            1, 1, ["A", "7"], new float[] { 1, -1 }, new float[] { 0, 0 });
+        byte[] bgra = [.. image.Pixels.ToArray().SelectMany(value =>
+            new byte[] { value, value, value, 255 })];
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        PdfOcrResult result = PdfOcrRecognizer.RecognizeBgra(
+            bgra, 4, 4, model, options, "0123456789");
+
+        Assert.Equal("7", Assert.Single(result.Words).Text);
+        Assert.Throws<ArgumentException>(() => PdfOcrRecognizer.RecognizeBgra(
+            bgra, 4, 4, model, options, "xyz"));
+    }
+
+    [Fact]
+    public void RawBgraWhitelistKeepsLanguageContext()
+    {
+        PdfOcrPreparedImage image = Prepared(8, 6,
+        [
+            "........",
+            "#...#...",
+            "#...#...",
+            "#...##..",
+            "#...##..",
+            "........"
+        ]);
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Create(
+            4, 4, ["0", "O", "X"], new float[48], new float[] { 0.1f, 0, 1 });
+        PdfOcrLanguageModel language = PdfOcrLanguageModel.Train(
+            Enumerable.Repeat("OO", 20));
+        byte[] bgra = [.. image.Pixels.ToArray().SelectMany(value =>
+            new byte[] { value, value, value, 255 })];
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        PdfOcrResult result = PdfOcrRecognizer.RecognizeBgra(
+            bgra, 8, 6, model, language, options, "0O");
+
+        Assert.Equal("OO", Assert.Single(result.Words).Text);
+    }
+
+    [Fact]
+    public void RawBgraContextualWhitelistExcludesForbiddenLanguageCandidates()
+    {
+        PdfOcrPreparedImage image = Prepared(8, 6,
+        [
+            "........",
+            "#...#...",
+            "#...#...",
+            "#...##..",
+            "#...##..",
+            "........"
+        ]);
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Create(
+            4, 4, ["0", "O", "X"], new float[48], new float[] { 0.1f, 0, 1 });
+        PdfOcrLanguageModel language = PdfOcrLanguageModel.Train(
+            Enumerable.Repeat("XX", 20));
+        byte[] bgra = [.. image.Pixels.ToArray().SelectMany(value =>
+            new byte[] { value, value, value, 255 })];
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        PdfOcrResult result = PdfOcrRecognizer.RecognizeBgra(
+            bgra, 8, 6, model, language, options, "0O");
+
+        Assert.DoesNotContain('X', Assert.Single(result.Words).Text);
+    }
+
+    [Fact]
+    public void ModelRejectsTruncatedAndNonFinitePayloads()
+    {
+        Assert.Throws<FormatException>(() => PdfOcrRecognitionModel.Load("bad"u8.ToArray()));
+        Assert.Throws<ArgumentException>(() => PdfOcrRecognitionModel.Create(
+            1, 1, ["x"], new float[] { float.NaN }, new float[] { 0 }));
+        Assert.Throws<ArgumentException>(() => PdfOcrRecognitionModel.Create(
+            1, 1, ["\uFFFD"], new float[] { 1 }, new float[] { 0 }));
+    }
+
+    [Fact]
+    public void ModelClassificationHandlesVectorBlocksAndScalarTail()
+    {
+        int features = Math.Min(128, Vector<float>.Count + 3);
+        float[] positive = [.. Enumerable.Repeat(1f, features)];
+        float[] negative = [.. Enumerable.Repeat(-1f, features)];
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Create(
+            features, 1, ["positive", "negative"],
+            positive.Concat(negative).ToArray(), new float[] { 0, 0 });
+        string blank = new('.', features * 2);
+        PdfOcrPreparedImage image = Prepared(features * 2, 4,
+            [blank, new string('#', features) + new string('.', features), blank, blank]);
+
+        PdfOcrRecognizedWord word = Assert.Single(PdfOcrRecognizer.Recognize(
+            image, PdfOcrLayoutAnalyzer.Analyze(image), model));
+
+        Assert.Equal("positive", word.Text);
+        Assert.Equal(1 / (1 + Math.Exp(-2 * features)), word.Confidence, 12);
+    }
+
+    [Fact]
+    public void LargePrototypeModelsUseTheProjectedCandidatePath()
+    {
+        const int width = 16, height = 16, count = 1_025;
+        string[] labels = [.. Enumerable.Range(0, count)
+            .Select(index => $"L{index:D4}")];
+        var weights = new float[count * width * height];
+        weights[(count - 1) * width * height] = 1;
+        PdfOcrRecognitionModel model = PdfOcrRecognitionModel.Create(
+            width, height, labels, weights, new float[count]);
+        var target = new float[width * height];
+        target[0] = 1;
+
+        PdfOcrModelEvaluation evaluation = PdfOcrModelTrainer.Evaluate(model,
+            [new(labels[^1], target)]);
+
+        Assert.Equal(1, evaluation.Accuracy);
+    }
+
+    [Fact]
+    public void ModelCatalogSelectsRequestedExactAndPrimaryLanguages()
+    {
+        PdfOcrRecognitionModel english = TinyModel("E");
+        PdfOcrRecognitionModel french = TinyModel("F");
+        var catalog = new PdfOcrRecognitionModelCatalog([
+            new("en", english),
+            new("fr-FR", french)
+        ]);
+
+        PdfOcrRecognitionModelSelection exact = catalog.Select(["FR_fr", "en-US"]);
+        PdfOcrRecognitionModelSelection fallback = catalog.Select(["de-DE", "en-US"]);
+
+        Assert.Equal(("fr-fr", french), (exact.Language, exact.Model));
+        Assert.Equal(("en", english), (fallback.Language, fallback.Model));
+        Assert.Throws<NotSupportedException>(() => catalog.Select(["de-DE"]));
+    }
+
+    [Fact]
+    public void ModelCatalogLazilyLoadsOnlyTheSelectedVerifiedLanguage()
+    {
+        byte[] english = TinyModel("E").Save();
+        byte[] french = TinyModel("F").Save();
+        int englishReads = 0, frenchReads = 0;
+        var catalog = PdfOcrRecognitionModelCatalog.Create([
+            new("en", () => { englishReads++; return english; },
+                Convert.ToHexString(SHA256.HashData(english))),
+            new("fr", () => { frenchReads++; return french; },
+                Convert.ToHexString(SHA256.HashData(french)))
+        ]);
+
+        PdfOcrRecognitionModelSelection first = catalog.Select(["en-US"]);
+        PdfOcrRecognitionModelSelection second = catalog.Select(["en"]);
+
+        Assert.Same(first.Model, second.Model);
+        Assert.Equal((1, 0), (englishReads, frenchReads));
+        Assert.Equal(["en", "fr"], catalog.Languages);
+    }
+
+    [Fact]
+    public void ModelCatalogCombinesDistinctRequestedLanguagesLazily()
+    {
+        byte[] english = TinyModel("E").Save();
+        byte[] french = TinyModel("F").Save();
+        int englishReads = 0, frenchReads = 0, germanReads = 0;
+        var catalog = PdfOcrRecognitionModelCatalog.Create([
+            new("en", () => { englishReads++; return english; }),
+            new("fr", () => { frenchReads++; return french; }),
+            new("de", () => { germanReads++; return TinyModel("D").Save(); })
+        ]);
+
+        PdfOcrRecognitionModelSelection selection = catalog.SelectCombined(
+            ["fr-FR", "en-US", "fr"]);
+        PdfOcrRecognitionModelSelection repeated = catalog.SelectCombined(
+            ["fr", "en"]);
+
+        Assert.Equal("fr+en", selection.Language);
+        Assert.Equal(["F", "E"], selection.Model.Labels);
+        Assert.Same(selection.Model, repeated.Model);
+        Assert.Equal((1, 1, 0), (englishReads, frenchReads, germanReads));
+    }
+
+    [Fact]
+    public void GlyphNormalizationPreservesAspectRatioAndCentersInk()
+    {
+        PdfOcrPreparedImage image = Prepared(4, 1, ["####"]);
+
+        float[] features = PdfOcrRecognizer.NormalizeGlyph(
+            image, new PdfOcrImageRegion(0, 0, 4, 1), 4, 4);
+
+        Assert.Equal([
+            0, 0, 0, 0,
+            1, 1, 1, 1,
+            0, 0, 0, 0,
+            0, 0, 0, 0
+        ], features);
+    }
+
+    [Fact]
+    public void GlyphNormalizationPreservesHeightWithinItsTextLine()
+    {
+        PdfOcrPreparedImage image = Prepared(4, 4,
+        [
+            "....",
+            ".##.",
+            ".##.",
+            "...."
+        ]);
+
+        float[] features = PdfOcrRecognizer.NormalizeGlyph(image,
+            new PdfOcrImageRegion(1, 1, 3, 3),
+            new PdfOcrImageRegion(0, 0, 4, 4), 4, 4);
+
+        Assert.Equal([
+            0, 0, 0, 0,
+            0, 1, 1, 0,
+            0, 1, 1, 0,
+            0, 0, 0, 0
+        ], features);
+    }
+
+    [Fact]
+    public void GlyphNormalizationUsesTheMedianLineHeightAndBaseline()
+    {
+        var line = new PdfOcrTextLine(
+            new PdfOcrImageRegion(0, 0, 30, 30), [],
+            [
+                new PdfOcrImageRegion(0, 10, 5, 20),
+                new PdfOcrImageRegion(8, 11, 13, 20),
+                new PdfOcrImageRegion(16, 0, 21, 30)
+            ]);
+
+        PdfOcrImageRegion bounds = PdfOcrRecognizer.NormalizationLineBounds(line);
+
+        Assert.Equal(new PdfOcrImageRegion(0, 10, 30, 20), bounds);
+    }
+
+    [Fact]
+    public void GlyphNormalizationLineBoundsIncludeTheLabeledGlyph()
+    {
+        var line = new PdfOcrTextLine(
+            new PdfOcrImageRegion(0, 0, 30, 30), [],
+            [
+                new PdfOcrImageRegion(0, 10, 5, 20),
+                new PdfOcrImageRegion(8, 11, 13, 20),
+                new PdfOcrImageRegion(16, 0, 21, 30)
+            ]);
+
+        PdfOcrImageRegion bounds = PdfOcrRecognizer.NormalizationLineBounds(
+            line, new PdfOcrImageRegion(16, 0, 21, 30));
+
+        Assert.Equal(new PdfOcrImageRegion(0, 0, 30, 30), bounds);
+    }
+
+    [Fact]
+    public void GlyphNormalizationPreservesThinStrokeCoverageWhenDownsampling()
+    {
+        PdfOcrPreparedImage image = Prepared(8, 8,
+        [
+            ".#......",
+            ".#......",
+            ".#......",
+            ".#......",
+            ".#......",
+            ".#......",
+            ".#......",
+            ".#......"
+        ]);
+
+        float[] features = PdfOcrRecognizer.NormalizeGlyph(
+            image, new PdfOcrImageRegion(0, 0, 8, 8), 4, 4);
+
+        Assert.All(Enumerable.Range(0, 4), row =>
+            Assert.Equal(0.5f, features[row * 4], 5));
+        Assert.All(Enumerable.Range(0, 4), row =>
+            Assert.All(features.AsSpan(row * 4 + 1, 3).ToArray(),
+                value => Assert.Equal(0, value)));
+    }
+
+    [Fact]
+    public void GlyphNormalizationHonorsCancellation()
+    {
+        PdfOcrPreparedImage image = Prepared(4, 1, ["####"]);
+        using var canceled = new CancellationTokenSource();
+        canceled.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfOcrRecognizer.NormalizeGlyph(image,
+                new PdfOcrImageRegion(0, 0, 4, 1), 4, 4, canceled.Token));
+    }
+
+    [Fact]
+    public void GlyphNormalizationRejectsUnboundedDimensionsAndRegions()
+    {
+        PdfOcrPreparedImage image = Prepared(4, 4,
+        [
+            "....",
+            ".##.",
+            ".##.",
+            "...."
+        ]);
+        var glyph = new PdfOcrImageRegion(1, 1, 3, 3);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            PdfOcrRecognizer.NormalizeGlyph(image, glyph, 129, 4));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            PdfOcrRecognizer.NormalizeGlyph(image,
+                new PdfOcrImageRegion(-1, 1, 3, 3), 4, 4));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            PdfOcrRecognizer.NormalizeGlyph(image, glyph,
+                new PdfOcrImageRegion(2, 1, 4, 3), 4, 4));
+    }
+
+    [Fact]
+    public void PageRecognizerRunsDirectlyFromEngineRenderAndMapsPdfBounds()
+    {
+        PdfOcrRecognitionModel model = RecognitionModel();
+        PdfImage image = RasterImage(
+        [
+            "........",
+            "#...#...",
+            "#...#...",
+            "#...##..",
+            "#...##..",
+            "........"
+        ]);
+        PdfDocument uncropped = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddPage(28, 36, new PdfContentStreamBuilder()
+                .DrawImage(image, 10, 20, 8, 6)).Build());
+        PdfDocument document = PdfDocument.Open(new PdfIncrementalPageEditor(uncropped)
+            .SetCropBox(0, 10, 20, 8, 6).Build());
+        var recognizer = new PdfOcrPageRecognizer(document, model);
+
+        PdfOcrPageRecognition result = recognizer.Recognize(0,
+            new PdfRenderOptions(8, 6, includeAnnotations: false, includeFormFields: false),
+            new PdfOcrOptions(["eng"], deskew: false, correctOrientation: false,
+                detectPageSegments: false));
+
+        PdfOcrWord word = Assert.Single(result.Review.Words);
+        Assert.Equal("IL", word.Text);
+        Assert.Equal("eng", word.Language);
+        Assert.Equal(new PdfContentBounds(0, 1, 6, 5), word.BoundingBox);
+        Assert.Empty(result.Diagnostics);
+        Assert.Equal((8, 6), (result.PixelWidth, result.PixelHeight));
+    }
+
+    [Fact]
+    public void PageRecognizerUsesTheFirstAvailableRequestedLanguageModel()
+    {
+        PdfImage image = RasterImage([
+            "....", ".##.", ".##.", "...."
+        ]);
+        PdfDocument document = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddPage(4, 4, new PdfContentStreamBuilder().DrawImage(image, 0, 0, 4, 4)).Build());
+        var catalog = new PdfOcrRecognitionModelCatalog([
+            new("en", TinyModel("E"))
+        ]);
+        var recognizer = new PdfOcrPageRecognizer(document, catalog);
+
+        PdfOcrPageRecognition result = recognizer.Recognize(0,
+            new PdfRenderOptions(4, 4, includeAnnotations: false, includeFormFields: false),
+            new PdfOcrOptions(["de-DE", "en-US"], deskew: false,
+                correctOrientation: false, removeBackground: false, removeNoise: false,
+                detectPageSegments: false));
+
+        PdfOcrWord word = Assert.Single(result.Review.Words);
+        Assert.Equal("E", word.Text);
+        Assert.Equal("en", word.Language);
+    }
+
+    [Fact]
+    public void PageRecognizerCombinesEveryAvailableRequestedLanguageModel()
+    {
+        PdfImage image = RasterImage([
+            "....", ".##.", ".##.", "...."
+        ]);
+        PdfDocument document = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddPage(4, 4, new PdfContentStreamBuilder()
+                .DrawImage(image, 0, 0, 4, 4)).Build());
+        var catalog = new PdfOcrRecognitionModelCatalog([
+            new("de", TinyModel("D")),
+            new("en", TinyModel("E"))
+        ]);
+        var recognizer = new PdfOcrPageRecognizer(document, catalog);
+
+        PdfOcrPageRecognition result = recognizer.Recognize(0,
+            new PdfRenderOptions(4, 4, includeAnnotations: false,
+                includeFormFields: false),
+            new PdfOcrOptions(["de-DE", "en-US"], deskew: false,
+                correctOrientation: false, removeBackground: false,
+                removeNoise: false, detectPageSegments: false));
+
+        Assert.Equal("de+en", Assert.Single(result.Review.Words).Language);
+    }
+
+    [Fact]
+    public void PageRecognizerSelectsAndMapsRightAngleOrientation()
+    {
+        string[] upright =
+        [
+            "........",
+            "..#.....",
+            "..#.....",
+            "..#.....",
+            "..####..",
+            "........"
+        ];
+        PdfOcrRecognitionModel model = OrientationModel(upright);
+        string[] rotated = RotateRowsClockwise(upright);
+        PdfDocument document = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddPage(rotated[0].Length, rotated.Length, new PdfContentStreamBuilder()
+                .DrawImage(RasterImage(rotated), 0, 0, rotated[0].Length, rotated.Length))
+            .Build());
+        var recognizer = new PdfOcrPageRecognizer(document, model);
+
+        PdfOcrPageRecognition result = recognizer.Recognize(0,
+            new PdfRenderOptions(rotated[0].Length, rotated.Length,
+                includeAnnotations: false, includeFormFields: false),
+            new PdfOcrOptions(["eng"], deskew: false, correctOrientation: true,
+                removeBackground: false, removeNoise: false, detectPageSegments: false));
+
+        PdfOcrWord word = Assert.Single(result.Review.Words);
+        Assert.Equal("L", word.Text);
+        Assert.Equal(new PdfContentBounds(1, 2, 5, 6), word.BoundingBox);
+        Assert.Empty(result.Diagnostics);
+    }
+
+    [Fact]
+    public void PageRecognizerRestoresDeskewedBoundsToSourcePixels()
+    {
+        PdfOcrImageRegion restored = PdfOcrImagePreprocessor.RestoreDeskewedBounds(
+            new PdfOcrImageRegion(40, 45, 60, 55), 10, 100, 100);
+
+        Assert.Equal(new PdfOcrImageRegion(39, 43, 61, 57), restored);
+        Assert.Equal(new PdfOcrImageRegion(40, 45, 60, 55),
+            PdfOcrImagePreprocessor.RestoreDeskewedBounds(
+                new PdfOcrImageRegion(40, 45, 60, 55), 0, 100, 100));
+    }
+
+    private static PdfOcrPreparedImage Prepared(int width, int height, string[] rows)
+    {
+        byte[] bgra = new byte[width * height * 4];
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+            {
+                byte value = rows[y][x] == '#' ? (byte)0 : (byte)255;
+                int offset = (y * width + x) * 4;
+                bgra[offset] = bgra[offset + 1] = bgra[offset + 2] = value;
+                bgra[offset + 3] = 255;
+            }
+        return PdfOcrImagePreprocessor.PrepareBgra(bgra, width, height,
+            new PdfOcrOptions(["eng"], deskew: false, correctOrientation: false,
+                removeBackground: false, removeNoise: false, detectPageSegments: false));
+    }
+
+    private static PdfOcrRecognitionModel RecognitionModel()
+    {
+        var iWeights = new float[16];
+        var lWeights = new float[16];
+        foreach (int index in new[] { 10, 14 })
+        {
+            iWeights[index] = -2;
+            lWeights[index] = 2;
+        }
+        return PdfOcrRecognitionModel.Create(4, 4, ["I", "L"],
+            iWeights.Concat(lWeights).ToArray(), new float[] { 0, 0 });
+    }
+
+    private static PdfOcrRecognitionModel OrientationModel(string[] uprightRows)
+    {
+        const int size = 6;
+        PdfOcrPreparedImage upright = Prepared(
+            uprightRows[0].Length, uprightRows.Length, uprightRows);
+        PdfOcrImageRegion bounds = Assert.Single(
+            PdfOcrLayoutAnalyzer.Analyze(upright).Components);
+        float[] features = PdfOcrRecognizer.NormalizeGlyph(upright, bounds, size, size);
+        float[][] wrongFeatures = [.. Enumerable.Range(1, 3).Select(turns =>
+        {
+            string[] rotated = uprightRows;
+            for (int turn = 0; turn < turns; turn++) rotated = RotateRowsClockwise(rotated);
+            PdfOcrPreparedImage prepared = Prepared(rotated[0].Length, rotated.Length, rotated);
+            PdfOcrImageRegion rotatedBounds = Assert.Single(
+                PdfOcrLayoutAnalyzer.Analyze(prepared).Components);
+            return PdfOcrRecognizer.NormalizeGlyph(prepared, rotatedBounds, size, size);
+        })];
+        var basis = new List<float[]>();
+        foreach (float[] wrong in wrongFeatures)
+        {
+            float[] vector = [.. wrong];
+            foreach (float[] existing in basis)
+            {
+                float projection = Dot(vector, existing);
+                for (int index = 0; index < vector.Length; index++)
+                    vector[index] -= projection * existing[index];
+            }
+            float length = MathF.Sqrt(Dot(vector, vector));
+            if (length > 0.0001f)
+            {
+                for (int index = 0; index < vector.Length; index++) vector[index] /= length;
+                basis.Add(vector);
+            }
+        }
+        float[] weights = [.. features];
+        foreach (float[] vector in basis)
+        {
+            float projection = Dot(weights, vector);
+            for (int index = 0; index < weights.Length; index++)
+                weights[index] -= projection * vector[index];
+        }
+        float scale = 8 / Dot(weights, features);
+        for (int index = 0; index < weights.Length; index++) weights[index] *= scale;
+        return PdfOcrRecognitionModel.Create(size, size, ["L", "X"],
+            weights.Concat(new float[weights.Length]).ToArray(), new float[] { 0, 0 });
+
+        static float Dot(float[] left, float[] right) =>
+            left.Zip(right, (a, b) => a * b).Sum();
+    }
+
+    private static PdfOcrRecognitionModel TinyModel(string label) =>
+        PdfOcrRecognitionModel.Create(1, 1, [label], new float[] { 1 }, new float[] { 0 });
+
+    private static byte[] PreviousModelBytes(string magic, bool includePriors)
+    {
+        using var output = new MemoryStream();
+        using var writer = new BinaryWriter(output);
+        writer.Write(magic.Select(character => (byte)character).ToArray());
+        writer.Write(1);
+        writer.Write(1);
+        writer.Write(1);
+        writer.Write((byte)1);
+        writer.Write((byte)'E');
+        if (includePriors) writer.Write(0f);
+        writer.Write(0f);
+        writer.Write(1f);
+        return output.ToArray();
+    }
+
+    private static PdfImage RasterImage(string[] rows)
+    {
+        int width = rows[0].Length;
+        byte[] rgb = new byte[width * rows.Length * 3];
+        for (int y = 0; y < rows.Length; y++)
+            for (int x = 0; x < width; x++)
+            {
+                byte value = rows[y][x] == '#' ? (byte)0 : (byte)255;
+                int offset = (y * width + x) * 3;
+                rgb[offset] = rgb[offset + 1] = rgb[offset + 2] = value;
+            }
+        return PdfImage.FromRgb(width, rows.Length, rgb);
+    }
+
+    private static byte[] BgraImage(string[] rows)
+    {
+        int width = rows[0].Length;
+        byte[] bgra = new byte[width * rows.Length * 4];
+        for (int y = 0; y < rows.Length; y++)
+            for (int x = 0; x < width; x++)
+            {
+                byte value = rows[y][x] == '#' ? (byte)0 : (byte)255;
+                int offset = (y * width + x) * 4;
+                bgra[offset] = bgra[offset + 1] = bgra[offset + 2] = value;
+                bgra[offset + 3] = 255;
+            }
+        return bgra;
+    }
+
+    private static string[] RotateRowsClockwise(string[] rows)
+    {
+        int width = rows[0].Length;
+        var rotated = new string[width];
+        for (int x = 0; x < width; x++)
+        {
+            var row = new char[rows.Length];
+            for (int y = 0; y < rows.Length; y++) row[y] = rows[rows.Length - 1 - y][x];
+            rotated[x] = new string(row);
+        }
+        return rotated;
+    }
+}

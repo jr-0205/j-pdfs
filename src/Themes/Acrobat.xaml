@@ -1,0 +1,133 @@
+<!-- J-PDF's theme "Acrobat": a dark-premium, Acrobat-inspired palette.
+
+     Graphite surfaces (#0F1013 page, #15161A panels, #191A1E panes) with a steel-blue action
+     accent and Acrobat's red reserved for the brand mark and destructive states only. Flat
+     radii, no grain, no icon shadow: the interface has to read as deliberate, not decorated.
+     Complete: every key Dark.xaml declares is declared here, because the theme at
+     MergedDictionaries[0] must be whole. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <SolidColorBrush x:Key="TextFieldBrush" Color="#101116" po:Freeze="True"/>
+
+    <sys:Double x:Key="GrainOpacity">0</sys:Double>
+    <sys:Double x:Key="IconShadowOpacity">0.0</sys:Double>
+
+    <!-- No text stroke: this theme's labels carry their contrast in the palette. -->
+    <x:Null x:Key="TextStroke"/>
+    <x:Null x:Key="TextStrokeSoft"/>
+
+    <!-- Segoe UI Variable, the Windows 11 UI face, over Segoe UI for Windows 10. -->
+    <FontFamily x:Key="ChromeFontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
+    <FontFamily x:Key="MenuFontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
+
+    <!-- Action accent: steel blue, used with restraint. -->
+    <SolidColorBrush x:Key="PrimaryBrush"        Color="#4D8DDB" po:Freeze="True"/>
+    <SolidColorBrush x:Key="PrimaryHoverBrush"   Color="#6AA6E8" po:Freeze="True"/>
+    <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#3A6FB0" po:Freeze="True"/>
+    <SolidColorBrush x:Key="HeaderLineBrush"     Color="#4D8DDB" po:Freeze="True"/>
+    <SolidColorBrush x:Key="OnPrimaryBrush"      Color="#FFFFFF" po:Freeze="True"/>
+    <SolidColorBrush x:Key="OutlineBtnBrush"     Color="#4D8DDB" po:Freeze="True"/>
+    <SolidColorBrush x:Key="InputHoverBrush"     Color="#4A4D55" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TextFooter"          Color="#9AA0AA" po:Freeze="True"/>
+
+    <!-- Surface tiers: near-black canvas, graphite panels, slightly lifted panes. -->
+    <SolidColorBrush x:Key="BackgroundBrush"  Color="#0F1013" po:Freeze="True"/>
+    <SolidColorBrush x:Key="SurfaceBrush"     Color="#15161A" po:Freeze="True"/>
+    <SolidColorBrush x:Key="PaneBrush"        Color="#191A1E" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TableHeaderBrush" Color="#1F2126" po:Freeze="True"/>
+    <SolidColorBrush x:Key="CardBorderBrush"  Color="#30323A" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TreeLineBrush"    Color="#26282E" po:Freeze="True"/>
+    <SolidColorBrush x:Key="WarnBrush"        Color="#E3A008" po:Freeze="True"/>
+    <SolidColorBrush x:Key="OkBrush"          Color="#3FB950" po:Freeze="True"/>
+    <SolidColorBrush x:Key="PaneBorderBrush"  Color="#30323A" po:Freeze="True"/>
+
+    <!-- Text: soft white, steel-gray secondary, dim metadata. -->
+    <SolidColorBrush x:Key="TextBrush"       Color="#F2F3F5" po:Freeze="True"/>
+    <SolidColorBrush x:Key="MutedTextBrush"  Color="#A3A7B0" po:Freeze="True"/>
+    <SolidColorBrush x:Key="ChromeTextBrush" Color="#C9CDD4" po:Freeze="True"/>
+    <SolidColorBrush x:Key="DimTextBrush"    Color="#777D88" po:Freeze="True"/>
+
+    <SolidColorBrush x:Key="RowAltBrush"      Color="#0DFFFFFF" po:Freeze="True"/>
+    <SolidColorBrush x:Key="RowHoverBrush"    Color="#22242A" po:Freeze="True"/>
+    <SolidColorBrush x:Key="RowSelectedBrush" Color="#1E3A5F" po:Freeze="True"/>
+    <LinearGradientBrush x:Key="SelectionBg" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
+        <GradientStop Color="#2A5C99" Offset="0"/>
+        <GradientStop Color="#1C406E" Offset="1"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="SelectionFg" Color="#FFFFFF" po:Freeze="True"/>
+
+    <SolidColorBrush x:Key="InputBorderBrush"     Color="#3A3D45" po:Freeze="True"/>
+    <SolidColorBrush x:Key="MenuBackgroundBrush"  Color="#191A1E" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TerminalBackgroundBrush" Color="#101114" po:Freeze="True"/>
+    <SolidColorBrush x:Key="MenuBorderBrush"      Color="#30323A" po:Freeze="True"/>
+    <SolidColorBrush x:Key="MenuTextBrush"        Color="#C9CDD4" po:Freeze="True"/>
+    <SolidColorBrush x:Key="MenuHoverBrush"       Color="#22242A" po:Freeze="True"/>
+    <SolidColorBrush x:Key="OutlinePressedBrush"  Color="#1E3A5F" po:Freeze="True"/>
+    <SolidColorBrush x:Key="ScrollThumbBrush"     Color="#664A4D55" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TabEdgeBrush"         Color="#664D8DDB" po:Freeze="True"/>
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#6AA6E8" po:Freeze="True"/>
+
+    <!-- Device-type labels: desaturated so metadata never outshines the document. -->
+    <SolidColorBrush x:Key="TypeRouter"     Color="#E0A458" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeWindows"    Color="#5AA9E6" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypePrinter"    Color="#B08BD8" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeSwitch"     Color="#9AA0AA" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeHypervisor" Color="#E06C75" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeNas"        Color="#56C08D" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeIot"        Color="#C08BD8" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeServer"     Color="#E08A5A" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeLinux"      Color="#C9C25A" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeDns"        Color="#5AC8D8" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeHa"         Color="#5AD8A6" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeMobile"     Color="#8FA8F0" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeCamera"     Color="#E0C060" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeSmarttv"    Color="#D096D0" po:Freeze="True"/>
+    <SolidColorBrush x:Key="TypeMedia"      Color="#6CC0E0" po:Freeze="True"/>
+
+    <!-- Shortcut categories: distinguishable without neon. -->
+    <SolidColorBrush x:Key="KsCatFile"   Color="#4D8DDB" po:Freeze="True"/>
+    <SolidColorBrush x:Key="KsCatNav"    Color="#A78BFA" po:Freeze="True"/>
+    <SolidColorBrush x:Key="KsCatView"   Color="#D97BD8" po:Freeze="True"/>
+    <SolidColorBrush x:Key="KsCatSearch" Color="#4DD0C0" po:Freeze="True"/>
+    <SolidColorBrush x:Key="KsCatEdit"   Color="#E06C75" po:Freeze="True"/>
+    <SolidColorBrush x:Key="KsCatTabs"   Color="#E0B44D" po:Freeze="True"/>
+    <SolidColorBrush x:Key="KsCatHelp"   Color="#6FCF97" po:Freeze="True"/>
+
+    <!-- Fluent geometry: 8px window, 6px panels, 4px controls, 2px chips. -->
+    <CornerRadius x:Key="WindowCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="PanelCornerRadius">6</CornerRadius>
+    <CornerRadius x:Key="ControlCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="SmallCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="FlyoutCornerRadius">6</CornerRadius>
+    <CornerRadius x:Key="AccentSwatchCornerRadius">9</CornerRadius>
+
+    <SolidColorBrush x:Key="TitleBarBrush"     Color="#0A0A0B" po:Freeze="True"/>
+    <SolidColorBrush x:Key="CaptionCloseBrush" Color="#E8112D" po:Freeze="True"/>
+    <SolidColorBrush x:Key="AppBorderBrush"    Color="#30323A" po:Freeze="True"/>
+
+    <SolidColorBrush x:Key="OutlineRestBrush"        Color="#5A5E67" po:Freeze="True"/>
+    <SolidColorBrush x:Key="ComboHighlightTextBrush" Color="#F2F3F5" po:Freeze="True"/>
+    <SolidColorBrush x:Key="GridSelectedTextBrush"   Color="#FFFFFF" po:Freeze="True"/>
+    <!-- Brand mark: Acrobat red, the one warm accent in an otherwise neutral room. -->
+    <SolidColorBrush x:Key="AccentLogo"        Color="#FF4438" po:Freeze="True"/>
+    <SolidColorBrush x:Key="RadioAccent"       Color="#4D8DDB" po:Freeze="True"/>
+    <SolidColorBrush x:Key="SelectionAccent"   Color="#4D8DDB" po:Freeze="True"/>
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#22242A" po:Freeze="True"/>
+    <SolidColorBrush x:Key="DialogTitleBarBrush" Color="Transparent" po:Freeze="True"/>
+    <SolidColorBrush x:Key="FooterBackgroundBrush" Color="#0A0A0B" po:Freeze="True"/>
+    <SolidColorBrush x:Key="MenuSeparatorBrush"    Color="#26282E" po:Freeze="True"/>
+    <SolidColorBrush x:Key="FileDialogPaneBrush"   Color="#15161A" po:Freeze="True"/>
+
+    <sys:Double x:Key="PaneShadowOpacity">0.55</sys:Double>
+    <sys:Double x:Key="TitleBarHeight">32</sys:Double>
+    <sys:Double x:Key="BarShadowOpacity">0.24</sys:Double>
+    <sys:Double x:Key="FlyoutShadowOpacity">0.50</sys:Double>
+    <sys:Double x:Key="WordmarkShadowOpacity">0.0</sys:Double>
+    <sys:Double x:Key="TitleWordmarkBoldSize">18</sys:Double>
+    <sys:Double x:Key="TitleWordmarkSize">18</sys:Double>
+</ResourceDictionary>

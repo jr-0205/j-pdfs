@@ -1,0 +1,46 @@
+# Build output
+bin/
+obj/
+*.user
+
+# Visual Studio
+.vs/
+*.suo
+
+# Publish
+publish/
+*.pubxml.user
+
+# Generated artifacts
+/artifacts/
+/TestResults/
+
+# Local notes / scratch
+*.odt
+/tmp/
+
+# Cloudflare Wrangler
+.wrangler/
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+*.exe
+bin/
+obj/
+
+*.tmp
+
+# Heavy source art - stored locally only, not shipped and not part of the project.
+# Anchored with a leading slash so it only ignores KillerPDF/brand, NOT pdf-landing/brand
+# (the small web logos the landing site links to).
+/brand/
+
+# Legacy validation outputs stay untracked. New diagnostics belong in external scratch.
+/baseline.json
+/after.json
+/resave.csv
+/vera-*.csv
+/vera-err.txt
+/qpdf-*.csv

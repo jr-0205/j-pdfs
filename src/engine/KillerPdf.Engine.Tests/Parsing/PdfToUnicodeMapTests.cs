@@ -1,0 +1,249 @@
+using System.Text;
+using KillerPdf.Engine.Fonts;
+using Xunit;
+
+namespace KillerPdf.Engine.Tests.Parsing;
+
+public sealed class PdfToUnicodeMapTests
+{
+    [Fact]
+    public void ParseFont_CompatibilityRecoveryReplacesInvalidUtf16Destinations()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(
+            "1 begincodespacerange <00> <ff> endcodespacerange "
+            + "1 beginbfchar <41> <d800> endbfchar");
+
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        PdfToUnicodeMap map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+
+        Assert.Equal("\uFFFD", Assert.Single(map.Decode([0x41])).Text);
+    }
+
+    [Fact]
+    public void ParseFont_ReusesTheCanonicalReplacementCharacter()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(
+            "1 begincodespacerange <00> <ff> endcodespacerange "
+            + "2 beginbfchar <41> <fffd> <42> <fffd> endbfchar");
+
+        PdfToUnicodeMap map = PdfToUnicodeMap.Parse(source);
+        string first = Assert.Single(map.Decode([0x41])).Text;
+        string second = Assert.Single(map.Decode([0x42])).Text;
+
+        Assert.Same(first, second);
+    }
+
+    [Theory]
+    [InlineData("", "\uFFFD")]
+    [InlineData("41", "\uFFFD")]
+    public void ParseFont_CompatibilityRecoveryReplacesEmptyOrOddUtf16Destinations(
+        string destination, string expected)
+    {
+        byte[] source = Encoding.ASCII.GetBytes(
+            "1 begincodespacerange <00> <ff> endcodespacerange "
+            + $"1 beginbfchar <41> <{destination}> endbfchar");
+
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        PdfToUnicodeMap map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+
+        Assert.Equal(expected, Assert.Single(map.Decode([0x41])).Text);
+    }
+
+    [Fact]
+    public void ParseFont_CompatibilityRecoveryKeepsFirstDuplicateMapping()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(
+            "1 begincodespacerange <00> <ff> endcodespacerange "
+            + "2 beginbfchar <41> <0041> <41> <0042> endbfchar");
+
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        PdfToUnicodeMap map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+
+        Assert.Equal("A", Assert.Single(map.Decode([0x41])).Text);
+    }
+
+    [Fact]
+    public void ParseFont_CompatibilityRecoveryUsesCompleteEntriesWhenCountIsWrong()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(
+            "1 begincodespacerange <00> <ff> endcodespacerange "
+            + "1 beginbfchar <41> <0041> <42> <0042> endbfchar");
+
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        PdfToUnicodeMap map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+
+        Assert.Equal(["A", "B"], map.Decode([0x41, 0x42]).Select(item => item.Text));
+    }
+
+    [Fact]
+    public void ParseFont_CompatibilityRecoveryInfersMissingCodeSpaceFromMappings()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(
+            "2 beginbfchar <0041> <0041> <0042> <0042> endbfchar");
+
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        PdfToUnicodeMap map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+
+        Assert.Equal(["A", "B"], map.Decode([0, 0x41, 0, 0x42])
+            .Select(item => item.Text));
+        Assert.All(map.Decode([0, 0x41]), item => Assert.Equal(2, item.ByteLength));
+    }
+
+    private const string Space = "1 begincodespacerange <0000> <FFFF> endcodespacerange ";
+
+    [Theory]
+    [InlineData("<0000> <ffffffff> <>")]
+    [InlineData("<0003> <0001> <0042>")]
+    public void RecoverySkipsInvalidMappingRangesAndRetainsValidEntries(string range)
+    {
+        byte[] source = Encoding.ASCII.GetBytes(Space
+            + $"2 beginbfrange {range} <0041> <0042> <0041> endbfrange");
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        var map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+        Assert.Equal(["A", "B"], map.Decode([0, 0x41, 0, 0x42]).Select(c => c.Text));
+        Assert.Throws<NotSupportedException>(() => map.Decode([0, 3]));
+    }
+
+    [Theory]
+    [InlineData("1 begincodespacerange <0000> <ffffffff> endcodespacerange")]
+    [InlineData("1 begincodespacerange <0003> <0001> endcodespacerange")]
+    [InlineData("1 begincodespacerange <00000000> <ffffffff> endcodespacerange 1 beginbfrange <00000000> <ffffffff> <> endbfrange")]
+    public void RecoveryStillRejectsInvalidCodeSpacesAndOversizedValidRanges(string source)
+        => Assert.Throws<FormatException>(() => PdfToUnicodeMap.ParseWithCompatibilityRecovery(
+            Encoding.ASCII.GetBytes(source)));
+
+    [Fact]
+    public void RecoveryIncludesExplicitMappingsOutsideDeclaredCodeSpace()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(
+            "1 begincodespacerange <0104> <012a> endcodespacerange "
+            + "3 beginbfchar <00fc> <0107> <0104> <0104> <0130> <0041> endbfchar");
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        var map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+        var decoded = map.Decode([0, 0xfc, 1, 4, 1, 0x30]);
+        Assert.Equal(["\u0107", "\u0104", "A"], decoded.Select(c => c.Text));
+        Assert.All(decoded, c => Assert.Equal(2, c.ByteLength));
+        Assert.Throws<NotSupportedException>(() => map.Decode([1, 5]));
+    }
+
+    [Fact]
+    public void RecoveryPreservesUnambiguousVariableLengthCodes()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(
+            "2 begincodespacerange <00> <7f> <8100> <81ff> endcodespacerange "
+            + "2 beginbfchar <41> <0041> <8001> <4e2d> endbfchar");
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        var map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+        var decoded = map.Decode([0x41, 0x80, 1]);
+        Assert.Equal(["A", "\u4e2d"], decoded.Select(c => c.Text));
+        Assert.Equal([1, 2], decoded.Select(c => c.ByteLength));
+    }
+
+    [Theory]
+    [InlineData("2 begincodespacerange <00> <ff> <8100> <81ff> endcodespacerange")]
+    [InlineData("2 begincodespacerange <00> <7f> <8100> <81ff> endcodespacerange 1 beginbfchar <0041> <0041> endbfchar")]
+    public void RecoveryRejectsAmbiguousCharacterWidths(string source)
+        => Assert.Throws<FormatException>(() => PdfToUnicodeMap.ParseWithCompatibilityRecovery(
+            Encoding.ASCII.GetBytes(source)));
+
+    [Theory]
+    [InlineData("<0041><0042><0043>", "ABC\uFFFD")]
+    [InlineData("", "\uFFFD\uFFFD\uFFFD\uFFFD")]
+    public void RecoveryRetainsOnlyAvailableRangeDestinations(string destinations, string expected)
+    {
+        byte[] source = Encoding.ASCII.GetBytes(Space
+            + $"1 beginbfrange <0000> <00ff> [{destinations}] endbfrange");
+
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        var map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+
+        Assert.Equal(expected, string.Concat(map.DecodeWithCompatibilityRecovery(
+            [0, 0, 0, 1, 0, 2, 0, 3]).Select(character => character.Text)));
+        Assert.Throws<NotSupportedException>(() => map.Decode([0, 3]));
+    }
+
+    [Fact]
+    public void RecoveryDoesNotMapArrayDestinationsBeyondTheDeclaredRange()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(Space
+            + "1 beginbfrange <0001> <0002> [<0041><0042><0043>] endbfrange");
+
+        Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(source));
+        var map = PdfToUnicodeMap.ParseWithCompatibilityRecovery(source);
+
+        Assert.Equal("AB", string.Concat(map.Decode([0, 1, 0, 2]).Select(character => character.Text)));
+        Assert.Throws<NotSupportedException>(() => map.Decode([0, 3]));
+    }
+
+    [Fact]
+    public void RecoveryStillBoundsDeclaredRangesWithShortDestinationArrays()
+    {
+        byte[] source = Encoding.ASCII.GetBytes(Space
+            + "1 beginbfrange <0000> <ffff> [<0041>] endbfrange");
+
+        Assert.Throws<FormatException>(() =>
+            PdfToUnicodeMap.ParseWithCompatibilityRecovery(source, maximumMappings: 10));
+    }
+
+    [Fact]
+    public void DecodesLigaturesAndSupplementaryCharacters()
+    {
+        var map = Parse(Space + "3 beginbfchar <0001> <0041> <0002> <00660069> <0003> <D83DDE00> endbfchar");
+        var decoded = map.Decode([0, 1, 0, 2, 0, 3]);
+        Assert.Equal(["A", "fi", char.ConvertFromUtf32(0x1F600)], decoded.Select(c => c.Text));
+        Assert.Equal(new uint[] { 1, 2, 3 }, decoded.Select(c => c.Code));
+        Assert.All(decoded, c => Assert.Equal(2, c.ByteLength));
+    }
+
+    [Fact]
+    public void ExpandsSequentialAndArrayRanges()
+    {
+        var map = Parse(Space + "2 beginbfrange <0001> <0003> <0041> <0004> <0005> [<00660069> <03A9>] endbfrange");
+        Assert.Equal("ABCfi\u03A9", string.Concat(map.Decode([0, 1, 0, 2, 0, 3, 0, 4, 0, 5]).Select(c => c.Text)));
+    }
+
+    [Fact]
+    public void DistinguishesVariableLengthSourceCodes()
+    {
+        var map = Parse("2 begincodespacerange <00> <7F> <8000> <FFFF> endcodespacerange " +
+            "2 beginbfchar <41> <0041> <8001> <4E2D> endbfchar");
+        Assert.Equal(["A", "\u4E2D"], map.Decode([65, 128, 1]).Select(c => c.Text));
+        Assert.Throws<FormatException>(() => map.Decode([128]));
+        Assert.Throws<NotSupportedException>(() => map.Decode("B"u8));
+    }
+
+    [Fact]
+    public void Decode_CompatibilityRecoveryReplacesIncompleteCharacterCodes()
+    {
+        var map = Parse(Space + "1 beginbfchar <0001> <0041> endbfchar");
+
+        IReadOnlyList<PdfDecodedCharacter> decoded =
+            map.DecodeWithCompatibilityRecovery([0, 1, 128]);
+
+        Assert.Equal(["A", "\uFFFD"], decoded.Select(character => character.Text));
+        Assert.Equal([2, 1], decoded.Select(character => character.ByteLength));
+    }
+
+    [Theory]
+    [InlineData("1 beginbfchar <0001> <0041> <0002> <0042> endbfchar")]
+    [InlineData("1 beginbfchar <0001> <D800> endbfchar")]
+    [InlineData("1 beginbfchar <0001> <41> endbfchar")]
+    [InlineData("2 beginbfchar <0001> <0041> <0001> <0042> endbfchar")]
+    [InlineData("1 beginbfrange <0001> <0003> [<0041>] endbfrange")]
+    [InlineData("1 beginbfrange <0003> <0001> <0041> endbfrange")]
+    [InlineData("1 beginbfchar")]
+    public void RejectsMalformedMappings(string mappings) => Assert.Throws<FormatException>(() => Parse(Space + mappings));
+
+    [Fact]
+    public void RejectsAmbiguousSpacesAndUnsupportedInheritance()
+    {
+        Assert.Throws<FormatException>(() => Parse("2 begincodespacerange <00> <FF> <0000> <FFFF> endcodespacerange"));
+        Assert.Throws<NotSupportedException>(() => Parse(Space + "/Base usecmap"));
+    }
+
+    [Fact]
+    public void BoundsRangeExpansion() => Assert.Throws<FormatException>(() => PdfToUnicodeMap.Parse(
+        Encoding.ASCII.GetBytes(Space + "1 beginbfrange <0000> <FFFF> <0000> endbfrange"), maximumMappings: 10));
+
+    private static PdfToUnicodeMap Parse(string source) => PdfToUnicodeMap.Parse(Encoding.ASCII.GetBytes(source));
+}

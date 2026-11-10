@@ -1,0 +1,30 @@
+<!-- J-PDF's own light Acrobat theme values: keys the kit palette does not define. AppTheme's
+     AppDerivedTokens (Services/AppTheme.cs) adds them; kit keys always keep the kit's value. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <SolidColorBrush x:Key="BgRecentPanel"     Color="#F5F5F5" po:Freeze="True"/>
+    <SolidColorBrush x:Key="AnnotationBarBrush" Color="#F0F0F0" po:Freeze="True"/>
+    <LinearGradientBrush x:Key="TabStripFadeBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
+        <GradientStop Offset="0.0"  Color="#00FFFFFF"/>
+        <GradientStop Offset="0.55" Color="#0F000000"/>
+        <GradientStop Offset="1.0"  Color="#2E000000"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="InstallBtnBg"       Color="#1473E6" po:Freeze="True"/>
+    <SolidColorBrush x:Key="DropBorder"         Color="#C9C9C9" po:Freeze="True"/>
+    <SolidColorBrush x:Key="SettingsOpenRowBg"  Color="#F2F2F2" po:Freeze="True"/>
+    <SolidColorBrush x:Key="DangerRed"          Color="#D7373F" po:Freeze="True"/>
+    <SolidColorBrush x:Key="BgDragHandle"       Color="#BDBDBD" po:Freeze="True"/>
+    <SolidColorBrush x:Key="DragLine"           Color="#C9C9C9" po:Freeze="True"/>
+    <SolidColorBrush x:Key="BgOverlay"          Color="#99000000" po:Freeze="True"/>
+    <sys:Double x:Key="HeaderShadowOpacity">0</sys:Double>
+
+    <!-- The reading room: a cool gray canvas behind white pages, exactly the separation
+         Acrobat gives the document. Pages get a hairline edge and one soft cast shadow. -->
+    <SolidColorBrush x:Key="BgCanvas"           Color="#E3E5E8" po:Freeze="True"/>
+    <SolidColorBrush x:Key="PageEdgeBrush"      Color="#D4D6DA" po:Freeze="True"/>
+    <sys:Double x:Key="PageShadowOpacity">0.26</sys:Double>
+
+    <SolidColorBrush x:Key="SelectionButtonBorderBrush" Color="#8A8A8A" po:Freeze="True"/>
+</ResourceDictionary>

@@ -1,0 +1,636 @@
+# Performance validation results
+
+## KillerPDF 1.9.0 isolated broad render comparison
+
+Measured September 24, 2026, against the current 1.8.x branch. All 649 PDFs in
+the conformance collection were rendered one file per process at 1024 pixels,
+page one, with a 20-second timeout per build and file. The order alternated by
+file. This isolates expensive PDFium font cases so one stalled file cannot block
+the rest of the collection.
+
+| Outcome | 1.8.x | 1.9.0 engine |
+| --- | ---: | ---: |
+| Rendered | 600 | 614 |
+| Skipped | 41 | 35 |
+| Failed | 8 | 0 |
+| Timed out | 0 | 0 |
+
+The historical PDFium Unifont stalls did not reproduce in either fresh build.
+All 600 pages rendered by both builds had matching output dimensions. The 1.9.0
+engine additionally recovered 14 files that PDFium skipped or failed. Six files
+that PDFium failed were classified as having no pages by the engine. This pass
+establishes bounded completion and outcome coverage, not pixel equivalence or a
+throughput result. Visual and multipage comparisons remain separate gates.
+
+The builds were 1.8.x commit `259c5f8` with application DLL SHA256
+`D8C974745D7DF23113BB25F68B8F72076EBDB312C84759577F94F8AA6D513E3A`, and
+1.9.0 commit `10552be` with application DLL SHA256
+`EBB5DDB3226EEB223C3B2DF09879BEB1B7E36E973660F9A582B518F996E28D4F`.
+Raw per-file logs and retained PNGs are archived locally in
+`C:/Users/steve/scratch/kp-bench-render/broad-regression-isolated-20260924`.
+
+## KillerPDF 1.9.0 expanded visual comparison
+
+Measured September 24, 2026, with the same fresh 1.8.x and 1.9.0 builds. The
+comparison now records dimensions, mean RGB channel delta, root mean square
+delta, and the percentage of pixels whose largest channel delta exceeds 16 or
+32. It covers all 600 mutually rendered first pages at 1024 pixels, plus 74
+pages from the 40-file difficult set at 2048 pixels.
+
+All 674 shared pages have matching dimensions. Across the 600-page set, the
+median page mean channel delta is 0.6121 and the mean is 2.5504. The difficult
+set adds 49 transparency-bearing pages, 14 annotation pages, two pages with
+authored appearances, three widget pages, and five pages from documents with
+form fields. Large differences remain investigation targets rather than being
+hidden behind a collection-wide tolerance.
+
+Eight additional 2048-pixel pages close the geometry and appearance gaps:
+three rotated and cropped pages from `421197.pdf`, three cropped pages from
+`027613.pdf`, the authored annotation appearance in
+`PDF 2.0 UTF-8 string and annotation.pdf`, and the widget appearance on page
+one of `Montenegro2021.pdf`. Both builds produced the same dimensions for all
+eight. Their mean channel deltas range from 0 through 0.7542, with 0 through
+1.336% of pixels exceeding a 16-level channel delta. Both renderers' retained
+images were visually inspected for orientation, crop boundaries, and visible
+appearances.
+
+Accepted differences remain file-specific. The large deltas for
+`pdfa2-6-1-13-bfo-t04-fail.pdf` and `pdfa2-6-1-13-bfo-t06-pass.pdf` are retained
+because the engine preserves the intended red rectangle while PDFium is blank.
+`GWG220_ColorConversionIndicator_x4.pdf` and
+`GWG221_OutputIntentChangeIndicator_x4.pdf` retain their reviewed disposition:
+the engine avoids the prominent error crosses present in the PDFium output.
+No shared threshold was raised, and other high-delta pages remain open review
+targets.
+
+Raw metrics and PNGs are archived locally in
+`C:/Users/steve/scratch/kp-bench-render/broad-regression-isolated-20260924`,
+`C:/Users/steve/scratch/kp-bench-render/visual-multipage-isolated-20260924`, and
+`C:/Users/steve/scratch/kp-bench-render/visual-targeted-isolated-20260924`.
+
+## KillerPDF 1.9.0 expanded PDFjs audit
+
+Measured September 24, 2026, at 2048 pixels and up to three pages per file.
+The retained source list contains 979 PDF paths and the current corpus correctly
+stores 977 unique files. The import manifest records `test/pdfs/empty#hash.pdf`
+as an exact duplicate of `test/pdfs/empty.pdf`, and records
+`web/compressed.tracemonkey-pldi-09.pdf` as an exact duplicate of
+`test/pdfs/tracemonkey.pdf`. Their byte counts and SHA-256 digests match, so the
+two aliases remain formally excluded instead of duplicating corpus data.
+
+The canonical files also close the alias render check. Both renderers completed
+the only page of `empty.pdf` and the first three pages of `tracemonkey.pdf` at
+2048 pixels. All eight output rows are successful and use matching dimensions.
+
+| Outcome | 1.8.x PDFium | 1.9.0 engine |
+| --- | ---: | ---: |
+| Rendered pages | 1,092 | 1,099 |
+| Skipped files | 21 | 18 |
+| Failed pages | 3 | 0 |
+
+There are 1,090 shared PNGs. The original pass matched dimensions on 1,089.
+The follow-up fixes the exception on page two of malformed
+`boundingBox_invalid.pdf`: both renderers now use the valid 800 by 600 media
+box and produce a 2048 by 1536 image with the expected `Empty /CropBox` label.
+
+For ranking only, each dimension-matched pair was reduced to a 256-pixel
+thumbnail before measuring mean RGB channel difference. The median is 0.0704;
+887 of 1,089 pairs are below 1, 996 are below 5, and 138 thumbnail pairs are
+identical. These thumbnail measurements find review targets and are not a
+pixel-equivalence gate.
+
+The largest differences were inspected in both outputs. They include JBIG2
+cases where the engine paints the test image and PDFium paints a black
+rectangle; expected calibrated-gray and CMYK color conversion differences; and
+`issue13343.pdf`, where the engine paints CJK text that PDFium omits. These are
+recorded as file-specific follow-ups rather than hidden behind a shared
+tolerance.
+
+The follow-up also closes the blank output in `xobject-image.pdf` and
+`issue12841_reduced.pdf`. The first now unwraps its ASCII hexadecimal filter
+before reading the final JPEG and is byte-identical to the PDFium red page. The
+second recovers its incorrect sequential JPEG spectral-end marker and paints
+the full photograph. Fresh 2048-pixel renders report no diagnostic for either
+file, and both were visually inspected.
+
+The remaining four targeted image cases are also dispositioned. The invalid
+four-byte JPEG in `issue18042.pdf` is skipped by both renderers; the first three
+engine pages are byte-identical to PDFium. Compatibility recovery now detects
+undeclared CCITT end-of-line markers in `issue5747.pdf` and
+`ccitt_EndOfBlock_false.pdf`. Their fresh 2048-pixel outputs contain the full
+scanned text page and all six fax samples with no diagnostic. It also treats an
+undeclared one-bit DeviceGray `/Mask` stream as grayscale alpha in
+`issue6621.pdf`, restoring the full seal. Strict stream decoding and strict
+mask validation remain unchanged. The three repaired images were visually
+compared with PDFium at matching dimensions.
+
+The audit exposed one current failure in `issue11045.pdf`. Its transparency
+group stores `/CS null`; the CMYK group detector now treats that as an omitted
+optional color space. The file renders again at both 1024 and 2048 pixels.
+Commit `5d7692a` passes all 4,122 engine tests, all 431 app tests, and a clean
+Release build.
+
+The retained 1024-pixel hashes are no longer a valid all-output invariant. Of
+957 historical successful pages whose source and current output are available,
+247 current PNGs remain byte-identical. Renderer changes since September 7
+include intentional font, annotation, recovery, color, and antialiasing work,
+so changed hashes require file-specific review and are not classified as
+regressions by hash alone.
+
+Raw logs, comparison rankings, and PNGs are archived locally in
+`C:/Users/steve/scratch/kp-bench-render/pdfjs-current-1024-20260924`,
+`C:/Users/steve/scratch/kp-bench-render/pdfjs-current-2048-pages3-20260924`, and
+`C:/Users/steve/scratch/kp-bench-render/pdfjs-pdfium-2048-pages3-20260924`. Focused
+recovery evidence is in
+`C:/Users/steve/scratch/kp-bench-render/ccitt-recovery-20260924` and
+`C:/Users/steve/scratch/kp-bench-render/mask-recovery-20260924`.
+
+## KillerPDF 1.9.0 exact-output speed follow-up
+
+September 8, 2026. Six engine and app commits (`d92dc82` through `f8b9343`) speed
+up rendering without changing any output pixel: all 74 difficult-set pages at 2048 and
+1024 pixels and all 600 shared-set first pages at 1024 pixels hash identically to the
+`0f30226` engine after every step. The engine suite passes 3,702 tests and the app suite
+342, with a clean Release build.
+
+The largest change renders graphics-state soft masks on demand over the area each paint
+reads instead of the whole group bounding box at every `gs`, the approach PDFium takes.
+The others are exact fast paths: untouched soft-mask pixels reuse their backdrop value
+and repeated luminosity colors reuse one conversion, normal blending over opaque pixels
+skips the zero and unit terms, opaque image samples and transparency groups write native
+ink directly, direct image and fill paths keep group alpha and apply under antialiased
+clips where coverage is full, packed image samples read in one step, JPEG blocks skip
+zero coefficients with tabulated chroma products, unprofiled ink converts through a
+table, scratch buffers rent by size bucket, Type 3 encodings are cached, and the app
+splits paints on pages of at least a million pixels across up to four threads.
+
+Measured on the 40-file, 74-page difficult set at 2048 pixels, three pages per file,
+three alternating runs per build, using the app's `--batch-render` while the machine
+was also in interactive use, so absolute figures are noisier than the earlier records.
+
+| Median of three runs | Engine at `0f30226` | Engine at `f8b9343` |
+| --- | ---: | ---: |
+| Render time, 40 shared files | 13.552 s | 11.613 s |
+| Process wall time | 19.254 s | 17.208 s |
+
+The per-file median ratio is 0.887 over the whole set. The soft-mask patches show the
+mask change directly: GWG169 0.29, GWG1611 0.39, GWG182 0.53, GWG130 0.62, GWG1610 0.63,
+with 363_Risk at 0.79, response-to-fiber 0.72, and mipeng 0.87. A separate engine-only
+harness that alternates the two engines in one process and sums per-file CPU time put
+the whole set at 0.80 of the old engine. Against the retained PDFium 1.8.5 figures
+(4.913 s render, 11.102 s wall) the render ratio is about 2.4 and the wall ratio about
+1.55, so the difficult-page gate stays open. The remaining time is JPEG decoding, ICC
+transforms, per-pixel compositing under soft masks, and GC pauses, which the app's
+memory-conservation setting makes more frequent; changing those output pixels or the GC
+policy is outside this pass.
+
+Raw runs: before and after comparison (archived locally: `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-render-informal/2026-09-08-lazy-masks`).
+Application DLL SHA256 after `18DD0EDBD19E3020C56716C79FFA87FF79F4EB49757F3605F7B35A252025F403`,
+before `5B036623B3043B216A638ACCE98D90EA03227AEEC71441895B916A725017F10B`. Memory was not
+sampled in these runs.
+
+## KillerPDF 1.9.0 image-memory follow-up
+
+September 8, 2026: invisible images now stop before codec and mask decoding.
+Four 1024-pixel RGBA regressions allocated 4,217,088 to 7,372,408 bytes before
+the change; each now allocates less than 262,144 bytes. Coverage includes
+off-page, clipped, transparent, and singular placements, plus visible reuse.
+All 74 difficult-set app outputs at 2048 pixels remain byte-identical to the
+available-intent checkpoint. Raw outputs are in
+`C:\Users\steve\scratch\kp-bench-render\legacy-killerpdf-benchmark\cmyk-compositing-20260907\invisible-images-20260908`.
+
+Reduced soft masks now retain only the needed resolution when the full mask
+was decoded solely for reduction. The 1024-pixel thumbnail regression reduces
+decoded cache storage from 4,234,304 to at most 3,185,728 bytes, eliminating
+1 MiB of duplicate retention. Repeat rendering stays below 262,144 allocated
+bytes, and zooming to full mask resolution matches a fresh renderer exactly.
+These are focused allocation and retention results, not whole-app peak-memory
+or speed parity claims.
+An uncached zoom resolution can require decoding the mask again when no full
+mask is retained; zoom latency remains part of the performance gate.
+After both changes, all 74 difficult-set pages remain byte-identical. Final
+outputs are in the sibling `reduced-mask-cache-20260908` directory. The full
+engine suite passes 3,682 tests, the app suite passes 342, and Release builds
+with zero warnings or errors.
+
+## KillerPDF 1.9.0 difficult-page speed follow-up
+
+Measured September 8, 2026, on the 40-file, 74-page difficult set at 2048 pixels
+with three pages per file, three alternating runs per pair, using the app's
+`--batch-render` and the default memory-conservation policy.
+
+| Median of three runs | PDFium 1.8.5 | Engine, color work only | Engine, tuned |
+| --- | ---: | ---: | ---: |
+| Render time, 40 shared files | 4.913 s | 15.275 s | 13.281 s |
+| Process wall time | 11.102 s | 21.182 s | 19.163 s |
+
+The color work (`e15c9e7`) had moved difficult-set rendering from the 13.03 s in
+the memory record to 15.28 s. The tuning commits after it (`3ced1f5` through
+`31f140b`) bring it to 13.28 s, 13.1% below the color-only build and back to the
+pre-color figure, while keeping every color change. Against PDFium the render
+ratio is 2.71 and the wall ratio 1.73, so the difficult-page gate stays open.
+
+The tuning is row-based painting for opaque fills, images, transparency-group
+compositing, and soft-mask sampling, exact byte conversion for plain gray, RGB,
+and unprofiled CMYK image samples, skipped zero-opacity paints outside knockout
+groups, whole-row rectangular ink fills, and `Lock` for the cache gates. All 74
+pages are byte-identical to the color-only build in the engine harness after every
+step. The engine suite passes 3,510 tests, including new parallelism tests.
+
+`PdfRenderOptions.MaximumParallelism` (default 1) is new. With six threads the
+engine harness renders the set 7.5% faster on this machine because only the
+large image and fill paints split by rows; decoding stays sequential. The app
+does not set it. The per-file comparison shows where the remaining gap sits:
+scanned and photographic pages (064034, 42828, balloon) are decode and color
+conversion bound at 1.6 to 2.6 times PDFium, and CMYK pages with profiles and
+many soft masks (Ghent, altona, 363_Risk) are 2.2 to 4 times PDFium.
+
+Raw runs: PDFium comparison (archived locally: `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-render-informal/2026-09-08-difficult-tuning/pdfium`)
+and color-only comparison (archived locally: `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-render-informal/2026-09-08-difficult-tuning/color-only`).
+Tuned application DLL SHA256
+`5A75FC25DD412D69B2BCE8EB165A8A612B71234C1A45698A10616CF455CE4129`, color-only
+`5E6713D0A28EB874B7FE6465FBB092192F13E1AA82E557D1AD31A50A04AC96D1`. Memory was
+not sampled in these runs.
+
+## KillerPDF 1.9.0 batch memory target
+
+Three rotating comparisons put median engine peak working set at 259.2 MiB
+versus PDFium's 269.1 MiB on the difficult 74-page sample, and 477.3 versus
+622.4 MiB on the shared 600-page set. Every engine working-set and private-byte
+peak was below its PDFium comparison. The decisive remaining change was the
+runtime's memory-conservation policy, following the buffer-ownership fixes.
+
+Shared render and wall medians were 2.5% and 1.7% higher than the engine control,
+within the approximately 5% noise allowance. This is not a speed win. All 2,022
+page comparisons preserved prior engine pixels. Suites pass 3,188 engine tests
+and 341 app tests, including with the memory policy enabled. The loose payload
+also loaded the setting and preserved all 74 smoke-test page pixels.
+
+The measured batch memory target passes. High-resolution speed, remaining color
+differences, interactive behavior, and release feature coverage remain open.
+See the memory comparison record (archived locally: `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-memory-parity/README.md`)
+for every run, both engine controls, build identity, and limitations.
+
+On 2026-10-16 the policy moved from level 9 to level 7. On a 3,401-file stress slice, level 7
+cut batch resave CPU time by 11% for 2% more peak memory. A rotating render comparison on the
+same two sets (three runs, identical DLLs, the runtime level as the only engine difference)
+measured level 7 at 614.5 MiB against 627.2 MiB for level 9 on the shared set and 630.3
+against 641.5 MiB on the difficult set, with identical pixels. The current parallel batch
+renderer finishes these sets 2.4 to 2.7 times faster than PDFium 1.8.90, but at either level
+it peaks at about 630 MiB on the difficult set against PDFium's 279 MiB, so the difficult-set
+memory target above no longer holds. Raw data:
+`C:/Users/steve/scratch/kp-bench-render/conserve7-20261016`.
+
+Later on 2026-10-16 the batch renderer stopped defaulting to one file worker per processor.
+A sweep of 1, 2, 3, 4, 6 and 12 workers on the 12-thread test machine showed peak memory
+rising with the worker count (difficult set: 266 MiB at one worker, about 310 at three,
+about 625 at twelve) while wall time flattened past six workers on the shared set and past
+three on the difficult set. The default is now at most six workers, or three above 1024
+pixels; `--parallel` still overrides it. Five alternating pairs against the previous default
+(twelve workers, both at level 7) gave these medians:
+
+| Set | Workers | Wall (s) | CPU (s) | Peak working set (MiB) |
+|---|---|---|---|---|
+| Shared, 1024 px | 12 | 16.98 | 59.06 | 617.8 |
+| Shared, 1024 px | 6 | 17.89 | 57.94 | 535.4 |
+| Difficult, 2048 px | 12 | 4.61 | 26.39 | 636.9 |
+| Difficult, 2048 px | 3 | 8.69 | 27.20 | 321.7 |
+
+Against the PDFium medians above (627 MiB and 24.9 s shared, 279 MiB and 11.1 s difficult),
+the new default uses less memory on the shared set and about 15% more on the difficult set,
+and is faster on both. No worker count above one met the strict difficult-set target in the
+sweep; two workers peaked near 304 MiB without beating PDFium's time. Rendered PNG hashes were
+identical for both defaults on both sets. Another session was building on the machine during
+some shared-set runs, so those wall times are noisier than the difficult-set runs. Raw data:
+`C:/Users/steve/scratch/kp-bench-render/render-parallel-20261016`.
+
+## KillerPDF 1.9.0 memory ownership follow-up
+
+Bounded surfaces, compact clips, explicit scratch lifetimes, shared immutable
+stream storage, and reusable batch pixels reduce allocation pressure. The latest
+single direct comparison used 644.2 MiB versus PDFium's 622.3 MiB on the shared
+600-page set, and 400.1 versus 268.7 MiB on the difficult 74-page set. All 674
+compared pages match the previous engine pixels. Suites pass 3,147 engine and
+341 app tests. These are development checks, not median or release acceptance
+results. Memory parity remains open, and difficult-page rendering remains slower.
+
+See the memory ownership record (archived locally: `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-memory-ownership/README.md`)
+for raw trials, build hashes, heap evidence, and limits.
+
+Normal app rendering now also avoids a duplicate page bitmap and releases session
+references on disposal. An actual app-boundary check on the 74-page sample kept
+all pixels identical and reduced render-call allocation volume by 26.2%. This is
+not a further batch peak-memory result or proof of interactive parity.
+
+## KillerPDF 1.9.0 correctness and memory follow-up
+
+The observed outer soft-mask reset defect is fixed, and unprofiled CMYK
+conversion preserves photograph shadow detail. Profile-dependent color
+differences remain. All 3,119 engine tests and 340 app tests pass.
+
+On the 40-file, 74-page sample at 2048 pixels, avoiding a page copy before PNG
+encoding reduced median peak working set from 783.2 to 590.3 MiB across three
+alternating runs. Wall time was unchanged (17.794 versus 17.801 seconds), and
+all 74 compared output pages were pixel-identical. These are engine-to-engine
+results on the difficult sample, not a new PDFium comparison.
+
+The final 600-file shared-set check completed every file in all three alternating
+runs. All 600 compared pages were pixel-identical. Median peak working set fell
+from 785.1 to 770.4 MiB, only 1.9%, while timing remained within machine noise.
+Separate high-resolution tracing estimates 14.8% fewer allocated bytes after
+both allocation changes. First-page display and scrolling remain unmeasured
+because native UI control was unavailable.
+
+See the correctness and memory record (archived locally: `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-render-correctness/README.md`)
+for the implementation, profile, raw results, and remaining measurement limits.
+
+## KillerPDF 1.9.0 rendering validation follow-up
+
+Measured September 7, 2026, using the retained tuning payload and PDFium 1.8.5.
+The same 600 successful first-page inputs were supplied to both builds at 1024
+pixels, with one warmup and three alternating measured runs each.
+
+| Measurement | PDFium 1.8.5 | Engine 1.9.0 |
+| --- | ---: | ---: |
+| Successful pages in every run | 600 | 600 |
+| Median render time | 11.634 s | 11.593 s |
+| Median whole-pass wall time | 21.989 s | 22.650 s |
+| Median peak working set | 620.3 MiB | 808.0 MiB |
+
+Render time remains at parity. The identical-input whole-pass gap is 3.0%, and
+peak working set is 30.3% higher. This run does not isolate JIT, PNG encoding,
+document opening, or other contributors to the remaining wall-time difference.
+
+The full engine suite passes 3,113 tests and the full app suite passes 338 tests.
+All five previously unverified sidebar tests pass in this session without code
+changes. The earlier FontCache exception was not reproduced; its cause remains
+unconfirmed.
+
+A separate 40-file sample selected from the prior text, shading, and slow-file
+lists rendered 74 pages per build at both 512 and 2048 pixels with no failures.
+It is deliberately biased toward expensive content. At 2048 pixels its one-pass
+wall time was 18.566 s for the engine versus 10.101 s for PDFium. Visible soft-mask
+and color differences remain, including dark rectangles around Ghent text effects
+and distorted image colors. These were also visible in a retained earlier engine
+payload. Successful rendering does not establish visual equivalence.
+
+See the complete follow-up record (archived locally: `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-render-validation/README.md`)
+for raw timings, startup results, build hashes, visual findings, and limitations.
+The band-parallel rendering plan remains a proposal, archived outside this
+repository. Correctness and memory work take priority over enabling it.
+
+## KillerPDF 1.9.0 engine tuning checkpoint
+
+Measured September 7, 2026, after the glyph mask cache, compiled calculator
+functions, rectangular-clip fast paths, pooled raster and Flate buffers, and the
+cross-reference recovery screening landed. Same 649-file conformance collection,
+page one at a maximum dimension of 1024 pixels, one warmup and three alternating
+measured runs per build.
+
+| Measurement | PDFium 1.8.5 | Engine 1.9.0 |
+| --- | ---: | ---: |
+| Rendered / skipped / failed | 600 / 41 / 8 | 614 / 35 / 0 |
+| Median render time on 600 shared files | 12.280 s | 12.196 s |
+| Median document open time on 600 shared files | not logged | 1.483 s |
+| Median whole-pass wall time | 23.209 s | 24.210 s |
+
+Product code: `604aa27`. App SHA256:
+`93B53A97AD8B1853699B5A55C00565FA985E887AE031D99C02207DE4BE6693B4`.
+The engine passes 3,113 tests.
+
+The per-run shared render ratios were 0.930, 1.042, and 0.976; the ratio of the
+medians is 0.993. The 1.8.5 build does not log open time, so its open cost is
+only inside the whole-pass figure. The engine's open time on the same files was
+3.7 s before the recovery screening change. Raw runs and the per-file comparison
+are archived locally in `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-render-informal/2026-09-07-engine-tuning`.
+
+Output changes: the glyph mask cache places cached glyphs at quarter-pixel
+positions, so antialiased text edges can differ from the previous build by up to
+about one eighth of a pixel of coverage; every other change in this checkpoint
+was verified pixel-identical on 190 sampled files. Run-to-run variation on this
+machine is about five percent, so a single run cannot separate the two builds.
+
+## KillerPDF 1.9.0 development checkpoint
+
+Measured September 7, 2026, using page one at a maximum dimension of 1024 pixels
+on the same 649-file conformance collection. Each build had one warmup and three
+alternating measured runs.
+
+| Measurement | PDFium 1.8.5 | Engine 1.9.0 |
+| --- | ---: | ---: |
+| Rendered / skipped / failed | 600 / 41 / 8 | 614 / 35 / 0 |
+| Median render time on 600 shared files | 11.707 s | 13.260 s |
+| Median whole-pass wall time | 22.241 s | 27.176 s |
+| Median sampled peak working set | 641.7 MB | 790.3 MB |
+
+Product code: `a5e4c07`. App SHA256:
+`A61BCA22055D9AFD943EC53507385D94A0C245E47910D4F2DB00997ECB16022F`.
+The engine passes 3,068 tests; the application passes 338 tests.
+
+The shared render ratio is 1.1327. All 614 successful engine images match the
+preceding recovery build. An earlier run measured 1.1582; run variation prevents
+attributing that difference to the intervening OCR confidence correction.
+Working set is sampled every 100 ms. Whole-pass wall time includes startup and
+image encoding and covers each build's accepted files; it does not isolate cold startup.
+
+Rendering without an exception does not prove complete page content or visual
+parity. Broader multipage coverage, color and font differences, OCR accuracy,
+memory use and performance remain ongoing work. Internal run logs and
+investigation notes are maintained outside the application repository.
+
+## KillerPDF 1.8.2 through 1.9.0 open/save benchmarks
+
+KillerPDF 1.8.71 and 1.8.80 received one warmup and five measured open/save passes
+per collection in the same session, with run order alternated. Earlier releases were
+measured in separate release sessions. KillerPDF 1.8.90 and the 1.9.0 development build
+received one warmup and five measured passes per collection on 2026-10-13, in the same
+session with run order alternated.
+
+| Collection | Inputs | 1.8.2 median seconds | 1.8.3 median seconds | 1.8.4 median seconds | 1.8.6 median seconds | 1.8.70 median seconds | 1.8.71 median seconds | 1.8.80 median seconds | 1.8.90 median seconds | 1.9.0 median seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Public regression | 16,696 | 167.891 | 182.093 | 207.099 | 169.360 | 172.706 | 234.392 | 236.493 | 283.235 | 315.899 |
+| Standards and color | 649 | 5.695 | 5.666 | 5.635 | 5.527 | 5.583 | 5.765 | 5.785 | 6.314 | 7.079 |
+| Private stress | 29,599 | 512.967 | 523.400 | 556.740 | 538.026 | 516.800 | 566.869 | 563.538 | 649.380 | 700.286 |
+
+Version 1.8.3 saved 1,485 additional files without losing any previously successful
+input. Versions 1.8.4 and 1.8.6 reproduced every prior outcome and diagnostic detail.
+Version 1.8.70 reproduced every 1.8.6 file outcome and diagnostic detail. Version
+1.8.80 reproduced every 1.8.71 outcome and diagnostic detail across the paired
+warmups and measured passes. Version 1.8.90 reproduced every 1.8.80 outcome and
+diagnostic detail across all passes. In the 2026-10-13 run, version 1.9.0 saved 108 more
+files than 1.8.90 (109 newly saved and one newly failed). That stress input saves in the
+2026-10-15 follow-up, so 1.9.0 now saves 109 more files and loses none. All recorded builds had zero crashes and timeouts in the separate damaged-file safety
+collection. See the
+[1.8.2 release record](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.2.md)
+and the reports and measured runs for [1.8.3](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.3.md) and
+[1.8.4](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.4.md), [1.8.6](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.6.md),
+[1.8.70](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.70.md), [1.8.80](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.80.md), [1.8.90](benchmarks/1.8.90/CORPUS.md), and [1.9.0](benchmarks/1.9.0/CORPUS.md).
+
+Compared directly with 1.8.71 in the alternating session, the 1.8.80 medians were
+0.90% longer for regression, 0.35% longer for standards, and 0.59% shorter for
+stress. All changes remain below the 10% investigation threshold.
+
+Compared directly with 1.8.90 in the alternating session, the 1.9.0 medians were 11.53%
+longer for regression, 12.12% longer for standards, and 7.84% longer for stress. The
+regression and standards changes were above the 10% investigation threshold. The slowest
+1.8.90 pass was faster than the fastest 1.9.0 pass in every collection. One private stress
+input that 1.8.90 saves (`pdf-association/poppler/poppler-81748-0.pdf`) failed in 1.9.0
+with "The signature /M value is not a valid PDF date". Host CPU load was not idle (42% to
+80% in the samples taken) and memory was not measured.
+
+A follow-up on 2026-10-15 rebuilt 1.9.0 after batch resave stopped opening each file twice
+and full rewrites stopped growing their output buffer through repeated copies. Against the
+same 1.8.90 payload, with one warmup and five alternating passes, 1.9.0 regression took
+1.74% longer (within session noise) with 6.45% less CPU time and 56.85% less peak memory,
+and standards took 9.53% less time with 4.87% less CPU time and 37.97% less peak memory. A
+full stress series on a later build, which stops object stream reads from rescanning every
+cross-reference entry, took 7.62% less time with 6.20% less CPU time and 49.37% less peak
+memory. The poppler input now saves, and the
+damaged-file gate matched 1.8.90 with no crashes or timeouts. See the
+[1.9.0 report](benchmarks/1.9.0/CORPUS.md#follow-up-run-on-2026-10-15).
+
+The 1.8.90 corpus medians above were measured on a busy host and are 19.8% (regression),
+9.1% (standards), and 15.2% (stress) above the recorded 1.8.80 medians. A same-session
+check on a quiet host, with 1.8.80 and 1.8.90 built the same way and alternating, measured
+1.8.90 at 222.307 seconds against 228.228 for regression (2.59% shorter) and 5.876 against
+5.999 for standards (2.05% shorter), with equal CPU time and identical per-file logs.
+1.8.90 has no timing regression. See the [1.8.90 report](benchmarks/1.8.90/CORPUS.md).
+
+## KillerPDF 1.8.1 compared with 1.8.0
+
+Benchmark date: 2026-08-29
+
+KillerPDF 1.8.1 completed the shared 2,236-file batch-resave workload in a median
+7.057 seconds, compared with 7.015 seconds for KillerPDF 1.8.0. The 0.6% throughput
+difference is within ordinary run-to-run variation and far below the 10% slowdown
+threshold that requires investigation.
+
+This is a regression benchmark for KillerPDF's real batch-resave path. It is not a
+claim that one PDF engine will be faster for every document or workload.
+
+### Builds under test
+
+| Version | Build | SHA-256 |
+|---|---|---|
+| KillerPDF 1.8.0 | Installed final release | `3D3C53B66A165C9BD26F1DCC1679AF131E69FB0305FF84BB52F53412EA657FCF` |
+| KillerPDF 1.8.1 | Release candidate built from the current source | `B80687668D9ADA6DF4E01D7772E909B90CA8DA9A4B4ACEAC37702AE5FF43F4E9` |
+
+Both executables reported their expected product versions. The 1.8.1 candidate used
+the same installed-payload build shape as the official 1.8.0 application.
+
+### Test system
+
+| Component | Value |
+|---|---|
+| Operating system | Windows 11 Pro 10.0.26200 |
+| CPU | AMD Ryzen 5 3600 6-Core Processor |
+| Memory | 32 GB DDR4-3200 |
+| Storage | 2 TB SPCC M.2 PCIe NVMe SSD |
+
+### Corpus
+
+The input was the same 2,236-file public conformance subset used for the 1.8.0
+release benchmark. Keeping the input fixed makes the two runs directly comparable.
+
+The shared input contains public veraPDF, Isartor, and TWG conformance files. The
+same input directory was supplied to both versions for every run.
+
+### Method
+
+1. Verify that both executables report the intended final product versions.
+2. Verify the release asset hashes and count the input PDFs recursively.
+3. Give each version one unmeasured warmup run.
+4. Run each version five measured times.
+5. Alternate which version runs first to reduce ordering bias from caching, machine
+   temperature, and background activity.
+6. Use a fresh output directory for every run.
+7. Record elapsed wall-clock time, successful output count, process exit code, and
+   files processed per second.
+8. Compare the median of the five measured runs instead of selecting the best run.
+
+Every measured run processed all 2,236 files and returned exit code 0.
+
+### Results
+
+| Version | Runs | Median time | Minimum | Maximum | Median files per second |
+|---|---:|---:|---:|---:|---:|
+| KillerPDF 1.8.0 | 5 | 7.015 seconds | 6.916 seconds | 7.217 seconds | 318.73 |
+| KillerPDF 1.8.1 | 5 | 7.057 seconds | 6.815 seconds | 7.326 seconds | 316.86 |
+
+The raw measurements are preserved in
+[`benchmarks/1.8.1/benchmark-results.csv`](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/shared-subset/1.8.1/benchmark-results.csv),
+with the calculated medians in
+[`benchmarks/1.8.1/benchmark-summary.csv`](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/shared-subset/1.8.1/benchmark-summary.csv).
+
+## KillerPDF 1.8.0 compared with 1.7.5
+
+Benchmark date: 2026-08-28
+
+KillerPDF 1.8.0 completed the shared 2,236-file batch-resave workload in a median
+10.013 seconds, compared with 16.167 seconds for KillerPDF 1.7.5. That is a 38.1%
+reduction in elapsed time. Median throughput increased from 138.31 to 223.32 files
+per second.
+
+### Builds under test
+
+| Version | Build | SHA-256 |
+|---|---|---|
+| KillerPDF 1.7.5 | Official GitHub release executable | `C53B34C5847ABE24228226656C00EFF5F76396D2BD8AD1BE8FDBAC56B153B136` |
+| KillerPDF 1.8.0 | Installed final release | `3D3C53B66A165C9BD26F1DCC1679AF131E69FB0305FF84BB52F53412EA657FCF` |
+
+The downloaded 1.7.5 executable matched the digest published for the v1.7.5 GitHub
+release asset. Both executables reported their expected final product versions.
+
+### Corpus note
+
+KillerPDF 1.7.5 could not process the PDF 2.0 files in the full 2,907-file corpus,
+so those files were excluded from both runs to keep the comparison equivalent.
+
+### Results
+
+| Version | Runs | Median time | Minimum | Maximum | Median files per second |
+|---|---:|---:|---:|---:|---:|
+| KillerPDF 1.7.5 | 5 | 16.167 seconds | 15.675 seconds | 16.687 seconds | 138.31 |
+| KillerPDF 1.8.0 | 5 | 10.013 seconds | 9.451 seconds | 11.518 seconds | 223.32 |
+
+The raw measurements are preserved in
+[`benchmarks/1.8.0/benchmark-results.csv`](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/shared-subset/1.8.0/benchmark-results.csv),
+with the calculated medians in
+[`benchmarks/1.8.0/benchmark-summary.csv`](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/shared-subset/1.8.0/benchmark-summary.csv).
+
+## Reproducing the benchmark
+
+[`Benchmark-Versions.ps1`](../tools/validation/Benchmark-Versions.ps1) runs the complete warmup,
+alternating measurement, logging, cleanup, and summary process. Run it from
+PowerShell with two KillerPDF executables and one shared input tree:
+
+```powershell
+..\tools\validation\Benchmark-Versions.ps1 `
+    -BaselineExe 'C:\path\to\KillerPDF-previous.exe' `
+    -CandidateExe 'C:\path\to\KillerPDF-current.exe' `
+    -InputDirectory 'C:\path\to\shared-corpus' `
+    -OutputDirectory "$env:USERPROFILE\scratch\kp-bench-render\measured" `
+    -Runs 5 `
+    -BaselineLabel 'KillerPDF previous' `
+    -CandidateLabel 'KillerPDF current'
+```
+
+The output directory must be inside the current user's profile. The script creates
+and removes only its own `output-*` run directories. It keeps the per-run logs,
+`benchmark-results.csv`, and `benchmark-summary.csv`.
+
+For a useful comparison, close other demanding applications, keep the machine on
+the same power plan, use the same corpus and storage device, and do not compare
+absolute numbers from different computers. The relative change between two builds
+measured in the same session is the result that matters.
+
+## Release baseline
+
+For each final release:
+
+1. Compare the previous official release with the proposed final build.
+2. Use the same machine, corpus, run count, and method.
+3. Save the raw CSV files under `validation/benchmarks/<version>/`.
+4. Add the new release result to this report.
+5. Investigate a median slowdown of 10% or more before release. A slowdown is not
+   automatically a failure, but it must be understood and documented.

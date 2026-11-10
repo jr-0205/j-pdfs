@@ -1,0 +1,163 @@
+using System.IO;
+using KillerPdf.Engine.Fonts;
+
+namespace KillerPDF.Services;
+
+internal sealed class InstalledPdfFontResolver : IPdfFontResolver
+{
+    internal static InstalledPdfFontResolver Instance { get; } = new();
+
+    // Face bytes are held weakly. The fonts a renderer parsed keep their bytes alive while a
+    // document is open, and faces no open document uses can be collected instead of staying
+    // for the life of the process. A null entry records that nothing is installed.
+    private readonly Dictionary<PdfFontRequest, WeakReference<byte[]>?> _cache = [];
+    private readonly Dictionary<(string Family, bool Bold, bool Italic), WeakReference<byte[]>?>
+        _familyCache = [];
+    private readonly Dictionary<string, WeakReference<byte[]>?> _standardFaceCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Lock _gate = new();
+    private static readonly HashSet<string> StyleWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Bold", "Italic", "BoldItalic", "Oblique", "BoldOblique", "Regular", "Roman"
+    };
+
+    public byte[]? Resolve(PdfFontRequest request)
+    {
+        lock (_gate)
+        {
+            if (TryCached(_cache, request, out byte[]? cached)) return cached;
+            DetectedPdfFontStyle style = PdfFontStyle.FromPdfName(request.PostScriptName);
+            bool standardAlias = style.Family.Equals("Courier New", StringComparison.OrdinalIgnoreCase)
+                || style.Family.Equals("Arial", StringComparison.OrdinalIgnoreCase)
+                || style.Family.Equals("Times New Roman", StringComparison.OrdinalIgnoreCase);
+            bool bold = standardAlias ? style.Bold : IsBold(request.PostScriptName);
+            bool italic = standardAlias ? style.Italic : IsItalic(request.PostScriptName);
+            byte[]? resolved = null;
+            if (standardAlias)
+            {
+                // A width or weight family built on a standard one ("Arial Black", "Arial
+                // Narrow") is a face of its own; use it when installed.
+                string specific = NormalizeFamily(request.PostScriptName);
+                if (specific.StartsWith(style.Family + " ", StringComparison.OrdinalIgnoreCase)
+                    && !StyleWords.Contains(specific[(style.Family.Length + 1)..]))
+                    resolved = FaceBytes(specific, bold, italic);
+                resolved ??= StandardWindowsFace(style.Family, bold, italic);
+            }
+            resolved ??= Candidates(request, style.Family)
+                .Select(family => FaceBytes(family, bold, italic))
+                .FirstOrDefault(bytes => bytes is not null);
+            return Remember(_cache, request, resolved);
+        }
+    }
+
+    // Every request that maps to one standard face shares a single array, so the several PDF
+    // names for a face hold one copy of its file instead of one copy per name.
+    private byte[]? StandardWindowsFace(string family, bool bold, bool italic)
+    {
+        string? fileName = (family, bold, italic) switch
+        {
+            ("Arial", false, false) => "arial.ttf",
+            ("Arial", true, false) => "arialbd.ttf",
+            ("Arial", false, true) => "ariali.ttf",
+            ("Arial", true, true) => "arialbi.ttf",
+            ("Times New Roman", false, false) => "times.ttf",
+            ("Times New Roman", true, false) => "timesbd.ttf",
+            ("Times New Roman", false, true) => "timesi.ttf",
+            ("Times New Roman", true, true) => "timesbi.ttf",
+            ("Courier New", false, false) => "cour.ttf",
+            ("Courier New", true, false) => "courbd.ttf",
+            ("Courier New", false, true) => "couri.ttf",
+            ("Courier New", true, true) => "courbi.ttf",
+            _ => null
+        };
+        if (fileName is null) return null;
+        if (TryCached(_standardFaceCache, fileName, out byte[]? cached)) return cached;
+        byte[]? bytes = null;
+        string windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        if (windows.Length > 0)
+        {
+            string path = Path.Combine(windows, "Fonts", fileName);
+            try { bytes = File.Exists(path) ? File.ReadAllBytes(path) : null; }
+            catch (IOException) { bytes = null; }
+            catch (UnauthorizedAccessException) { bytes = null; }
+        }
+        return Remember(_standardFaceCache, fileName, bytes);
+    }
+
+    private byte[]? FaceBytes(string family, bool bold, bool italic)
+    {
+        var key = (family, bold, italic);
+        return TryCached(_familyCache, key, out byte[]? bytes) ? bytes
+            : Remember(_familyCache, key, InstalledFontCatalog.FaceBytes(family, bold, italic));
+    }
+
+    private static bool TryCached<TKey>(Dictionary<TKey, WeakReference<byte[]>?> cache, TKey key,
+        out byte[]? bytes) where TKey : notnull
+    {
+        bytes = null;
+        if (!cache.TryGetValue(key, out WeakReference<byte[]>? entry)) return false;
+        return entry is null || entry.TryGetTarget(out bytes);
+    }
+
+    private static byte[]? Remember<TKey>(Dictionary<TKey, WeakReference<byte[]>?> cache, TKey key,
+        byte[]? bytes) where TKey : notnull
+    {
+        cache[key] = bytes is null ? null : new WeakReference<byte[]>(bytes);
+        return bytes;
+    }
+
+    private static IEnumerable<string> Candidates(PdfFontRequest request, string styleFamily)
+    {
+        string name = NormalizeFamily(request.PostScriptName);
+        if (name.Length > 0) yield return name;
+        // The style parser splits CamelCase names ("ArialNarrow" -> "Arial Narrow").
+        if (name.Length > 0 && !name.Equals(styleFamily, StringComparison.OrdinalIgnoreCase))
+            yield return styleFamily;
+        if (Contains(name, "emoji") && !name.Equals("Segoe UI Emoji", StringComparison.OrdinalIgnoreCase))
+            yield return "Segoe UI Emoji";
+
+        bool serif = Contains(name, "min") || Contains(name, "ming")
+            || Contains(name, "song") || Contains(name, "serif");
+        string[] fallbacks = request.Ordering switch
+        {
+            "Japan1" when serif => ["Yu Mincho", "MS Mincho", "Meiryo", "Yu Gothic", "MS Gothic"],
+            "Japan1" => ["Yu Gothic", "Meiryo", "MS Gothic"],
+            "GB1" when serif => ["SimSun", "Microsoft YaHei"],
+            "GB1" => ["Microsoft YaHei", "SimSun"],
+            "CNS1" when serif => ["PMingLiU", "Microsoft JhengHei"],
+            "CNS1" => ["Microsoft JhengHei", "PMingLiU"],
+            "Korea1" when serif => ["Batang", "Malgun Gothic"],
+            "Korea1" => ["Malgun Gothic", "Batang"],
+            _ => []
+        };
+        foreach (string family in fallbacks)
+            if (!family.Equals(name, StringComparison.OrdinalIgnoreCase)) yield return family;
+    }
+
+    private static string NormalizeFamily(string value)
+    {
+        int comma = value.IndexOf(',');
+        if (comma >= 0) value = value[..comma];
+        string[] suffixes =
+        [
+            "-BoldItalic", "-BoldOblique", "-SemiboldItalic", "-Bold",
+            "-Semibold", "-Italic", "-Oblique", "PSMT", "MT"
+        ];
+        foreach (string suffix in suffixes)
+            if (value.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                value = value[..^suffix.Length];
+                break;
+            }
+        return value.Replace('-', ' ').Trim();
+    }
+
+    private static bool IsBold(string value) => Contains(value, "bold")
+        || Contains(value, "semibold") || Contains(value, "demi")
+        || Contains(value, "black") || Contains(value, "heavy");
+
+    private static bool IsItalic(string value) => Contains(value, "italic")
+        || Contains(value, "oblique") || value.EndsWith("-It", StringComparison.OrdinalIgnoreCase);
+
+    private static bool Contains(string value, string part) =>
+        value.Contains(part, StringComparison.OrdinalIgnoreCase);
+}
