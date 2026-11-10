@@ -1,36 +1,44 @@
-<p align="center">
-  <a href="https://jpdfs.net"><img src="docs/wordmark.png" height="180" alt="JPDFs wordmark: a free, open-source PDF editor for Windows"></a>
-</p>
-
 # JPDFs 1.9
 
-JPDFs is a free, open-source PDF editor for Windows. Read, annotate, edit, organize, sign, redact and convert documents in one app, locally and without an account. Version 1.9 uses its own PDF engine for rendering, text extraction, editing and document processing.
+**A modern PDF workspace for Windows.** JPDFs brings document reading, editing, organization, conversion and protection together in one desktop application. It is designed to keep everyday PDF work in one place, with a native Windows experience and local document handling.
 
-<p align="center">
-  <a href="docs/readme-two-page.png"><img src="docs/readme-two-page.png" width="49%" alt="A six-page guide open in Two-Page view with the Dark theme, the page strip on the left and the full toolbar across the top"></a>
-  <a href="docs/readme-markup.png"><img src="docs/readme-markup.png" width="49%" alt="Highlights, a pen circle and a text box on a page, with the paragraph editing bar open above it"></a>
-  <a href="docs/readme-compare.png"><img src="docs/readme-compare.png" width="49%" alt="Two versions of a guide compared side by side with the changed photo outlined in both panes"></a>
-  <a href="docs/readme-sidebar-top.png"><img src="docs/readme-sidebar-top.png" width="49%" alt="The page strip docked across the top of the window with the Greed theme"></a>
-</p>
+> JPDFs is the current product identity and name used throughout this documentation. Legacy promotional artwork and screenshots have been retired from this page so that the documentation presents the current project consistently.
 
-## What you can do
+## At a glance
 
-- Read documents in tabs or split panes, search text, follow bookmarks, and inspect comments, attachments, layers and signatures. Dock the sidebar on any side of the window and put the tabs at the top or the bottom.
-- Add text, drawings, highlights, shapes, stamps, images, measurements and reusable signatures. Edit a page's own text line by line or by paragraph, or change matching text everywhere with Find and Replace.
-- Merge, split, extract, reorder, rotate, crop, resize and straighten pages. Compare two documents side by side with the changes marked.
-- Run OCR on scans, review the recognized words, and save searchable copies or convert a scan into real text.
-- Export to Word, Excel, PowerPoint, HTML, Markdown, text, JSON or page images, and review detected tables before they go to XLSX or CSV. Convert Word and Excel files to PDF.
-- Create and fill forms, recognize fields, flatten forms, and exchange form data and comments through FDF or XFDF.
-- Redact by area, text search or sensitive-data pattern, verify the result, and save a separate redacted copy.
-- Protect copies with passwords or certificate recipients. Sign PDFs and inspect signature integrity, certificate chains, timestamps and later changes.
-- Repeat work with guided tasks, macros, watched folders, data merge and the command line.
-- Choose from 13 themes and 20 interface languages, customize shortcuts, and scale the whole interface.
+- **Read and navigate:** open documents in tabs or split panes, search text, use bookmarks and inspect comments, attachments, layers and signatures.
+- **Edit and annotate:** add text, drawings, highlights, shapes, stamps, images, measurements and reusable signatures. Edit supported text line by line or by paragraph.
+- **Organize pages:** merge, split, extract, reorder, rotate, crop, resize and straighten pages. Compare two documents side by side.
+- **Recognize scanned documents:** run OCR, review recognized text and save searchable copies.
+- **Convert documents:** export to Word, Excel, PowerPoint, HTML, Markdown, text, JSON or images. Convert supported Word and Excel files to PDF.
+- **Work with forms:** create and fill forms, recognize fields, flatten forms, and exchange form data and comments through FDF or XFDF.
+- **Protect information:** redact by area, text search or sensitive-data pattern; protect copies with passwords or certificate recipients; inspect digital signatures.
+- **Automate repeated work:** use guided tasks, macros, watched folders, data merge and command-line tools.
+- **Personalize the workspace:** choose from 13 themes and 20 interface languages, customize shortcuts and scale the interface.
 
-Source-text and paragraph editing work on supported layouts and fonts; scanned pages need OCR first. Exported Office files can change layout, so review them before sharing. Signature reports distinguish failed checks from evidence that is unavailable or has not been checked.
+## A workspace built around documents
+
+JPDFs combines document navigation, editing tools and page organization in a single desktop workspace. The interface supports tabbed documents, split views and a dockable sidebar. Tool availability depends on the document type and the operation being performed.
+
+The application also includes workflows for OCR, conversion, redaction, forms, signatures and batch operations. These tools are intended to make common document tasks accessible without requiring a separate utility for every operation.
+
+## Important limitations
+
+Text and paragraph editing depend on the source PDF's layout and fonts. Scanned pages need OCR before their text can be edited. Exported Office documents may not preserve every detail of the original layout, so review converted files before distributing them. Signature reports distinguish failed checks from evidence that is unavailable or has not been checked.
 
 ## Get JPDFs
 
-Downloads and the [user guide](https://jpdfs.net/help) are at [jpdfs.net](https://jpdfs.net). Install it, run the portable package, or get it from the Microsoft Store, Chocolatey or WinGet. The [release assets](https://github.com/JPDFs/JPDFs/releases) include every package and the source archives. OCR language models download separately from inside the app.
+Downloads, release notes and the user guide are available from the [official JPDFs website](https://jpdfs.net). You can also find installers, portable packages and source archives on the [GitHub releases page](https://github.com/JPDFs/JPDFs/releases).
+
+## Documentation
+
+- [Product overview and capabilities](docs/PRODUCT-OVERVIEW.md)
+- [Application changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
+- [Engine documentation](engine/README.md)
+- [Engine changelog](engine/CHANGELOG.md)
+- [Translation guide](TRANSLATING.md)
+- [Layered architecture and migration plan](docs/architecture/LAYERED-ARCHITECTURE.md)
 
 ## Build and test
 
@@ -43,14 +51,7 @@ dotnet test engine/JPDFs.Engine.Tests/JPDFs.Engine.Tests.csproj
 dotnet test JPDFs.Tests/JPDFs.Tests.csproj
 ```
 
-A few app tests open WPF windows. Run them on an unlocked desktop and follow the prerequisites in the [UI smoke guide](tests/JPDFs.UiSmoke/README.md). Build and test one checkout at a time.
-
-- [Application changelog](CHANGELOG.md)
-- [Contributing](CONTRIBUTING.md)
-- [Engine documentation](engine/README.md)
-- [Engine changelog](engine/CHANGELOG.md)
-- [Translation guide](TRANSLATING.md)
-- [Layered architecture and migration plan](docs/architecture/LAYERED-ARCHITECTURE.md)
+A few application tests open WPF windows. Run them on an unlocked desktop and follow the prerequisites in the [UI smoke guide](tests/JPDFs.UiSmoke/README.md). Build and test one checkout at a time.
 
 ## License
 
