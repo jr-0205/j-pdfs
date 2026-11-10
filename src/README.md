@@ -4,7 +4,7 @@
 
 # JPDFs 1.9
 
-JPDFs is a free, open-source PDF editor for Windows. Read, annotate, edit, organize, sign, redact and convert documents in one app, locally and without an account. Version 1.9 runs on JPDFs's own PDF engine for rendering, text extraction, editing and document processing.
+JPDFs is a free, open-source PDF editor for Windows. Read, annotate, edit, organize, sign, redact and convert documents in one app, locally and without an account. Version 1.9 uses its own PDF engine for rendering, text extraction, editing and document processing.
 
 <p align="center">
   <a href="docs/readme-two-page.png"><img src="docs/readme-two-page.png" width="49%" alt="A six-page guide open in Two-Page view with the Dark theme, the page strip on the left and the full toolbar across the top"></a>
@@ -26,7 +26,7 @@ JPDFs is a free, open-source PDF editor for Windows. Read, annotate, edit, organ
 - Repeat work with guided tasks, macros, watched folders, data merge and the command line.
 - Choose from 13 themes and 20 interface languages, customize shortcuts, and scale the whole interface.
 
-Source-text and paragraph editing work on supported layouts and fonts; scanned pages need OCR first. Exported Office files can change layout, so review them before sharing. Signature reports tell failed checks apart from evidence that is unavailable or has not been checked.
+Source-text and paragraph editing work on supported layouts and fonts; scanned pages need OCR first. Exported Office files can change layout, so review them before sharing. Signature reports distinguish failed checks from evidence that is unavailable or has not been checked.
 
 ## Get JPDFs
 
