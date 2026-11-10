@@ -4,9 +4,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
     /// Outward stubs: the annotation, text, crop, form and link members under the names the rest of

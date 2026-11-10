@@ -7,7 +7,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Collections.Generic;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>Crossfades palette changes without entering the window's measure/arrange pass.</summary>
     internal static class ThemeTransition

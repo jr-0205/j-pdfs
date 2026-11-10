@@ -21,6 +21,6 @@ foreach ($stale in @('PDFium rendering', 'pdfium rendering', 'PDFIUM')) {
     }
     if (-not $rejected) { throw 'Expected stale PDFium listing rejection.' }
 }
-Assert-ReleaseStoreListing "Field,Type,English`nDescription,Text,KillerPDF engine"
-Assert-ReleaseStoreListing ([IO.File]::ReadAllText((Join-Path $root 'store\KillerPDF-Store-listing.csv')))
+Assert-ReleaseStoreListing "Field,Type,English`nDescription,Text,JPDFs engine"
+Assert-ReleaseStoreListing ([IO.File]::ReadAllText((Join-Path $root 'store\JPDFs-Store-listing.csv')))
 Write-Host 'PASS release Store listing rejection fixtures and current CSV.'

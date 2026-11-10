@@ -1,10 +1,10 @@
-using KillerPDF.Controls;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
+using JPDFs.Controls;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
 using System.IO;
 using System.Windows.Media;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static class RedactionPageEdit
 {

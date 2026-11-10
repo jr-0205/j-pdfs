@@ -1,7 +1,7 @@
 #nullable enable
 using System;
 
-namespace KillerFamily.CommandLine
+namespace JpdfsUi.CommandLine
 {
     /// <summary>Recognizes app commands without taking filenames or normal launches away from the UI.</summary>
     public static class CommandLineEntry

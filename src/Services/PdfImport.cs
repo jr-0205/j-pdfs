@@ -1,12 +1,12 @@
 using System.IO;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // ============================================================
     // File import/repair helpers - pure functions over paths and
     // PdfDocuments, no window state. Split out of FileOperations.cs
-    // and ImportAndZip.cs (KillerUI refactor); shared by the GUI
+    // and ImportAndZip.cs (JpdfsUiKit refactor); shared by the GUI
     // open/merge/repair paths, TempReload, and the CLI. The one
     // import helper NOT here is TryPdfiumStripEncryption - it rides
     // the shared PDFium interop block (and its lock), which stays
@@ -109,7 +109,7 @@ namespace KillerPDF.Services
 
         /// <summary>
         /// Strategy 1 worker (background-safe, no UI/_doc access): imports the complete source
-        /// graph through The KillerPDF.Engine into a clean temp PDF and returns its path.
+        /// graph through The JPDFs.Engine into a clean temp PDF and returns its path.
         /// </summary>
         internal static string? RepairViaImportToFile(string path)
         {

@@ -1,7 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static class PdfZipExport
 {

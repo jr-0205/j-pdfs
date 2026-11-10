@@ -13,7 +13,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace KillerFamily.Accessibility
+namespace JpdfsUi.Accessibility
 {
     internal static class AccessibleControls
     {

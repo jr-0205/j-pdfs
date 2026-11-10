@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][string]$EvidenceRoot
 )
 # Checks that single-output CLI commands refuse to write over their own input and publish
-# their output atomically. Runs the built KillerPDF.dll through dotnet against synthetic PDFs.
+# their output atomically. Runs the built JPDFs.dll through dotnet against synthetic PDFs.
 
 $ErrorActionPreference = 'Stop'
 $runRoot = Join-Path $EvidenceRoot ('cli-output-' + [guid]::NewGuid().ToString('N'))

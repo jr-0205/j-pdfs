@@ -1,10 +1,10 @@
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
-    /// APP-OWNED: what the kit's language switch (Shell/Language.cs) needs from KillerPDF. The
+    /// APP-OWNED: what the kit's language switch (Shell/Language.cs) needs from JPDFs. The
     /// toolbar rebuild after a language change is the kit's (ToolbarStyle.cs), and the shortcuts
     /// card reopens in the view it was showing.
-    /// KillerPDF's remaining code-built text is rebuilt in RelocalizeAppUi (SettingsPanel.cs).
+    /// JPDFs's remaining code-built text is rebuilt in RelocalizeAppUi (SettingsPanel.cs).
     /// </summary>
     public partial class MainWindow
     {

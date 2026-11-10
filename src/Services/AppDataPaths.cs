@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static class AppDataPaths
 {

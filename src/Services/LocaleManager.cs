@@ -3,9 +3,9 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
-    // The family's 20 UI languages, KillerPDF's set and names. en-US is always the base layer, so a
+    // The family's 20 UI languages, JPDFs's set and names. en-US is always the base layer, so a
     // locale that omits a key falls back to English; the chosen locale's file layers on top.
     //
     // The choice is saved by NAME, not ordinal, so members can be reordered freely - but keep these
@@ -40,7 +40,7 @@ namespace KillerPDF.Services
         public static event Action? LocaleChanged;
 
         // The override dictionary this class merged, found again by reference. A fixed slot is
-        // not safe: an app merges its own dictionaries after the strings (KillerScan's App.xaml
+        // not safe: an app merges its own dictionaries after the strings (JpdfsScan's App.xaml
         // does), and replacing or removing "slot 3" overwrote or dropped them on a language switch.
         private static ResourceDictionary? _override;
 
@@ -49,7 +49,7 @@ namespace KillerPDF.Services
         public static string Loc(string key) =>
             Application.Current.TryFindResource(key) as string ?? key;
 
-        // ---- Translator test mode (KillerPDF #211) ----
+        // ---- Translator test mode (JPDFs #211) ----
         // --lang-file <path> reads an external translation file into the override slot, winning
         // over the saved locale, and re-applies it on every save of the file, so a translator can
         // check string length and context in the live app before the file is built in. Keys the
@@ -85,8 +85,8 @@ namespace KillerPDF.Services
 
         /// <summary>
         /// The saved "Locale" setting, including names an app stored before the enum was unified:
-        /// KillerScan saved Japanese as "Ja" where the family name is "JaJP", and Killendar,
-        /// KillerShell and KillerShot saved Czech and Italian as "Cs" and "It".
+        /// JpdfsScan saved Japanese as "Ja" where the family name is "JaJP", and Killendar,
+        /// JpdfsShell and JpdfsShot saved Czech and Italian as "Cs" and "It".
         /// </summary>
         private static Locale? ParseSaved(string? saved)
         {

@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Scan to PDF (#73): pick the scanner and whether its own settings window opens first.
 internal sealed class ScanDialog : Window

@@ -5,7 +5,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// The procedural film grain the whole app is textured with. One tile, shared by every grain
@@ -35,7 +35,7 @@ namespace KillerPDF.Controls
         private static readonly bool[] Leaning = new bool[Size * Size];
         private static readonly Dictionary<int, BitmapSource> Cache = new();
         // Every tracked brush binds its ImageSource to this one. A bound brush cannot be frozen, so a
-        // style or template that seals it (a StaticResource grain layer, KillerPDF) leaves it live, and
+        // style or template that seals it (a StaticResource grain layer, JPDFs) leaves it live, and
         // a theme change repaints it instead of throwing on a frozen brush.
         private static readonly ImageBrush TileSource = new();
         private static BitmapSource? _current;

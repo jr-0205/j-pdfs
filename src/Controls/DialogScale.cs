@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 /// <summary>Draws a dialog at the app's scale, like the window it opens over.</summary>
 internal static class DialogScale

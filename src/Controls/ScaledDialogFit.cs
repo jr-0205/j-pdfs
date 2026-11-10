@@ -1,4 +1,4 @@
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 /// <summary>Keeps a dialog drawn at the app's scale usable. Its controls grow with the scale, so a
 /// minimum size in plain pixels stops holding them, and a fixed field outgrows its own scroll area.</summary>

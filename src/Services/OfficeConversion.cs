@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Raised when an older .doc or .xls file needs Word or Excel and it is not installed.</summary>
 internal sealed class OfficeNotInstalledException(string application)
@@ -13,7 +13,7 @@ internal sealed class OfficeNotInstalledException(string application)
 }
 
 /// <summary>
-/// Document to PDF (#74). Word .docx and Excel .xlsx files are converted by KillerPDF itself.
+/// Document to PDF (#74). Word .docx and Excel .xlsx files are converted by JPDFs itself.
 /// The older binary .doc and .xls formats are exported through Word or Excel when installed,
 /// in a hidden instance that is closed afterwards. The file's content decides the route, so a
 /// .doc that is really a .docx package converts internally.
@@ -52,7 +52,7 @@ internal static class OfficeConversion
 
     private static byte[] InstalledOffice(string path, bool word, Func<bool, object> createApplication, TimeSpan timeout)
     {
-        string output = Path.Combine(Path.GetTempPath(), $"KillerPDF-convert-{Guid.NewGuid():N}.pdf");
+        string output = Path.Combine(Path.GetTempPath(), $"JPDFs-convert-{Guid.NewGuid():N}.pdf");
         Exception? failure = null;
         var session = new ExportSession();
         var thread = new Thread(() =>
@@ -131,7 +131,7 @@ internal static class OfficeConversion
         private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
     }
 
-    // Late-bound so KillerPDF needs no Office interop assemblies. An instance that was already
+    // Late-bound so JPDFs needs no Office interop assemblies. An instance that was already
     // visible or has existing documents is left running with its documents.
     private static void Export(string path, string output, bool word, Func<bool, object> createApplication,
         ExportSession session)

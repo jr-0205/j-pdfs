@@ -1,5 +1,5 @@
-using KillerPdf.Engine.Documents;
-namespace KillerPDF.Services
+using JPDFs.Engine.Documents;
+namespace JPDFs.Services
 {
     /// <summary>
     /// Uses an installed engine recognition model when one is available, with Tesseract retained as

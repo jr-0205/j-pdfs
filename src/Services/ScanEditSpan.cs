@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The words of a scanned line an edit really changes: original words First through Last
 /// give way to Replacement, and everything else keeps its scanned look.</summary>

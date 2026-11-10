@@ -1,6 +1,6 @@
-using KillerPdf.Engine.Filters;
+using JPDFs.Engine.Filters;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed class WicJpegDecoder : IPdfJpegDecoder
 {

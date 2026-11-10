@@ -10,7 +10,7 @@ Add a page and register the attachment before placing an icon that refers to it.
 Page indexes are zero-based; annotation coordinates and size are PDF points.
 
 ```csharp
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
 static byte[] CreateAttachmentSample()
 {
@@ -61,7 +61,7 @@ The following example creates the host-selected directory and refuses to overwri
 an existing file:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static string ExtractSampleAttachment(byte[] source, string outputDirectory)
 {
@@ -89,8 +89,8 @@ Use `PdfIncrementalPageEditor` for document-level attachment registration and
 payload edits, then call `Build` and reopen the returned bytes:
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
 
 static byte[] ReplaceSampleAttachment(byte[] source)
 {
@@ -146,7 +146,7 @@ return updated bytes for the corresponding metadata. `Clear` removes collection
 presentation metadata. These operations do not extract files or run an initial
 document; the host decides how to display the portfolio and open selected content.
 
-See [PdfAttachmentReader](../KillerPdf.Engine/Documents/PdfAttachmentReader.cs),
-[PdfAttachmentComparison](../KillerPdf.Engine/Documents/PdfAttachmentComparison.cs),
-[PdfCollectionReader](../KillerPdf.Engine/Documents/PdfCollectionReader.cs), and
-[PdfCollectionEditor](../KillerPdf.Engine/Editing/PdfCollectionEditor.cs).
+See [PdfAttachmentReader](../JPDFs.Engine/Documents/PdfAttachmentReader.cs),
+[PdfAttachmentComparison](../JPDFs.Engine/Documents/PdfAttachmentComparison.cs),
+[PdfCollectionReader](../JPDFs.Engine/Documents/PdfCollectionReader.cs), and
+[PdfCollectionEditor](../JPDFs.Engine/Editing/PdfCollectionEditor.cs).

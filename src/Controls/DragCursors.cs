@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Input;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // ============================================================
     // The family grab cursors: an open hand while hovering something

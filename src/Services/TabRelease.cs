@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>What a tab gives up when it closes, by any route: Close, Close All Tabs, or its window
 /// closing.</summary>

@@ -1,7 +1,7 @@
-<UserControl x:Class="KillerPDF.Controls.PdfViewer"
+<UserControl x:Class="JPDFs.Controls.PdfViewer"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:KillerPDF.Controls"
+             xmlns:local="clr-namespace:JPDFs.Controls"
              Focusable="True" IsTabStop="False">
     <!-- One document view: this pane's tab strip and its card.
 
@@ -28,7 +28,7 @@
                 <ContextMenu Opened="TabPlacementMenu_Opened"/>
             </Border.ContextMenu>
             <Grid>
-                <!-- Match KillerShell: the strip is transparent and does not paint another grain
+                <!-- Match JpdfsShell: the strip is transparent and does not paint another grain
                      tile over the window's existing background. Only the opaque active tab
                      replaces that shared grain below. -->
                 <Border x:Name="TabStripFade" IsHitTestVisible="False"
@@ -187,7 +187,7 @@
                                                     CornerRadius="{Binding CornerRadius, ElementName=tabBd}" Margin="-12,-4,-5,-5"
                                                     Background="{DynamicResource GrainTileBrush}" Opacity="0"/>
                                             <!-- TabTitleFontSize / TabCloseFontSize (ThemeManager): 12 and
-                                                 17 to match KillerShell, 11 and 14 on 98SE. -->
+                                                 17 to match JpdfsShell, 11 and 14 on 98SE. -->
                                             <DockPanel x:Name="tabContents" LastChildFill="True" VerticalAlignment="Center"
                                                        RenderTransform="{DynamicResource TabPlacementTransform}" RenderTransformOrigin="0.5,0.5">
                                                 <Button x:Name="tabClose" DockPanel.Dock="Right" Content="x"
@@ -315,7 +315,7 @@
                                         <!-- One pane open (neither focused nor dimmed): the active tab's
                                              sides fade out toward its foot instead of stopping dead, and
                                              RetroTabBorder runs the card's edge up beneath them, the same
-                                             as KillerShell. 98SE's focus thickness is 0 and its focus
+                                             as JpdfsShell. 98SE's focus thickness is 0 and its focus
                                              padding is its active padding, so nothing there changes. -->
                                         <MultiDataTrigger>
                                             <MultiDataTrigger.Conditions>
@@ -444,7 +444,7 @@
                 CornerRadius="{DynamicResource RadCard}">
             <!-- Clipped to the card's own corners (DocPane_SizeChanged). A Border with a
                  CornerRadius does NOT clip its child, so the canvas and the page square the
-                 corners straight back off. Same treatment as KillerShell's PaneContent. -->
+                 corners straight back off. Same treatment as JpdfsShell's PaneContent. -->
             <Grid x:Name="DocPaneContent" SizeChanged="DocPane_SizeChanged">
                 <Border x:Name="PaneBevelOuterDark" Panel.ZIndex="100" IsHitTestVisible="False" BorderBrush="{DynamicResource PaneBevelDarkBrush}" BorderThickness="{DynamicResource PaneBevelLightThickness}"/>
                 <Border x:Name="PaneBevelOuterLight" Panel.ZIndex="100" IsHitTestVisible="False" BorderBrush="{DynamicResource PaneBevelLightBrush}" BorderThickness="{DynamicResource PaneBevelDarkThickness}"/>

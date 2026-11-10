@@ -8,17 +8,17 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPDF.Services.Signing;
-using KillerPDF.Services;
+using JPDFs.Services.Signing;
+using JPDFs.Services;
 using Microsoft.Win32;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
     /// Themed modal dialog that cryptographically signs the open PDF with a certificate (a .pfx/.p12
     /// file, or one from the Windows store) and writes a NEW signed copy. This is the real digital
     /// signature - distinct from the drawn "Signature" stamp tool, which only places a picture.
-    /// Chrome and colors mirror PrintPreviewWindow so every KillerPDF dialog looks identical.
+    /// Chrome and colors mirror PrintPreviewWindow so every JPDFs dialog looks identical.
     /// </summary>
     internal sealed class SignDocumentDialog : Window
     {
@@ -297,14 +297,14 @@ namespace KillerPDF
 
         private void BrowsePfx()
         {
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Open)
+            var dlg = new JPDFs.Controls.FileDialog(JPDFs.Controls.FileDialogMode.Open)
                           { Filter = L("Str_Filter_Cert") + "|*.pfx;*.p12|" + L("Str_Filter_AllFiles") + "|*.*", Title = L("Str_Sign_ChooseCert") };
             if (dlg.ShowDialog(this) == true) _pfxBox.Text = dlg.FileName;
         }
 
         private void BrowseOutput()
         {
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Save)
+            var dlg = new JPDFs.Controls.FileDialog(JPDFs.Controls.FileDialogMode.Save)
                           { Filter = L("Str_Filter_Pdf") + "|*.pdf", Title = L("Str_Sign_SaveAs"), FileName = Path.GetFileName(_outputBox.Text) };
             string? directory = Path.GetDirectoryName(_outputBox.Text);
             if (Directory.Exists(directory)) dlg.InitialDirectory = directory;
@@ -395,7 +395,7 @@ namespace KillerPDF
                 Mouse.OverrideCursor = null;
             }
 
-            KillerDialog.Show(this, L("Str_Dlg_SignedSavedTo") + "\n" + output, L("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Information);
+            JpdfsDialog.Show(this, L("Str_Dlg_SignedSavedTo") + "\n" + output, L("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Information);
             DialogResult = true;
             Close();
         }
@@ -403,9 +403,9 @@ namespace KillerPDF
         // The engine reports every network, reply and verification failure of the timestamp step
         // with its own exception, so it is not mistaken for a certificate problem.
         private static bool IsTimestampFailure(Exception ex) =>
-            ex is KillerPdf.Engine.Signing.PdfTimestampException;
+            ex is JPDFs.Engine.Signing.PdfTimestampException;
 
-        private void Warn(string msg) => KillerDialog.Show(this, msg, L("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Warning);
+        private void Warn(string msg) => JpdfsDialog.Show(this, msg, L("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Warning);
 
         private static StackPanel DimensionField(string label, string value, out TextBox box)
         {

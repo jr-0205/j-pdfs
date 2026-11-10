@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 // Which toolbar buttons can be used in the current document state. Free of WPF and of
 // MainWindow so the rules can be checked without standing up a window.

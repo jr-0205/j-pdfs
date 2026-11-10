@@ -28,19 +28,19 @@ jobs:
       matrix:
         include:
           - name: application
-            project: KillerPDF.csproj
+            project: JPDFs.csproj
             mode: build
             framework: ''
           - name: application-tests
-            project: KillerPDF.Tests/KillerPDF.Tests.csproj
+            project: JPDFs.Tests/JPDFs.Tests.csproj
             mode: test
             framework: ''
           - name: engine-tests
-            project: engine/KillerPdf.Engine.Tests/KillerPdf.Engine.Tests.csproj
+            project: engine/JPDFs.Engine.Tests/JPDFs.Engine.Tests.csproj
             mode: test
             framework: ''
           - name: ui-smoke-fixture
-            project: tests/KillerPDF.UiSmoke/KillerPDF.UiSmoke.csproj
+            project: tests/JPDFs.UiSmoke/JPDFs.UiSmoke.csproj
             mode: build
             framework: ''
     name: ${{ matrix.name }}
@@ -67,7 +67,7 @@ jobs:
       - name: Verify website shortcut data
         if: matrix.name == 'application'
         run: |
-          dotnet run --project tools/KillerPDF.ShortcutSite/KillerPDF.ShortcutSite.csproj --configuration Release -- "$env:GITHUB_WORKSPACE" --check 2>&1 | Tee-Object ci-results/shortcuts.log
+          dotnet run --project tools/JPDFs.ShortcutSite/JPDFs.ShortcutSite.csproj --configuration Release -- "$env:GITHUB_WORKSPACE" --check 2>&1 | Tee-Object ci-results/shortcuts.log
           if ($LASTEXITCODE -ne 0) { throw 'Website shortcuts differ from the app. See shortcuts.log.' }
       - name: Verify WinGet release notes fit the manifest
         if: matrix.name == 'application'
@@ -77,7 +77,7 @@ jobs:
         if: matrix.name == 'application'
         run: |
           foreach ($mode in @('unsigned-store', 'missing-store-payload', 'unsigned-store-inner', 'mismatched-store-version', 'valid-store', 'checksum-create', 'checksum-replaced-store', 'checksum-missing-store', 'checksum-unchanged-store')) {
-            $evidence = Join-Path $env:RUNNER_TEMP ('killerpdf-artifact-' + $mode + '-' + [guid]::NewGuid().ToString('N'))
+            $evidence = Join-Path $env:RUNNER_TEMP ('jpdfs-artifact-' + $mode + '-' + [guid]::NewGuid().ToString('N'))
             try {
               & ./build/Test-ReleaseArtifactVerification.ps1 -Mode $mode -EvidenceRoot $evidence 2>&1 | Tee-Object ("ci-results/release-artifacts-$mode.log")
             } finally {
@@ -87,7 +87,7 @@ jobs:
       - name: Build the app the CLI tests launch
         if: matrix.name == 'application-tests'
         run: |
-          dotnet build KillerPDF.csproj --configuration Release --verbosity minimal 2>&1 | Tee-Object ci-results/test-app-build.log
+          dotnet build JPDFs.csproj --configuration Release --verbosity minimal 2>&1 | Tee-Object ci-results/test-app-build.log
           if ($LASTEXITCODE -ne 0) { throw 'Test app build failed. See test-app-build.log.' }
       - name: Run tests
         if: matrix.mode == 'test'
@@ -103,9 +103,9 @@ jobs:
         run: |
           if (!$env:WINDIR) { $env:WINDIR = $env:SYSTEMROOT }
           # This job needs the compiled app but never starts App.OnStartup or UI automation.
-          dotnet build KillerPDF.csproj --configuration Release --verbosity minimal 2>&1 | Tee-Object ci-results/fixture-app-build.log
+          dotnet build JPDFs.csproj --configuration Release --verbosity minimal 2>&1 | Tee-Object ci-results/fixture-app-build.log
           if ($LASTEXITCODE -ne 0) { throw 'Fixture app build failed. See fixture-app-build.log.' }
-          dotnet run --project tests/KillerPDF.UiSmoke/KillerPDF.UiSmoke.csproj --configuration Release --no-build --no-restore -- --verify-fixture bin/Release/net10.0-windows/KillerPDF.dll ci-results/fixture 2>&1 | Tee-Object ci-results/fixture.log
+          dotnet run --project tests/JPDFs.UiSmoke/JPDFs.UiSmoke.csproj --configuration Release --no-build --no-restore -- --verify-fixture bin/Release/net10.0-windows/JPDFs.dll ci-results/fixture 2>&1 | Tee-Object ci-results/fixture.log
           if ($LASTEXITCODE -ne 0) { throw 'Synthetic PDF regression failed. See fixture.log and fixture/host-error.txt.' }
       - name: Retain failure diagnostics and test results
         if: always()

@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>Shared geometry and behavior for the permanent 24px rail and sidebar chrome.</summary>
     internal static class SidebarChrome

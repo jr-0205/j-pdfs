@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     The second half of the release validation (Compare-VeraPDF.ps1 is the first). Reads the
-    resave log written by `KillerPDF.exe --batch-resave` and checks only the rows marked OK -
+    resave log written by `JPDFs.exe --batch-resave` and checks only the rows marked OK -
     skipped files were never written and have nothing to compare.
 
     qpdf exit codes: 0 = clean, 2 = errors, 3 = warnings only. Because the numeric exit codes
@@ -19,7 +19,7 @@
 
 .NOTES
     Compatible with Windows PowerShell 5.1 and PowerShell 7.
-    Part of the KillerPDF validation harness (validation/).
+    Part of the JPDFs validation harness (validation/).
 #>
 [CmdletBinding()]
 param(

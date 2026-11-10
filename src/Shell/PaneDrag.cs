@@ -2,9 +2,9 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using KillerPDF.Controls;
+using JPDFs.Controls;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
     /// Moving a document tab from one pane to the other. Partial of MainWindow.
@@ -17,7 +17,7 @@ namespace KillerPDF.Shell
     /// The reorder-WITHIN-a-pane drag lives in PdfViewer.TabStrip.cs and is untouched; this only
     /// takes over when the drop lands somewhere that pane is not.
     ///
-    /// Ported from KillerShell's PaneDrag.cs.
+    /// Ported from JpdfsShell's PaneDrag.cs.
     /// </summary>
     public partial class MainWindow
     {

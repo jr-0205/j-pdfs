@@ -1,32 +1,32 @@
-# The KillerPDF.Engine
+# The JPDFs.Engine
 
-The KillerPDF.Engine is an independent, UI-free .NET library for reading, rendering, searching, validating, authoring, editing, redacting, signing, encrypting, and writing PDF files. It gives KillerPDF a modern PDF 2.0, PDF/A, and PDF/UA foundation while exposing a public API designed for use in other applications.
+The JPDFs.Engine is an independent, UI-free .NET library for reading, rendering, searching, validating, authoring, editing, redacting, signing, encrypting, and writing PDF files. It gives JPDFs a modern PDF 2.0, PDF/A, and PDF/UA foundation while exposing a public API designed for use in other applications.
 
-“The KillerPDF.Engine” is the formal display name. Ordinary prose may use “KillerPDF.Engine” or “the engine” when it reads more naturally. The assembly, package identifier, and C# namespaces use `KillerPdf.Engine`.
+“The JPDFs.Engine” is the formal display name. Ordinary prose may use “JPDFs.Engine” or “the engine” when it reads more naturally. The assembly, package identifier, and C# namespaces use `JPDFs.Engine`.
 
 ## Five-minute start
 
-The KillerPDF.Engine targets .NET 10. [Get KillerPdf.Engine from NuGet.org](https://www.nuget.org/packages/KillerPdf.Engine), or install it with:
+The JPDFs.Engine targets .NET 10. [Get JPDFs.Engine from NuGet.org](https://www.nuget.org/packages/JPDFs.Engine), or install it with:
 
 ```powershell
-dotnet add package KillerPdf.Engine
+dotnet add package JPDFs.Engine
 ```
 
-When working directly from a KillerPDF repository checkout, use a project reference instead:
+When working directly from a JPDFs repository checkout, use a project reference instead:
 
 ```xml
-<ProjectReference Include="path\to\KillerPDF\engine\KillerPdf.Engine\KillerPdf.Engine.csproj" />
+<ProjectReference Include="path\to\JPDFs\engine\JPDFs.Engine\JPDFs.Engine.csproj" />
 ```
 
 Create a PDF 2.0 document:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
 byte[] pdf = new PdfDocumentBuilder()
     .SetMetadata(new PdfDocumentMetadata
     {
-        Title = "Hello from The KillerPDF.Engine",
+        Title = "Hello from The JPDFs.Engine",
         Author = "Example application",
         Language = "en-US"
     })
@@ -39,8 +39,8 @@ File.WriteAllBytes("hello.pdf", pdf);
 Open and deterministically rewrite an existing document:
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
 
 byte[] source = File.ReadAllBytes("input.pdf");
 PdfDocument document = PdfDocument.Open(source);
@@ -52,7 +52,7 @@ File.WriteAllBytes("output.pdf", rewritten);
 Extract text and image placements from a page:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 PdfDocument document = PdfDocument.Open(File.ReadAllBytes("input.pdf"), string.Empty);
 var reader = new PdfPageContentReader(document);
@@ -70,7 +70,7 @@ does not certify visual visibility or PDF conformance; image clipping uses bound
 
 ### Read and understand real PDF files
 
-The KillerPDF.Engine parses the PDF file itself, including headers, tokens, objects, streams, classic cross-reference tables, cross-reference streams, object streams, trailers, incremental revisions, page trees, name trees, and number trees. Objects are resolved lazily, malformed structures are bounded, and diagnostics retain useful file offsets.
+The JPDFs.Engine parses the PDF file itself, including headers, tokens, objects, streams, classic cross-reference tables, cross-reference streams, object streams, trailers, incremental revisions, page trees, name trees, and number trees. Objects are resolved lazily, malformed structures are bounded, and diagnostics retain useful file offsets.
 
 ### Preserve or deliberately rewrite
 
@@ -82,7 +82,7 @@ Application save pipelines can also repair harmless serialization artifacts with
 
 The authoring model covers pages, content streams, graphics state, paths, text, fonts, images, color spaces, shadings, tiling patterns, transparency, resources, metadata, navigation, optional content, attachments, and viewer behavior. The API uses typed PDF concepts instead of exposing raw application state.
 
-KillerPDF itself now uses those typed content APIs for its complete annotation and stamp burn-in pipeline. Text boxes, highlights, redactions, freehand ink, filled shapes, signatures, placed images, page numbers, and watermarks are written as isolated page overlays with rotation-aware placement and self-contained resources.
+JPDFs itself now uses those typed content APIs for its complete annotation and stamp burn-in pipeline. Text boxes, highlights, redactions, freehand ink, filled shapes, signatures, placed images, page numbers, and watermarks are written as isolated page overlays with rotation-aware placement and self-contained resources.
 
 ### Edit document structure
 
@@ -90,7 +90,7 @@ Pages can be inserted, imported, removed, reordered, rotated, cropped, resized, 
 
 ### Build and edit interactive PDFs
 
-The KillerPDF.Engine supports bookmarks, destinations, links, attachments, visual and editorial annotations, replies, popups, redactions, optional-content groups, and AcroForm fields. Its bookmark reader exposes the complete hierarchy with decoded titles, stable object identity, presentation state, and resolved local or named destinations without leaking parser objects. Its native link reader exposes normalized page geometry, annotation indices, decoded URI actions, and resolved direct or named page targets. Its form-widget reader exposes inherited hierarchical field state, interactive values and options, button states, crop-aware geometry, and rotation. Text fields, checkboxes, radio buttons, combo boxes, list boxes, push buttons, and signature fields have typed authoring and incremental-editing APIs.
+The JPDFs.Engine supports bookmarks, destinations, links, attachments, visual and editorial annotations, replies, popups, redactions, optional-content groups, and AcroForm fields. Its bookmark reader exposes the complete hierarchy with decoded titles, stable object identity, presentation state, and resolved local or named destinations without leaking parser objects. Its native link reader exposes normalized page geometry, annotation indices, decoded URI actions, and resolved direct or named page targets. Its form-widget reader exposes inherited hierarchical field state, interactive values and options, button states, crop-aware geometry, and rotation. Text fields, checkboxes, radio buttons, combo boxes, list boxes, push buttons, and signature fields have typed authoring and incremental-editing APIs.
 
 ### Handle standards and accessibility
 
@@ -231,23 +231,23 @@ timestamps, document-timestamp verification, host duties, and writer limits.
 
 ```text
 engine/
-  KillerPdf.Engine/          Reusable library
-  KillerPdf.Engine.Tests/    Unit and regression tests
-  KillerPdf.Engine.Corpus/   Corpus gates and standards smoke generators
+  JPDFs.Engine/          Reusable library
+  JPDFs.Engine.Tests/    Unit and regression tests
+  JPDFs.Engine.Corpus/   Corpus gates and standards smoke generators
   docs/                      Integration guides and architecture records
   CHANGELOG.md               Engine-only release history
   README.md                  This developer entry point
 ```
 
-The KillerPDF.Engine remains in the KillerPDF monorepo so library changes, application integration, tests, and corpus gates can evolve atomically. Its dependency boundary is deliberately independent: the library does not reference WPF, KillerPDF application code, PDFium, PdfPig, PdfSharpCore, or PDFsharp.
+The JPDFs.Engine remains in the JPDFs monorepo so library changes, application integration, tests, and corpus gates can evolve atomically. Its dependency boundary is deliberately independent: the library does not reference WPF, JPDFs application code, PDFium, PdfPig, PdfSharpCore, or PDFsharp.
 
 ## Build and test
 
 From the repository root:
 
 ```powershell
-dotnet build engine\KillerPdf.Engine\KillerPdf.Engine.csproj -c Release
-dotnet test engine\KillerPdf.Engine.Tests\KillerPdf.Engine.Tests.csproj -c Release
+dotnet build engine\JPDFs.Engine\JPDFs.Engine.csproj -c Release
+dotnet test engine\JPDFs.Engine.Tests\JPDFs.Engine.Tests.csproj -c Release
 ```
 
 The project treats compiler warnings as errors and generates XML API documentation during normal builds.
@@ -271,19 +271,19 @@ Corpus files are intentionally malformed or nonconforming in many cases. A refus
 - Fail closed when required structure cannot be interpreted or preserved safely.
 - Emit deterministic output so regressions are reproducible.
 - Enforce explicit implementation limits before allocating or serializing unbounded structures.
-- Keep public APIs typed and reusable instead of exposing KillerPDF application state.
+- Keep public APIs typed and reusable instead of exposing JPDFs application state.
 - Treat conformance as validator-backed behavior, not a label inferred from the PDF header.
 
-The original architecture decision is recorded in [ADR-001](https://github.com/SteveTheKiller/KillerPDF/blob/main/engine/docs/architecture/ADR-001-pdf-engine-boundary.md).
+The original architecture decision is recorded in [ADR-001](https://github.com/JPDFs/JPDFs/blob/main/engine/docs/architecture/ADR-001-pdf-engine-boundary.md).
 
-## KillerPDF integration
+## JPDFs integration
 
-KillerPDF directly references The KillerPDF.Engine for document parsing, text extraction, writing, editing, and rendering. The Windows application no longer references PDFium, Docnet.Core, PdfPig, or PdfSharpCore.
+JPDFs directly references The JPDFs.Engine for document parsing, text extraction, writing, editing, and rendering. The Windows application no longer references PDFium, Docnet.Core, PdfPig, or PdfSharpCore.
 
-See [The KillerPDF.Engine changelog](https://github.com/SteveTheKiller/KillerPDF/blob/main/engine/CHANGELOG.md) for detailed capability history.
+See [The JPDFs.Engine changelog](https://github.com/JPDFs/JPDFs/blob/main/engine/CHANGELOG.md) for detailed capability history.
 
 ## License
 
-The KillerPDF.Engine is licensed under GPLv3 as part of the KillerPDF repository. See the repository [LICENSE](https://github.com/SteveTheKiller/KillerPDF/blob/main/LICENSE).
+The JPDFs.Engine is licensed under GPLv3 as part of the JPDFs repository. See the repository [LICENSE](https://github.com/JPDFs/JPDFs/blob/main/LICENSE).
 
 Bundled font metrics and character maps retain their original licenses in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), also included in the NuGet package.

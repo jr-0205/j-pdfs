@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,10 +13,10 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
-using KillerFamily.Accessibility;
+using JPDFs.Services;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -389,7 +389,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_DuplicateFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_DuplicateFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

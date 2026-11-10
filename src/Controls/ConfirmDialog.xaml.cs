@@ -2,9 +2,9 @@ using System.Windows;
 using System.Windows.Input;
 
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
-    // The family confirm dialog (KillerShell's, generalized): a heading, an optional detail or
+    // The family confirm dialog (JpdfsShell's, generalized): a heading, an optional detail or
     // bullet block, up to two optional checkboxes, an optional extra answer, and installer and
     // notice modes. Each app writes its own wording at the call site.
     public partial class ConfirmDialog : Window
@@ -20,7 +20,7 @@ namespace KillerPDF.Controls
         /// <summary>State of the second optional checkbox. Meaningless unless check2Label was passed.</summary>
         public bool Check2Checked => Check2.IsChecked == true;
 
-        /// <summary>Optional app hook, run once the window has a handle (KillerShell draws its theme border here).</summary>
+        /// <summary>Optional app hook, run once the window has a handle (JpdfsShell draws its theme border here).</summary>
         partial void OnDialogSourceInitialized();
 
         public ConfirmDialog()
@@ -145,14 +145,14 @@ namespace KillerPDF.Controls
             Loaded += (_, _) => CancelButton.Focus();
         }
 
-        // The wordmark and plain caption carry the app's own name: "Killer" plus the accent word
-        // for a KillerX app, "The " plus the name otherwise (The Killendar).
+        // The wordmark and plain caption carry the app's own name: "Jpdfs" plus the accent word
+        // for a JpdfsX app, "The " plus the name otherwise (The Killendar).
         private void ApplyAppName()
         {
             string name = Services.AppInfo.DisplayName;
-            bool killer = name.StartsWith("Killer") && name.Length > "Killer".Length;
-            string lead = killer ? "Killer" : "The ";
-            string accent = killer ? name.Substring("Killer".Length) : name;
+            bool jpdfs = name.StartsWith("Jpdfs") && name.Length > "Jpdfs".Length;
+            string lead = jpdfs ? "Jpdfs" : "The ";
+            string accent = jpdfs ? name.Substring("Jpdfs".Length) : name;
             foreach (var run in new[] { WordLead0, WordLead1, WordLead2 }) run.Text = lead;
             foreach (var run in new[] { WordAccent0, WordAccent1, WordAccent2 }) run.Text = accent;
             PlainTitle.Text = name;

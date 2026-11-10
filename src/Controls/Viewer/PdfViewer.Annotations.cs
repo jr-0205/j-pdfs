@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Annotation rendering - draws the per-page annotation overlays (text, cover, highlight, ink,
     // signature, image). Moved from Shell/Annotations.cs; the namespace and class line are the only

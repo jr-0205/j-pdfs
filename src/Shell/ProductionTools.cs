@@ -1,8 +1,8 @@
 using System.IO;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {

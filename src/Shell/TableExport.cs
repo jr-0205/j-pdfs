@@ -1,9 +1,9 @@
 using System.IO;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -44,7 +44,7 @@ public partial class MainWindow
                 .Any(source => source is not null && string.Equals(Path.GetFullPath(source), destination,
                     StringComparison.OrdinalIgnoreCase)))
             {
-                KillerDialog.Show(this, Loc("Str_Merge_SourceOutput"));
+                JpdfsDialog.Show(this, Loc("Str_Merge_SourceOutput"));
                 return;
             }
             cancellation = BeginCancellableOp(Loc("Str_Op_Export")); started = true;
@@ -56,7 +56,7 @@ public partial class MainWindow
         catch (OperationCanceledException) { }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
-            KillerDialog.Show(this, Loc("Str_Err_ExportFailed") + "\n" + error.Message,
+            JpdfsDialog.Show(this, Loc("Str_Err_ExportFailed") + "\n" + error.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { if (started) EndCancellableOp(cancellation); }

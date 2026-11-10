@@ -3,9 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // While a signature is being placed, a faint copy follows the pointer at the size it will land,
     // and the wheel resizes it. It sits on the page canvas, so page zoom applies to it as well.

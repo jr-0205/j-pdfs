@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class PortfolioStructureDialog : Window
 {
@@ -217,7 +217,7 @@ internal sealed class PortfolioStructureDialog : Window
         }
         catch (FormatException)
         {
-            KillerDialog.Show(this, L("Str_Portfolio_StructureInvalid"),
+            JpdfsDialog.Show(this, L("Str_Portfolio_StructureInvalid"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }

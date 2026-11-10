@@ -1,10 +1,10 @@
 using System.IO;
 using System.Windows;
-using KillerPDF.Services;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Signing;
+using JPDFs.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Signing;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -57,7 +57,7 @@ public partial class MainWindow
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
-            KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + error.Message,
+            JpdfsDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + error.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally

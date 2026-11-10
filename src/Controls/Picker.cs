@@ -1,6 +1,6 @@
 using System;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Row and place models for FileDialog.
     public sealed class PickerPlace(string label, string path, bool pinned = false,

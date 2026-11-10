@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
-    // Tabbed document support. KillerPDF keeps one window and one live "working set" of
+    // Tabbed document support. JPDFs keeps one window and one live "working set" of
     // per-document fields (in MainWindow.xaml.cs). Each open PDF is a DocumentSession that
     // owns its own copy of those fields. Switching tabs captures the live fields into the
     // outgoing session and applies the incoming session's fields, then re-renders.
@@ -126,7 +126,7 @@ namespace KillerPDF.Controls
             // Everything below is bound by the tab template (PdfViewer.xaml) and nothing else
             // reads it. It has to NOTIFY: a strip row is only rebuilt when the collection itself
             // changes, so a property edited in place on a live row would otherwise never repaint.
-            // (The same trap as KillerNotes issue #13.)
+            // (The same trap as JpdfsNotes issue #13.)
 
             private string _tabLabel = Untitled;
             /// <summary>Title with the dirty dot, as the tab shows it.</summary>
@@ -891,7 +891,7 @@ namespace KillerPDF.Controls
 
         // Save, Don't Save or Cancel for closing a document with unsaved changes.
         private MessageBoxResult AskToSaveBeforeClose(string message)
-            => KillerDialog.AskToSave(Host!.Window, message,
+            => JpdfsDialog.AskToSave(Host!.Window, message,
                 Loc("Str_Btn_Save"), Loc("Str_Btn_DontSave"), Loc("Str_Btn_CancelDlg"));
 
         // Saves one of this pane's documents for a close prompt's Save. A save works on the live

@@ -1,4 +1,4 @@
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     /// <summary>
     /// What SearchController needs from the window hosting it, beyond the shared shell services.

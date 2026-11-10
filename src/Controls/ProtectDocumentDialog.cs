@@ -9,11 +9,11 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPDF.Services;
-using KillerPDF.Services.Signing;
-using KillerPdf.Engine.Security;
+using JPDFs.Services;
+using JPDFs.Services.Signing;
+using JPDFs.Engine.Security;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
     /// Themed modal dialog that writes an AES-256 encrypted copy of the saved document, protected
@@ -214,7 +214,7 @@ namespace KillerPDF
 
         private void AddCertificateFile()
         {
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Open)
+            var dlg = new JPDFs.Controls.FileDialog(JPDFs.Controls.FileDialogMode.Open)
             {
                 Filter = L("Str_Filter_Cert") + "|*.cer;*.crt;*.pem;*.der|" + L("Str_Filter_AllFiles") + "|*.*",
                 Title = L("Str_Protect_ChooseCert")
@@ -261,7 +261,7 @@ namespace KillerPDF
 
         private void BrowseOutput()
         {
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Save)
+            var dlg = new JPDFs.Controls.FileDialog(JPDFs.Controls.FileDialogMode.Save)
                           { Filter = L("Str_Filter_Pdf") + "|*.pdf", Title = L("Str_Protect_SaveAs"), FileName = Path.GetFileName(_outputBox.Text) };
             if (dlg.ShowDialog(this) == true) _outputBox.Text = dlg.FileName;
         }
@@ -291,7 +291,7 @@ namespace KillerPDF
             bool signed;
             try { signed = PdfEngineIntegration.HasSignedSignatures(_sourcePdf); }
             catch (Exception ex) when (ex is not OutOfMemoryException) { signed = false; }
-            if (signed && KillerDialog.Show(this, L("Str_Protect_SignedWarning"), L("Str_Protect_Name"),
+            if (signed && JpdfsDialog.Show(this, L("Str_Protect_SignedWarning"), L("Str_Protect_Name"),
                     MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
                 return;
 
@@ -353,7 +353,7 @@ namespace KillerPDF
 
             string savedMessage = L("Str_Protect_SavedTo") + "\n" + fullOutput;
             if (referenceRepairCount > 0) savedMessage += "\n\n" + L("Str_Save_ReferenceRepairs");
-            KillerDialog.Show(this, savedMessage, L("Str_Protect_Name"), MessageBoxButton.OK, MessageBoxImage.Information);
+            JpdfsDialog.Show(this, savedMessage, L("Str_Protect_Name"), MessageBoxButton.OK, MessageBoxImage.Information);
             DialogResult = true;
             Close();
         }
@@ -364,7 +364,7 @@ namespace KillerPDF
             catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return false; }
         }
 
-        private void Warn(string msg) => KillerDialog.Show(this, msg, L("Str_Protect_Name"), MessageBoxButton.OK, MessageBoxImage.Warning);
+        private void Warn(string msg) => JpdfsDialog.Show(this, msg, L("Str_Protect_Name"), MessageBoxButton.OK, MessageBoxImage.Warning);
 
         // ---- themed control helpers (mirroring SignDocumentDialog) -------------------------------
         private Style? FindOwnerStyle(string key) => Owner?.TryFindResource(key) as Style;

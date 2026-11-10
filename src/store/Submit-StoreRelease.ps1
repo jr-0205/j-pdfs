@@ -9,8 +9,8 @@
     for the Store to fetch the installer, creates the submission and confirms certification
     started. Certification itself takes up to three business days and is not waited for.
 
-    Credentials come from user environment variables: KILLER_STORE_TENANT_ID,
-    KILLER_STORE_CLIENT_ID, KILLER_STORE_CLIENT_SECRET and KILLER_STORE_SELLER_ID.
+    Credentials come from user environment variables: JPDFS_STORE_TENANT_ID,
+    JPDFS_STORE_CLIENT_ID, JPDFS_STORE_CLIENT_SECRET and JPDFS_STORE_SELLER_ID.
 
 .PARAMETER ProductId
     The Store ID of the product (for example XP8JR4WJK03BJP).
@@ -78,15 +78,15 @@ function Invoke-Store([string]$Method, [string]$Path, $Body = $null) {
 if ($PackageUrl -notmatch '^https://') { throw "PackageUrl must be an https URL: $PackageUrl" }
 
 Write-Host "==> Signing in to the Microsoft Store submission API"
-$tenant = Get-Setting 'KILLER_STORE_TENANT_ID'
+$tenant = Get-Setting 'JPDFS_STORE_TENANT_ID'
 $token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$tenant/oauth2/v2.0/token" `
     -ContentType 'application/x-www-form-urlencoded' -Body @{
         grant_type    = 'client_credentials'
-        client_id     = Get-Setting 'KILLER_STORE_CLIENT_ID'
-        client_secret = Get-Setting 'KILLER_STORE_CLIENT_SECRET'
+        client_id     = Get-Setting 'JPDFS_STORE_CLIENT_ID'
+        client_secret = Get-Setting 'JPDFS_STORE_CLIENT_SECRET'
         scope         = 'https://api.store.microsoft.com/.default'
     }).access_token
-$script:headers = @{ Authorization = "Bearer $token"; 'X-Seller-Account-Id' = (Get-Setting 'KILLER_STORE_SELLER_ID') }
+$script:headers = @{ Authorization = "Bearer $token"; 'X-Seller-Account-Id' = (Get-Setting 'JPDFS_STORE_SELLER_ID') }
 
 if (-not $PreflightOnly) {
     Write-Host "==> Checking the installer is reachable"
@@ -114,10 +114,10 @@ Write-Host "  Package ${packageId}: $existingPackageUrl"
 if ($PreflightOnly) { Write-Host "  Store preflight OK."; return }
 
 # Sync translated listings before submitting the installer, including newly added languages.
-$listingScript = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'KillerHarness\scripts\StoreUpdate.ps1'
+$listingScript = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'JpdfsHarness\scripts\StoreUpdate.ps1'
 if (-not (Test-Path -LiteralPath $listingScript)) { throw "Store listing updater is missing: $listingScript" }
 $listingArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $listingScript,
-    '-App', 'KillerPDF', '-ListingsOnly', '-StoreProductId', $ProductId, '-StoreDirectory', $PSScriptRoot)
+    '-App', 'JPDFs', '-ListingsOnly', '-StoreProductId', $ProductId, '-StoreDirectory', $PSScriptRoot)
 if (-not $DryRun) { $listingArgs += '-DraftOnly' }
 & powershell @listingArgs
 if ($LASTEXITCODE -ne 0) { throw 'Store listing sync failed. The installer was not submitted.' }

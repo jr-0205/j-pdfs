@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -67,13 +67,13 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_RotateFailed"), ex.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, string.Format(Loc("Str_RotateFailed"), ex.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void Split_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureMayWrite(PdfOutput.Printable)) return;
             var sourceCurrent = CaptureDocumentOrigin();
             int[]? ordered = PromptPageOperationRange("Str_Lbl_Extract", _doc.PageCount);
@@ -94,7 +94,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_SplitFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_SplitFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -105,17 +105,17 @@ namespace KillerPDF.Shell
 
         private void Delete_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureEditable(continueAfterUnlock: false)) return;
             var sourceCurrent = CaptureDocumentOrigin();
             int[]? selected = PromptPageOperationRange("Str_Lbl_Delete", _doc.PageCount);
             if (selected is null || !sourceCurrent()) return;
             if (selected.Length >= _doc.PageCount)
             {
-                KillerDialog.Show(this, Loc("Str_Dlg_KeepOnePage"));
+                JpdfsDialog.Show(this, Loc("Str_Dlg_KeepOnePage"));
                 return;
             }
-            var result = KillerDialog.Show(this, selected.Length == 1 ? Loc("Str_Dlg_DeletePage1") : string.Format(Loc("Str_Dlg_DeletePagesN"), selected.Length), "J-PDF's",
+            var result = JpdfsDialog.Show(this, selected.Length == 1 ? Loc("Str_Dlg_DeletePage1") : string.Format(Loc("Str_Dlg_DeletePagesN"), selected.Length), "J-PDF's",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result != MessageBoxResult.Yes || !sourceCurrent()) return;
             try
@@ -161,7 +161,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_DeleteFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_DeleteFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -178,7 +178,7 @@ namespace KillerPDF.Shell
             List<int>? pages = Features.CliRunner.CliParsePageRange(dialog.Values[0], pageCount, out _);
             if (pages is null)
             {
-                KillerDialog.Show(this, Loc("Str_InvalidRange"), "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
+                JpdfsDialog.Show(this, Loc("Str_InvalidRange"), "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return null;
             }
             return [.. pages];
@@ -186,7 +186,7 @@ namespace KillerPDF.Shell
 
         private void InsertBlankPage_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureEditable(continueAfterUnlock: false)) return;
             int insertAfter = PageList.SelectedIndex >= 0
                 ? PageList.SelectedIndex : _doc.PageCount - 1;
@@ -230,7 +230,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_InsertFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_InsertFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -238,7 +238,7 @@ namespace KillerPDF.Shell
         // (sidebar empty area / outside the page), where there's no specific page to insert relative to.
         private void AddBlankPageAtEnd()
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureEditable()) return;
             int referencePage = Math.Clamp(PageList.SelectedIndex >= 0
                 ? PageList.SelectedIndex : _currentPage, 0, _doc.PageCount - 1);
@@ -263,7 +263,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_AddPageFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_AddPageFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -295,7 +295,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message),
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

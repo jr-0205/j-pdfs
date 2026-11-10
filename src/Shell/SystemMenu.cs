@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
-using KillerFamily.Accessibility;
+using JpdfsUi.Accessibility;
 
 // ============================================================
 // THEMED WINDOWS SYSTEM MENU
@@ -31,14 +31,14 @@ using KillerFamily.Accessibility;
 //   4. Add the six Str_Sys_* keys to en-US.xaml at minimum. Missing keys fall back to English
 //      rather than rendering the key name, so a half-translated locale still reads correctly.
 //
-// TRAP (KillerPDF, 2026-07-31): an Absolute-placement ContextMenu with no PlacementTarget has
+// TRAP (JPDFs, 2026-07-31): an Absolute-placement ContextMenu with no PlacementTarget has
 // NO inheritance context, so it only sees APP-level implicit styles. An app that keeps its
-// ContextMenu/MenuItem styles in the window's resources (KillerPDF does) gets the stock white
+// ContextMenu/MenuItem styles in the window's resources (JPDFs does) gets the stock white
 // menu. ShowSystemMenu below therefore sets PlacementTarget = this - harmless with
 // PlacementMode.Absolute (it supplies the resource context without affecting position). Do not
 // remove it when porting.
 //
-// Originally written for KillerScan; KillerShell's older Minimize/Maximize/Close-only copy in
+// Originally written for JpdfsScan; JpdfsShell's older Minimize/Maximize/Close-only copy in
 // Chrome.cs was replaced with this file on 2026-10-23, when Close gained Windows' Alt+F4 hint and
 // the default item its bold. Ported into
 // the kit 2026-07-30 because three of five apps were still showing the stock white menu.
@@ -57,7 +57,7 @@ using KillerFamily.Accessibility;
 //   SystemMenuOpening(): runs each time the menu opens, before the kit enables its items, so
 //      the app's own rows can show their current state.
 // ============================================================
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {

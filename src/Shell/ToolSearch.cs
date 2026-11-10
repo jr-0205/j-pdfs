@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using KillerFamily.Accessibility;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // ============================================================
     // Tool search in the title bar, left of Minimize. The magnifier, or Ctrl+K, opens a box that

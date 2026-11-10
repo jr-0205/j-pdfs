@@ -1,6 +1,6 @@
 using System;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -18,10 +18,10 @@ using System.Windows.Input;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
-using KillerPDF.Services;
+using JPDFs.Services;
 using Microsoft.Win32;
 
-namespace KillerPDF
+namespace JPDFs
 {
     public partial class App : Application
     {
@@ -30,7 +30,7 @@ namespace KillerPDF
         // ============================================================
 
         private static readonly string AppName   = "J-PDF's";
-        // The public portable file is KillerPDF-Portable.exe. Once installed, shortcuts launch the
+        // The public portable file is JPDFs-Portable.exe. Once installed, shortcuts launch the
         // loose-file application directly so installed startup never pays launcher/extraction cost.
         private static readonly string ExeName   = "JPDFs.App.exe";
         private static readonly string InstallDir = Path.Combine(
@@ -46,7 +46,7 @@ namespace KillerPDF
         private static readonly string DesktopLnk   = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), $"{AppName}.lnk");
 
-        // ── Machine-wide install (all users), matching Killendar / KillerShell ─────────────
+        // ── Machine-wide install (all users), matching Killendar / JpdfsShell ─────────────
         // ProgramFiles rather than LocalApplicationData\Programs, so it needs elevation - which
         // is why it goes through the /silent path under a UAC prompt instead of being done inline.
         private static readonly string MachineInstallDir = Path.Combine(
@@ -83,9 +83,9 @@ namespace KillerPDF
                 return;
             }
             Services.PdfEngineBurn.MacroTempFile = MakeTempFile;
-            KillerFamily.Accessibility.AccessibleControls.Initialize();
-            KillerFamily.Theming.AccentShadow.Initialize();
-            KillerFamily.Layout.ShortcutHints.Initialize(GetSetting, SetSetting);
+            JpdfsUi.Accessibility.AccessibleControls.Initialize();
+            JpdfsUi.Theming.AccentShadow.Initialize();
+            JpdfsUi.Layout.ShortcutHints.Initialize(GetSetting, SetSetting);
             if (IsStartupSmoke)
             {
                 RunStartupSmoke(e);
@@ -125,7 +125,7 @@ namespace KillerPDF
                 catch (Exception ex)
                 {
                     Console.Error.WriteLine("Install registration failed: " + ex.Message);
-                    Shutdown(KillerFamily.Deployment.InstallerExitCodes.FromException(ex));
+                    Shutdown(JpdfsUi.Deployment.InstallerExitCodes.FromException(ex));
                 }
                 return;
             }
@@ -169,14 +169,14 @@ namespace KillerPDF
             // Headless CLI commands (see Features/Cli/CliRunner.cs; --batch-resave in
             // BatchRunner.cs). Checked before the single-instance mutex so CLI runs work
             // while a GUI instance is open, never forward to it, and never show a window.
-            if (KillerPDF.Features.CliRunner.TryRunCli(e.Args, out int cliExit))
+            if (JPDFs.Features.CliRunner.TryRunCli(e.Args, out int cliExit))
             {
                 Shutdown(cliExit);
                 return;
             }
 
             // Developer-only visual check for the crash dialog. It runs before single-instance
-            // forwarding so the preview can open beside a normal KillerPDF session.
+            // forwarding so the preview can open beside a normal JPDFs session.
             if (e.Args.Any(a => string.Equals(
                     a, "--crash-dialog-preview", StringComparison.OrdinalIgnoreCase)))
             {
@@ -271,7 +271,7 @@ namespace KillerPDF
             mainWindow.Show();
             StartupTrace.Mark("MainWindow.Show returned");
             // After Show: under OnLastWindowClose, a prompt shown before the main window is the app's
-            // only window, and answering it closed KillerPDF instead of opening it.
+            // only window, and answering it closed JPDFs instead of opening it.
             OfferInstallConflictRepair();
             StartFolderAutomationIfConfigured();
         }
@@ -406,7 +406,7 @@ namespace KillerPDF
                 if (string.Equals(path, UninstallCloseCommand, StringComparison.Ordinal))
                 {
                     // Add or Remove Programs owns the foreground when it starts uninstall. Bring
-                    // KillerPDF forward before closing so its quit or unsaved-work prompt cannot
+                    // JPDFs forward before closing so its quit or unsaved-work prompt cannot
                     // open invisibly behind Settings.
                     mw.RestoreAndActivate();
                     mw.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle,
@@ -474,7 +474,7 @@ namespace KillerPDF
         }
 
         // Explorer launches the secondary process with foreground permission. Pass that permission
-        // to the already-running KillerPDF process before asking it to activate its window.
+        // to the already-running JPDFs process before asking it to activate its window.
         private static void GrantPrimaryForegroundPermission()
         {
             try
@@ -515,14 +515,14 @@ namespace KillerPDF
 
         /// <summary>
         /// The render thread failed, so this window will stay black. Save unsaved documents aside,
-        /// start a fresh KillerPDF that waits for this one to exit, and leave without prompts that
+        /// start a fresh JPDFs that waits for this one to exit, and leave without prompts that
         /// could not be drawn. The new process renders in software for that session.
         /// </summary>
         private void RestartAfterRenderFailure(string logPath)
         {
             if (System.Threading.Interlocked.Exchange(ref _renderRecoveryStarted, 1) != 0) return;
             string? manifest = null;
-            KillerPDF.Shell.MainWindow? window = null;
+            JPDFs.Shell.MainWindow? window = null;
             try
             {
                 window = MainWindow as MainWindow;
@@ -577,11 +577,11 @@ namespace KillerPDF
 
         private void OnDispatcherException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            if (KillerPDF.Features.CommandLineCrash.Console is not null)
+            if (JPDFs.Features.CommandLineCrash.Console is not null)
             {
                 // A command-line run has no window to recover; report it and end the run.
                 e.Handled = true;
-                KillerPDF.Features.CommandLineCrash.TryReport(e.Exception,
+                JPDFs.Features.CommandLineCrash.TryReport(e.Exception,
                     CrashReporter.Capture(e.Exception, "Dispatcher (command line)"));
                 // Exit now: a Shutdown already requested with the command's own code would keep it.
                 CleanupSessionTemps();
@@ -608,7 +608,7 @@ namespace KillerPDF
                      ?? new Exception(e.ExceptionObject?.ToString() ?? "Unknown error");
             var logPath = CrashReporter.Capture(ex, "AppDomain");
             // A command-line run reports on its console; only a desktop session gets the dialog.
-            if (KillerPDF.Features.CommandLineCrash.TryReport(ex, logPath))
+            if (JPDFs.Features.CommandLineCrash.TryReport(ex, logPath))
             {
                 // Exit with the documented failure code instead of the runtime's crash code.
                 CleanupSessionTemps();
@@ -1035,11 +1035,11 @@ namespace KillerPDF
             catch { return false; }
         }
 
-        /// <summary>True when KillerPDF is already installed machine-wide.</summary>
+        /// <summary>True when JPDFs is already installed machine-wide.</summary>
         internal static bool MachineInstallExists() => ExistingRegisteredExecutable(Registry.LocalMachine) != null
             || File.Exists(MachineInstallExe) || File.Exists(LegacyMachineInstallExe);
 
-        /// <summary>True when KillerPDF is already installed for the current user.</summary>
+        /// <summary>True when JPDFs is already installed for the current user.</summary>
         internal static bool UserInstallExists() => ExistingRegisteredExecutable(Registry.CurrentUser) != null
             || File.Exists(InstallExe) || File.Exists(LegacyUserInstallExe);
 
@@ -1081,8 +1081,8 @@ namespace KillerPDF
             string message = runningMachine
                 ? SetupText("Str_Dlg_DuplicateInstallMachine", "J-PDF's found two installed copies on this computer.\n\nYou are currently running the all-users installation. An older per-user copy is also present, usually because it was in use during an earlier update.\n\nRemove the unused per-user copy now? Your settings and PDF files will not be removed.")
                 : SetupText("Str_Dlg_DuplicateInstallUser", "J-PDF's found two installed copies on this computer.\n\nYou are currently running the per-user installation. An all-users copy is also present.\n\nRemove the unused all-users copy now? Windows will ask for administrator permission. Your settings and PDF files will not be removed.");
-            if (KillerDialog.Show(Current.MainWindow, message,
-                SetupText("Str_Dlg_DuplicateInstallTitle", "Duplicate KillerPDF installation"),
+            if (JpdfsDialog.Show(Current.MainWindow, message,
+                SetupText("Str_Dlg_DuplicateInstallTitle", "Duplicate JPDFs installation"),
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
 
             if (runningMachine)
@@ -1122,7 +1122,7 @@ namespace KillerPDF
         }
 
         /// <summary>
-        /// Installs KillerPDF, offers to set it as the default PDF handler, then relaunches from
+        /// Installs JPDFs, offers to set it as the default PDF handler, then relaunches from
         /// the installed location. Returns false if the install did not happen, so the caller can
         /// put the portable badge back rather than leaving the user with a half-finished state.
         /// The footer's Install button (Shell/Install.cs) calls it; the command it runs comes from
@@ -1148,10 +1148,10 @@ namespace KillerPDF
 
             if (plan.Kind == Shell.PortableInstallKind.RefusedSecondCopy)
             {
-                KillerDialog.Show(Current.MainWindow,
+                JpdfsDialog.Show(Current.MainWindow,
                     Current.TryFindResource("Str_Dlg_OneInstallOnly") as string ??
-                        "J-PDF's is already installed for everyone on this computer. Update that installation, or uninstall it before choosing a per-user install. KillerPDF will not create two installed copies.",
-                    Current.TryFindResource("Str_Dlg_InstallTitle") as string ?? "Install KillerPDF",
+                        "J-PDF's is already installed for everyone on this computer. Update that installation, or uninstall it before choosing a per-user install. JPDFs will not create two installed copies.",
+                    Current.TryFindResource("Str_Dlg_InstallTitle") as string ?? "Install JPDFs",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return false;
             }
@@ -1183,9 +1183,9 @@ namespace KillerPDF
             {
                 // Loc() is a MainWindow member; App resolves strings off the merged dictionaries
                 // directly, the same way Uninstall() does.
-                var res = KillerDialog.Show(null,
+                var res = JpdfsDialog.Show(null,
                     Current.TryFindResource("Str_Dlg_SetDefaultPdfMsg") as string
-                        ?? "Would you like to set KillerPDF as your default PDF viewer?",
+                        ?? "Would you like to set JPDFs as your default PDF viewer?",
                     AppName, MessageBoxButton.YesNo);
                 if (res == MessageBoxResult.Yes)
                     Process.Start(new ProcessStartInfo("ms-settings:defaultapps")
@@ -1216,12 +1216,12 @@ namespace KillerPDF
             catch { return false; }
         }
 
-        /// <summary>The DemoThumbprint idea in the other apps: KillerPDF has no demo build, so the
+        /// <summary>The DemoThumbprint idea in the other apps: JPDFs has no demo build, so the
         /// footer badge always shows on a portable copy.</summary>
         internal static bool IsDemo => false;
 
         /// <summary>True when this exe carries the whole app, as old woven single-file builds did.
-        /// The packaged portable's inner app and developer builds keep KillerPDF.dll beside the exe,
+        /// The packaged portable's inner app and developer builds keep JPDFs.dll beside the exe,
         /// so copying the exe alone would install something that cannot start.</summary>
         private static bool CurrentExeIsSelfContained()
         {
@@ -1283,23 +1283,23 @@ namespace KillerPDF
         /// the footer's all-users install - gets back. Elevated, it installs machine-wide; without admin
         /// rights it installs for the current user.
         ///
-        /// A machine-wide install registers file associations in HKLM so every account sees KillerPDF
+        /// A machine-wide install registers file associations in HKLM so every account sees JPDFs
         /// in Open With and Default apps. Windows still leaves the actual default choice to each user.
         /// </summary>
         private static int DoSilentInstall()
         {
             try
             {
-                using var installLease = KillerFamily.Deployment.InstallerExitCodes.Acquire(AppName);
+                using var installLease = JpdfsUi.Deployment.InstallerExitCodes.Acquire(AppName);
                 string src = Environment.ProcessPath
                     ?? throw new InvalidOperationException("The current executable path is unavailable.");
 
                 // Only this exe is copied, so it has to carry the whole app. The installed application's
-                // own KillerPDF.App.exe does not, and registering it would leave a copy that cannot start.
+                // own JPDFs.App.exe does not, and registering it would leave a copy that cannot start.
                 if (!CurrentExeIsSelfContained())
                 {
-                    Console.Error.WriteLine("Silent install needs the KillerPDF.exe installer, not the installed application.");
-                    return KillerFamily.Deployment.InstallerExitCodes.Failure;
+                    Console.Error.WriteLine("Silent install needs the JPDFs.exe installer, not the installed application.");
+                    return JpdfsUi.Deployment.InstallerExitCodes.Failure;
                 }
 
                 // Same trust gate as the interactive path - an unsigned or wrong-publisher exe must
@@ -1308,13 +1308,13 @@ namespace KillerPDF
                 if (!valid)
                 {
                     Console.Error.WriteLine("Silent install refused: EXE has no valid Authenticode signature.");
-                    return KillerFamily.Deployment.InstallerExitCodes.SecurityRejected;
+                    return JpdfsUi.Deployment.InstallerExitCodes.SecurityRejected;
                 }
 
                 // With admin rights (winget, choco, RMM) the install is machine-wide. Without them,
                 // as the Microsoft Store runs installers, it is the normal per-user install with no
                 // prompt. The app never needs admin rights.
-                bool machine = KillerFamily.Deployment.InstallerExitCodes.IsElevated();
+                bool machine = JpdfsUi.Deployment.InstallerExitCodes.IsElevated();
                 string installDir = machine ? MachineInstallDir : InstallDir;
                 string installExe = machine ? MachineInstallExe : InstallExe;
 
@@ -1329,12 +1329,12 @@ namespace KillerPDF
                         .Any(argument => string.Equals(argument, "/desktop", StringComparison.OrdinalIgnoreCase)),
                         installedExecutable: installExe) is { } desktopProblem)
                     Console.Error.WriteLine("Installed without the desktop shortcut: " + desktopProblem);
-                return KillerFamily.Deployment.InstallerExitCodes.Success;
+                return JpdfsUi.Deployment.InstallerExitCodes.Success;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine("Silent install failed: " + ex.Message);
-                return KillerFamily.Deployment.InstallerExitCodes.FromException(ex);
+                return JpdfsUi.Deployment.InstallerExitCodes.FromException(ex);
             }
         }
 
@@ -1360,7 +1360,7 @@ namespace KillerPDF
 
         /// <summary>
         /// Creates a tracked temp path of the form jpdfs_&lt;tag&gt;_&lt;guid&gt;.pdf
-        /// in a process-owned directory under %LOCALAPPDATA%\KillerPDF\Temp\.
+        /// in a process-owned directory under %LOCALAPPDATA%\JPDFs\Temp\.
         /// All registered paths are deleted when CleanupSessionTemps() is called.
         /// </summary>
         internal static string MakeTempFile(string tag) => SessionTempFiles.Value.CreatePath(tag);
@@ -1431,7 +1431,7 @@ namespace KillerPDF
         }
 
         /// <summary>
-        /// Wipes all persisted KillerPDF state: settings (registry), downloaded OCR language packs, the
+        /// Wipes all persisted JPDFs state: settings (registry), downloaded OCR language packs, the
         /// native OCR cache, and temp files. Best-effort - files locked this session (e.g. loaded native
         /// DLLs) are skipped and clear on the next restart. The user's actual PDFs are never touched.
         /// </summary>
@@ -1821,10 +1821,10 @@ namespace KillerPDF
             var (valid, _, _) = VerifyAuthenticode(src);
             if (!valid)
             {
-                KillerDialog.Show(Current.MainWindow,
+                JpdfsDialog.Show(Current.MainWindow,
                     SetupText("Str_Dlg_InstallUnsigned",
                         "Installation refused: the running EXE does not carry a valid Authenticode " +
-                        "signature.\n\nOnly signed builds of KillerPDF can be installed."),
+                        "signature.\n\nOnly signed builds of JPDFs can be installed."),
                     AppName, MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
@@ -1836,7 +1836,7 @@ namespace KillerPDF
                 var instVer = FileVersionInfo.GetVersionInfo(InstallExe).FileVersion ?? "";
                 if (string.Compare(runVer, instVer, StringComparison.OrdinalIgnoreCase) < 0)
                 {
-                    var res = KillerDialog.Show(Current.MainWindow,
+                    var res = JpdfsDialog.Show(Current.MainWindow,
                         string.Format(SetupText("Str_Dlg_InstallDowngrade",
                             "You are about to install an older version ({0}) " +
                             "over the currently installed version ({1}).\n\n" +
@@ -1864,10 +1864,10 @@ namespace KillerPDF
                 }
                 catch (Exception copyEx) when (copyEx is UnauthorizedAccessException or IOException)
                 {
-                    KillerDialog.Show(Current.MainWindow,
+                    JpdfsDialog.Show(Current.MainWindow,
                         string.Format(SetupText("Str_Dlg_InstallWriteFailed",
                             "Couldn't write the installed copy at:\n{0}" +
-                            "\n\nClose any open KillerPDF window (and check Task Manager for KillerPDF.exe), " +
+                            "\n\nClose any open JPDFs window (and check Task Manager for JPDFs.exe), " +
                             "then run the installer again."), InstallExe),
                         AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
                     return false;
@@ -1875,16 +1875,16 @@ namespace KillerPDF
                 try { File.SetAttributes(InstallExe, FileAttributes.Normal); } catch { }
                 if (RegisterInstalledCopy(machine: false, desktop: wantDesktop, installedExecutable: InstallExe)
                     is { } desktopProblem)
-                    KillerDialog.Show(Current.MainWindow,
+                    JpdfsDialog.Show(Current.MainWindow,
                         string.Format(SetupText("Str_Dlg_InstallNoDesktopShortcut",
                             "J-PDF's is installed, but Windows did not allow the desktop shortcut:\n{0}\n\n" +
-                            "Open KillerPDF from the Start menu."), desktopProblem),
+                            "Open JPDFs from the Start menu."), desktopProblem),
                         AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return true;
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(Current.MainWindow,
+                JpdfsDialog.Show(Current.MainWindow,
                     string.Format(SetupText("Str_Dlg_InstallFailed", "Installation failed:\n{0}"), ex.Message), AppName,
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
@@ -1911,7 +1911,7 @@ namespace KillerPDF
         }
 
         /// <summary>
-        /// Register KillerPDF under either HKCU for a per-user install or HKLM for a machine-wide
+        /// Register JPDFs under either HKCU for a per-user install or HKLM for a machine-wide
         /// install. This advertises the handler without changing any user's chosen PDF default.
         /// </summary>
         private static void RegisterFileHandler(RegistryKey root, string exePath, string iconPath)
@@ -1935,7 +1935,7 @@ namespace KillerPDF
 
             // Existing Open with choices can retain the launcher name after an upgrade.
             // Both application identities must launch the installed payload, not setup.
-            foreach (string application in new[] { "KillerPDF.App.exe", "JPDFs.exe" })
+            foreach (string application in new[] { "JPDFs.App.exe", "JPDFs.exe" })
             {
                 string applicationKey = @"Software\Classes\Applications\" + application;
                 using (var k = root.CreateSubKey(applicationKey))
@@ -1946,7 +1946,7 @@ namespace KillerPDF
                     k.SetValue(".pdf", "");
             }
 
-            // Associate .pdf extension - adds KillerPDF to the "Open with" list
+            // Associate .pdf extension - adds JPDFs to the "Open with" list
             using (var k = root.CreateSubKey(
                 @"Software\Classes\.pdf\OpenWithProgids"))
                 k.SetValue("JPDFs.pdf", Array.Empty<byte>(), RegistryValueKind.None);
@@ -1979,8 +1979,8 @@ namespace KillerPDF
         private static void UnregisterFileHandler(RegistryKey root)
         {
             try { root.DeleteSubKeyTree(@"Software\Classes\JPDFs.pdf", false); } catch { }
-            try { root.DeleteSubKeyTree(@"Software\Classes\Applications\KillerPDF.App.exe", false); } catch { }
-            try { root.DeleteSubKeyTree(@"Software\Classes\Applications\KillerPDF.exe", false); } catch { }
+            try { root.DeleteSubKeyTree(@"Software\Classes\Applications\JPDFs.App.exe", false); } catch { }
+            try { root.DeleteSubKeyTree(@"Software\Classes\Applications\JPDFs.exe", false); } catch { }
             try { root.DeleteSubKeyTree(@"Software\JPDFs\Capabilities", false); } catch { }
             try
             {
@@ -2037,7 +2037,7 @@ namespace KillerPDF
             catch (Exception ex)
             {
                 if (!silent)
-                    KillerDialog.Show(null,
+                    JpdfsDialog.Show(null,
                         string.Format(SetupText("Str_Dlg_UninstallElevationFailed",
                             "Uninstall could not request administrator access:\n{0}"), ex.Message),
                         AppName, MessageBoxButton.OK, MessageBoxImage.Error);
@@ -2160,18 +2160,18 @@ namespace KillerPDF
             if (owned is null)
             {
                 if (!silent)
-                    KillerDialog.Show(null,
+                    JpdfsDialog.Show(null,
                         SetupText("Str_Dlg_UninstallNotInstalled",
-                            "This KillerPDF was not installed here, so nothing was removed.\nDelete the folder yourself if you no longer want it."),
+                            "This JPDFs was not installed here, so nothing was removed.\nDelete the folder yourself if you no longer want it."),
                         AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return 1;
             }
 
             if (!silent)
             {
-                var res = KillerDialog.Show(
+                var res = JpdfsDialog.Show(
                     null,
-                    SetupText("Str_Dlg_UninstallConfirm", "Uninstall KillerPDF from this computer?"),
+                    SetupText("Str_Dlg_UninstallConfirm", "Uninstall JPDFs from this computer?"),
                     AppName,
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question,
@@ -2183,7 +2183,7 @@ namespace KillerPDF
             if (!CloseRunningInstanceForUninstall())
             {
                 if (!silent)
-                    KillerDialog.Show(null,
+                    JpdfsDialog.Show(null,
                         SetupText("Str_Dlg_UninstallStillRunning",
                             "J-PDF's is still running.\nClose it, then try uninstalling again."),
                         AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -2243,7 +2243,7 @@ namespace KillerPDF
 
             if (!silent)
             {
-                KillerDialog.Show(null,
+                JpdfsDialog.Show(null,
                     Application.Current.TryFindResource("Str_Dlg_Uninstalled") as string ?? "J-PDF's has been uninstalled.", AppName,
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }

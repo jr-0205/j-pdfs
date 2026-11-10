@@ -1,7 +1,7 @@
 using System.IO;
-using KillerPdf.Engine.Fonts;
+using JPDFs.Engine.Fonts;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed class InstalledPdfFontResolver : IPdfFontResolver
 {

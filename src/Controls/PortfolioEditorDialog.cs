@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class PortfolioEditorDialog : Window
 {

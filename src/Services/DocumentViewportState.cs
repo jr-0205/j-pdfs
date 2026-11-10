@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The optional true-zoom extension to the existing seven-field document view record.</summary>
 internal static class DocumentViewportState

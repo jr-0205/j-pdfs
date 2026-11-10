@@ -11,7 +11,7 @@ using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal static class TrustedUpdate
     {
@@ -63,14 +63,14 @@ namespace KillerPDF.Services
             try
             {
                 ValidateRequest(args);
-                if (!KillerFamily.Deployment.InstallerExitCodes.IsElevated())
+                if (!JpdfsUi.Deployment.InstallerExitCodes.IsElevated())
                     throw new SecurityException("The machine update operation requires a complete elevated request.");
                 string directory = MachineDirectory;
                 string target = Path.Combine(directory, AppInfo.ExeName);
                 using var self = Process.GetCurrentProcess();
                 if (!string.Equals(self.MainModule!.FileName, target, StringComparison.OrdinalIgnoreCase))
                     throw new SecurityException("The update helper is not the protected installed application.");
-                using var lease = KillerFamily.Deployment.InstallerExitCodes.Acquire(AppInfo.DisplayName);
+                using var lease = JpdfsUi.Deployment.InstallerExitCodes.Acquire(AppInfo.DisplayName);
                 using var pinned = InstallationFiles.PinDirectory(directory, mustExist: true);
                 using var creator = WindowsIdentity.GetCurrent();
                 ValidateMachineOwner(directory, creator.Owner
@@ -114,7 +114,7 @@ namespace KillerPDF.Services
             catch (Exception error)
             {
                 Console.Error.WriteLine(error.Message);
-                return KillerFamily.Deployment.InstallerExitCodes.FromException(error);
+                return JpdfsUi.Deployment.InstallerExitCodes.FromException(error);
             }
         }
 
@@ -157,8 +157,8 @@ namespace KillerPDF.Services
             string body = "$ErrorActionPreference='Stop';$lease=$null;$owned=$false;try{\n"
                 + UpdateImagePublication.Guard + "\n"
                 + Wait(parentId, parentTicks, Abandoned) + Wait(helperId, helperTicks, Abandoned)
-                + "$lease=New-Object Threading.Mutex($false,'Global\\KillerTools-Install-" + AppInfo.DisplayName + "');"
-                + "try{$owned=$lease.WaitOne(0)}catch [Threading.AbandonedMutexException]{$owned=$true};if(-not $owned){throw 'Another KillerTools install or update is running, so this update was not applied.'};"
+                + "$lease=New-Object Threading.Mutex($false,'Global\\JpdfsTools-Install-" + AppInfo.DisplayName + "');"
+                + "try{$owned=$lease.WaitOne(0)}catch [Threading.AbandonedMutexException]{$owned=$true};if(-not $owned){throw 'Another JpdfsTools install or update is running, so this update was not applied.'};"
                 + "$original=[IO.File]::OpenRead(" + Data(target) + ");$hash=[Security.Cryptography.SHA256]::Create();"
                 + "try{if([BitConverter]::ToString($hash.ComputeHash($original)).Replace('-','') -ne " + Data(originalHash)
                 + "){throw 'The installed image changed before update publication.'}}finally{$hash.Dispose();$original.Dispose()};\n"
@@ -166,9 +166,9 @@ namespace KillerPDF.Services
                 + "\n}catch{$message=$_.Exception.ToString();[Console]::Error.WriteLine($message);try{[IO.File]::AppendAllText("
                 + Data(report) + ",[Environment]::NewLine+$message)}catch{};"
                 // Nothing was published, so the installed copy is reopened for the user the same way
-                // a finished update is, never as this administrator (Start-KillerUpdatedApp). The
+                // a finished update is, never as this administrator (Start-JpdfsUpdatedApp). The
                 // report beside the staged copy still says what happened.
-                + "try{Start-KillerUpdatedApp " + Data(target) + " '' $true}catch{};exit 1}"
+                + "try{Start-JpdfsUpdatedApp " + Data(target) + " '' $true}catch{};exit 1}"
                 + "finally{if($null -ne $lease){if($owned){$lease.ReleaseMutex()};$lease.Dispose()}}";
             return new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),
                 @"WindowsPowerShell\v1.0\powershell.exe"), ImmutablePowerShell.Arguments(body))
@@ -193,7 +193,7 @@ namespace KillerPDF.Services
         /// <summary>Refuses an elevated request unless every argument has exactly the shape
         /// <see cref="Start"/> writes: the helper verb, an absolute download path, a 64-digit hex
         /// hash, a release version, a positive owner id and start time, and a staging identity
-        /// (Killendar's and KillerNotes' request check).</summary>
+        /// (Killendar's and JpdfsNotes' request check).</summary>
         internal static void ValidateRequest(string[] args)
         {
             if (args.Length != 7 || args[0] != HelperArgument

@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// Gives the standalone install and uninstall windows their own taskbar button, labeled
-    /// "J-PDF's Installer" or "Uninstall KillerPDF" with the app icon, instead of grouping them
+    /// "J-PDF's Installer" or "Uninstall JPDFs" with the app icon, instead of grouping them
     /// under the exe name. The taskbar takes the label from the window's relaunch display name.
     /// </summary>
     internal static class TaskbarIdentity
@@ -29,7 +29,7 @@ namespace KillerPDF.Controls
         private static void Use(string label, string role, string arguments)
         {
             _label = label;
-            _id = "SteveTheKiller." + AppName + "." + role;
+            _id = "JPDFs." + AppName + "." + role;
             _arguments = arguments;
         }
 

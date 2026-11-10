@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // ============================================================
     // Keyboard-shortcuts overlay: the LIST view.
@@ -26,7 +26,7 @@ namespace KillerPDF.Shell
 
         // A titled group of rows. TitleKey is a Str_* resource key rendered as the subheader,
         // colored by the section's KsCat* theme brush - the family neon set the keyboard map
-        // already uses (KillerShell's colored categories, taken as the reference).
+        // already uses (JpdfsShell's colored categories, taken as the reference).
         private sealed class KsSection
         {
             public string TitleKey = "";

@@ -13,7 +13,7 @@ Create a `PdfOptionalContentGroup`, wrap its drawing commands with
 The document builder registers the referenced groups and writes their resources.
 
 ```csharp
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
 static byte[] CreateLayerSample()
 {
@@ -47,8 +47,8 @@ use the object identity from the current document when editing. Imported PDFs
 can contain duplicate names, so do not silently choose the first matching label.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
 
 static byte[] SetLayerVisibility(byte[] source, string name, bool visible)
 {
@@ -107,8 +107,8 @@ unused definitions. Without an explicit visible set, it uses saved initial state
 An explicit empty set hides all registered groups while preserving ordinary content.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
 
 static byte[] FlattenInitiallyVisibleLayers(byte[] source)
 {
@@ -135,6 +135,6 @@ The sample's default and flattened renderings should both show only the blue
 rectangle. Toggling Notes on should also show the red rectangle. Verify pixels
 and diagnostics in addition to checking that layer definitions were removed.
 
-See [PdfOptionalContentReader](../KillerPdf.Engine/Documents/PdfOptionalContentReader.cs),
-[PdfOptionalContentEditor](../KillerPdf.Engine/Editing/PdfOptionalContentEditor.cs),
+See [PdfOptionalContentReader](../JPDFs.Engine/Documents/PdfOptionalContentReader.cs),
+[PdfOptionalContentEditor](../JPDFs.Engine/Editing/PdfOptionalContentEditor.cs),
 and the [rendering guide](rendering.md) for the implementation and related limits.

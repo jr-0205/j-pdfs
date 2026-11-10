@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Passwords given as options can be read by any program running as the same user and are kept in
-    // process-creation logs. With --secrets-stdin, a caller such as KillerMCP sends them on standard input
+    // process-creation logs. With --secrets-stdin, a caller such as JpdfsMCP sends them on standard input
     // as one JSON object instead, each named like the option it replaces, without the leading dashes.
     internal static class CliSecrets
     {

@@ -1,13 +1,13 @@
 using System.IO;
 using System.Threading;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // ============================================================
     // Document rasterization cores - pure functions over a rendered
-    // source file, no window state (KillerUI refactor; split out of
+    // source file, no window state (JpdfsUiKit refactor; split out of
     // FileOperations.cs' Save Flattened and Export Images flows).
     // The shell keeps the dialogs, the annotation burn, and the
     // progress overlay; progress arrives via callback, cancel via

@@ -1,6 +1,6 @@
-using ContentDoc = KillerPDF.Services.PdfContentDocument;
+using ContentDoc = JPDFs.Services.PdfContentDocument;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // ============================================================
     // Image placement extraction for the display dark mode (#135

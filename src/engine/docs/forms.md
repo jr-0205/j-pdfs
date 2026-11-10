@@ -21,7 +21,7 @@ The following functions can live in a host service. Add the namespace imports
 and use normal .NET implicit usings:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static IReadOnlyList<PdfFormWidgetInfo> ReadWidgets(byte[] pdf)
 {
@@ -102,7 +102,7 @@ byte prefix does not by itself establish signature validity.
 ## Direct field edits
 
 For host-owned editing without interchange data, create a
-`KillerPdf.Engine.Editing.PdfIncrementalPageEditor` from the opened document.
+`JPDFs.Engine.Editing.PdfIncrementalPageEditor` from the opened document.
 Use fully qualified field names from the widget reader and queue the intended
 changes before calling `Build()` once. The returned PDF bytes contain the
 incremental revision; the host chooses where to save them.

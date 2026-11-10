@@ -11,15 +11,15 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
+using JPDFs.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
 // CliParsePageRange moved out with the CLI runner but is used here too (Export Images'
 // range box); its encoder sibling is now Services/BitmapHelpers.EncodeJpeg.
-using static KillerPDF.Features.CliRunner;
-using KillerFamily.Accessibility;
+using static JPDFs.Features.CliRunner;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -137,7 +137,7 @@ namespace KillerPDF.Shell
                     // The document was assigned before the finish step threw (a PDF with no pages, for one),
                     // so nothing may count as opened.
                     AbandonFailedOpen();
-                    KillerDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), ex2.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+                    JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), ex2.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex) when (PdfImport.IsXRefException(ex))
@@ -152,7 +152,7 @@ namespace KillerPDF.Shell
                     FinishOpenFile(path, srcPath);
                     RememberProtectionOfDamagedSource(srcPath);
                     SetStatus(string.Format(Loc("Str_OpenedReadOnlyXRef"), System.IO.Path.GetFileName(path), _doc.PageCount));
-                    KillerDialog.Show(this,
+                    JpdfsDialog.Show(this,
                         string.Format(Loc("Str_Dlg_OpenedReadOnlyXRef"), System.IO.Path.GetFileName(path)),
                         Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
@@ -163,7 +163,7 @@ namespace KillerPDF.Shell
                 catch
                 {
                     // ReadOnly also failed - offer to repair.
-                    var result = KillerDialog.Show(this,
+                    var result = JpdfsDialog.Show(this,
                         string.Format(Loc("Str_Dlg_RepairAskOpen"), System.IO.Path.GetFileName(path)),
                         Loc("Str_Dlg_AppTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
                     if (result == MessageBoxResult.Yes)
@@ -186,7 +186,7 @@ namespace KillerPDF.Shell
                 // Any other open failure (truncated file, malformed objects, an out-of-range parse, etc.):
                 // we can't classify the damage, but the PDFium-based repair often recovers it anyway, so
                 // offer the repair rather than just failing outright.
-                var result = KillerDialog.Show(this,
+                var result = JpdfsDialog.Show(this,
                     string.Format(Loc("Str_Dlg_RepairAskOpen"), System.IO.Path.GetFileName(path)),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (result == MessageBoxResult.Yes)
@@ -208,13 +208,13 @@ namespace KillerPDF.Shell
         // The open-failure classifiers (IsEofParseException, IsXRefException, IsNetworkPath,
         // IsOwnerPasswordException, IsPasswordException) live in Services/PdfImport.cs.
 
-        // The PDF itself is fine; there was no room for KillerPDF's working copy, usually a full or
+        // The PDF itself is fine; there was no room for JPDFs's working copy, usually a full or
         // unavailable temp folder. Every open path reports that instead of offering a repair.
         private void ShowWorkingCopyProblem(WorkingCopyUnavailableException error)
         {
             _doc?.Close();
             _doc = null;
-            KillerDialog.Show(this, Loc("Str_Err_WorkingCopy") + "\n" + error.Message, Loc("Str_Dlg_AppTitle"),
+            JpdfsDialog.Show(this, Loc("Str_Err_WorkingCopy") + "\n" + error.Message, Loc("Str_Dlg_AppTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
@@ -345,10 +345,10 @@ namespace KillerPDF.Shell
             }
         }
 
-        // Themed "Password Required" prompt (KillerDialog): family dialog chrome + themed PasswordBox.
-        private string? PromptForPassword(string filename) => KillerDialog.PromptPassword(this, filename);
+        // Themed "Password Required" prompt (JpdfsDialog): family dialog chrome + themed PasswordBox.
+        private string? PromptForPassword(string filename) => JpdfsDialog.PromptPassword(this, filename);
 
-        // PDF parsing, repair, and rendering are owned by The KillerPDF.Engine.
+        // PDF parsing, repair, and rendering are owned by The JPDFs.Engine.
         // TryImportRepairToPath lives in Services/PdfImport.cs.
 
         private async void TryRepairAndOpen(string path)
@@ -371,7 +371,7 @@ namespace KillerPDF.Shell
                 bool raster = false;
 
                 // Strategy 0 (#103): lossless engine re-save. Compatibility recovery handles
-                // broken xref tables (including the dangling /Outlines entry older KillerPDF
+                // broken xref tables (including the dangling /Outlines entry older JPDFs
                 // builds wrote) and rewrites a clean file preserving EVERYTHING - forms,
                 // bookmarks, text. The import-copy below drops the document-level AcroForm,
                 // which is what used to turn a repaired fillable form into a flat one.
@@ -407,7 +407,7 @@ namespace KillerPDF.Shell
                 {
                     HideBusyOverlay(busy);
                     _asyncOpenPending = false;
-                    KillerDialog.Show(this, Loc("Str_Repair_Unrecoverable"),
+                    JpdfsDialog.Show(this, Loc("Str_Repair_Unrecoverable"),
                         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -423,7 +423,7 @@ namespace KillerPDF.Shell
                 HideBusyOverlay(busy);
                 FinalizeAsyncOpen();
                 adopted = true;
-                KillerDialog.Show(this,
+                JpdfsDialog.Show(this,
                     raster
                         ? string.Format(Loc("Str_Dlg_RepairedRaster"), System.IO.Path.GetFileName(path))
                         : string.Format(Loc("Str_Dlg_Repaired"), System.IO.Path.GetFileName(path)),
@@ -445,7 +445,7 @@ namespace KillerPDF.Shell
                 {
                     _asyncOpenPending = false;
                     AbandonFailedOpen();   // the finish step can throw after the repaired copy is assigned
-                    KillerDialog.Show(this, Loc("Str_Err_RepairFailed") + "\n" + ex.Message, "J-PDF's",
+                    JpdfsDialog.Show(this, Loc("Str_Err_RepairFailed") + "\n" + ex.Message, "J-PDF's",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -474,7 +474,7 @@ namespace KillerPDF.Shell
                 var tempDec = App.MakeTempFile("dec");
                 if (!PdfEngineIntegration.TryRemoveCertificateEncryption(srcPath, tempDec, certificates, out OpenedProtection recipient))
                 {
-                    KillerDialog.Show(this, Loc("Str_Dlg_NoRecipientCertificate"), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    JpdfsDialog.Show(this, Loc("Str_Dlg_NoRecipientCertificate"), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
                 _doc?.Close();
@@ -500,7 +500,7 @@ namespace KillerPDF.Shell
                 // The finish step can throw after the document is assigned (a PDF with no pages, for one), but a
                 // failure before the open replaced anything leaves the document that was already showing.
                 if (!ReferenceEquals(_doc, before)) AbandonFailedOpen();
-                KillerDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), ex.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), ex.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -508,12 +508,12 @@ namespace KillerPDF.Shell
         // matches the screen; the open file itself stays as it is.
         private void OpenProtectDialog()
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureMayRemoveProtection()) return;
             CommitActiveTextBox();
             if (_isDirty || string.IsNullOrEmpty(_originalFile) || !File.Exists(_originalFile))
             {
-                var ask = KillerDialog.Show(this, Loc("Str_Dlg_SaveBeforeProtect"),
+                var ask = JpdfsDialog.Show(this, Loc("Str_Dlg_SaveBeforeProtect"),
                     "J-PDF's", MessageBoxButton.OKCancel);
                 if (ask != MessageBoxResult.OK) return;
                 SaveInPlace();
@@ -531,7 +531,7 @@ namespace KillerPDF.Shell
         // its own path: a regular save keeps the encryption, and only a limit makes this the owner's call.
         private void RemovePassword()
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (EnsureMayRemoveProtection()) SaveInPlace(otherPaneConfirmed: false, removeProtection: true);
         }
 
@@ -610,7 +610,7 @@ namespace KillerPDF.Shell
                 {
                     AbandonFailedOpen();
                     owner.Viewer.AbortPendingTabLoadExt(owner.Session!);
-                    KillerDialog.Show(this, Loc("Str_Err_OpenProtected") + "\n" + ex.Message,
+                    JpdfsDialog.Show(this, Loc("Str_Err_OpenProtected") + "\n" + ex.Message,
                         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 EndCancellableOp(ct);
@@ -688,7 +688,7 @@ namespace KillerPDF.Shell
             catch (Exception error) when (error is not OutOfMemoryException)
             {
                 if (!ReferenceEquals(_doc, before)) AbandonFailedOpen();
-                KillerDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), error.Message),
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), error.Message),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -722,7 +722,7 @@ namespace KillerPDF.Shell
             catch (Exception error) when (error is not OutOfMemoryException)
             {
                 if (!ReferenceEquals(_doc, before)) AbandonFailedOpen();
-                KillerDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), error.Message),
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), error.Message),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -751,9 +751,9 @@ namespace KillerPDF.Shell
 
         private string? AskForOwnerPassword(bool lastWasWrong)
         {
-            if (lastWasWrong) KillerDialog.Show(this, Loc("Str_Restricted_WrongPassword"), "J-PDF's",
+            if (lastWasWrong) JpdfsDialog.Show(this, Loc("Str_Restricted_WrongPassword"), "J-PDF's",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
-            return KillerDialog.PromptPassword(this, _originalFile ?? _currentFile ?? string.Empty,
+            return JpdfsDialog.PromptPassword(this, _originalFile ?? _currentFile ?? string.Empty,
                 Loc("Str_Protection_Prompt"), Loc("Str_Restricted_Unlock"));
         }
 
@@ -762,7 +762,7 @@ namespace KillerPDF.Shell
             if (answer == ProtectionAnswer.Allowed) return true;
             if (answer == ProtectionAnswer.Canceled) { SetStatus(Loc("Str_Protection_Refused")); return false; }
             bool unreadable = !EnsureProtectionReadable();
-            if (!unreadable) KillerDialog.Show(this, Loc(_protection.Access.Role == PdfAccessRole.Recipient
+            if (!unreadable) JpdfsDialog.Show(this, Loc(_protection.Access.Role == PdfAccessRole.Recipient
                     ? "Str_Protection_Refused_Certificate" : "Str_Protection_Refused"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return false;
@@ -773,7 +773,7 @@ namespace KillerPDF.Shell
         private bool EnsureProtectionReadable()
         {
             if (!_protection.IsUnreadable) return true;
-            KillerDialog.Show(this, string.Format(Loc("Str_Protection_Unreadable"), _protection.Access.Refusal), "J-PDF's",
+            JpdfsDialog.Show(this, string.Format(Loc("Str_Protection_Unreadable"), _protection.Access.Refusal), "J-PDF's",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return false;
         }
@@ -786,7 +786,7 @@ namespace KillerPDF.Shell
             // Certificate encryption has no owner password, so the recipient's permissions stand.
             if (_restrictedByCertificate)
             {
-                KillerDialog.Show(this, Loc("Str_Restricted_CertificateNotice"), "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Restricted_CertificateNotice"), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return false;
             }
@@ -794,7 +794,7 @@ namespace KillerPDF.Shell
             string sourcePath = _currentFile;
             string displayPath = _originalFile;
             string encryptedPath = ViewingCopySources.GetValueOrDefault(sourcePath, sourcePath);
-            string? password = KillerDialog.PromptPassword(this, displayPath,
+            string? password = JpdfsDialog.PromptPassword(this, displayPath,
                 Loc(UnlockPrompt.KeyFor(purpose)), Loc("Str_Restricted_Unlock"));
             if (password is null) return false;
 
@@ -802,7 +802,7 @@ namespace KillerPDF.Shell
             UnlockAnswer unlock = _protection.Unlock(encryptedPath, unlockedPath, password);
             if (unlock.Outcome != UnlockOutcome.Unlocked)
             {
-                KillerDialog.Show(this, unlock.Outcome == UnlockOutcome.WrongPassword
+                JpdfsDialog.Show(this, unlock.Outcome == UnlockOutcome.WrongPassword
                         ? Loc("Str_Restricted_WrongPassword")
                         : string.Format(Loc("Str_Restricted_UnlockFailed"), System.IO.Path.GetFileName(displayPath), unlock.Reason),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -845,7 +845,7 @@ namespace KillerPDF.Shell
             {
                 _doc?.Close();
                 _doc = null;
-                KillerDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), error.Message),
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), error.Message),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                 RestoreReadOnlyOriginal(sourcePath, displayPath, CarryOverlays, protection);
                 return false;
@@ -964,7 +964,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Err_NewDocFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_NewDocFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -1012,7 +1012,7 @@ namespace KillerPDF.Shell
                     var item = MakeMenuItem(System.IO.Path.GetFileName(path), (_, _) =>
                     {
                         if (System.IO.File.Exists(path)) OpenInNewTab(path);
-                        else KillerDialog.Show(this, Loc("Str_Err_FileNotFound") + "\n" + path, "J-PDF's",
+                        else JpdfsDialog.Show(this, Loc("Str_Err_FileNotFound") + "\n" + path, "J-PDF's",
                             MessageBoxButton.OK, MessageBoxImage.Warning);
                     });
                     item.ToolTip = path;
@@ -1096,7 +1096,7 @@ namespace KillerPDF.Shell
         }
 
         // The file-type icon lookup (per-extension cache + SHGetFileInfo) lives in
-        // Services/ShellIcons.cs - the same shape the KillerUI file picker uses.
+        // Services/ShellIcons.cs - the same shape the JpdfsUiKit file picker uses.
 
         // Fills the empty-state "Recent" list with clickable filenames (hidden when there are none).
         // The start screen belongs to a PANE, so a pane filling its own list has to name itself: the
@@ -1248,7 +1248,7 @@ namespace KillerPDF.Shell
                     // through ActiveViewer. Clicking pane B's recents opened the file in pane A.
                     FocusPane(pane);
                     if (System.IO.File.Exists(path)) OpenInNewTab(path);
-                    else KillerDialog.Show(this, Loc("Str_Err_FileNotFound") + "\n" + path, "J-PDF's",
+                    else JpdfsDialog.Show(this, Loc("Str_Err_FileNotFound") + "\n" + path, "J-PDF's",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                 };
                 list.Items.Add(row);
@@ -1298,18 +1298,18 @@ namespace KillerPDF.Shell
         // Opens the Document Info dialog; edits are applied to the live doc and persist on the next save.
         private void OpenDocumentInfo()
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             CommitActiveTextBox();
             string? path = _originalFile ?? _currentFile;
-            KillerPdf.Engine.Documents.PdfDocumentInformation info;
-            try { info = KillerPdf.Engine.Documents.PdfDocumentInformation.Read(EnsureEngineDocumentSession().Document); }
+            JPDFs.Engine.Documents.PdfDocumentInformation info;
+            try { info = JPDFs.Engine.Documents.PdfDocumentInformation.Read(EnsureEngineDocumentSession().Document); }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 // A bad date or title in an otherwise valid PDF is not worth a crash dialog.
-                KillerDialog.Show(this, ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
+                JpdfsDialog.Show(this, ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            KillerPdf.Engine.Authoring.PdfDocumentMetadata? editedMetadata = null;
+            JPDFs.Engine.Authoring.PdfDocumentMetadata? editedMetadata = null;
             var dlg = new DocumentInfoDialog(this, info, metadata => editedMetadata = metadata, path);
             dlg.ShowDialog();   // fade-close dialogs don't reliably return true; rely on the Saved flag
             if (dlg.Saved && editedMetadata is not null)
@@ -1325,7 +1325,7 @@ namespace KillerPDF.Shell
                 }
                 catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
-                    KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message,
+                    JpdfsDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message,
                         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -1338,7 +1338,7 @@ namespace KillerPDF.Shell
 
         private async Task MergeAtIndex(int? insertionIndex)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureEditable()) return;
             var dlg = new Controls.FileDialog(Controls.FileDialogMode.Open)
                           { Filter = Loc("Str_Filter_Pdf") + "|*.pdf", Title = Loc("Str_Dlg_SelectMerge"), Multiselect = true };
@@ -1354,7 +1354,7 @@ namespace KillerPDF.Shell
                     try
                     {
                         string importPath = file;
-                        IReadOnlyList<KillerPdf.Engine.Documents.PdfPageInformation> pages;
+                        IReadOnlyList<JPDFs.Engine.Documents.PdfPageInformation> pages;
                         try
                         {
                             pages = await RunBusyAsync(() =>
@@ -1412,7 +1412,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_MergeFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_MergeFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1423,8 +1423,8 @@ namespace KillerPDF.Shell
         // Adobe Reader only displays pages whose sides are 3-14400 points; anything outside
         // that range shows "The dimensions of this page are out-of-range" and renders blank.
         // Such pages usually come from images with broken DPI metadata turned into a PDF (by
-        // KillerPDF 1.6.1 and earlier, or by other tools). PDFium renders any size, so the
-        // file looks normal in KillerPDF and only fails in Adobe.
+        // JPDFs 1.6.1 and earlier, or by other tools). PDFium renders any size, so the
+        // file looks normal in JPDFs and only fails in Adobe.
         // Min/MaxAdobePageDim live in Services/PdfImport.cs (shared with the image importer).
 
         // Called at the top of every user-facing save. If any page is outside Adobe's supported
@@ -1437,7 +1437,7 @@ namespace KillerPDF.Shell
             IReadOnlyList<int> pages = PdfPageDimensionNormalizer.FindPagesOutsideRange(
                 session.Document, PdfImport.MinAdobePageDim, PdfImport.MaxAdobePageDim);
             if (pages.Count == 0) return;
-            var res = KillerDialog.Show(this, string.Format(Loc("Str_Dlg_PageOutOfRange"), pages.Count),
+            var res = JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_PageOutOfRange"), pages.Count),
                 "J-PDF's", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (res != MessageBoxResult.Yes) return;
             // Every save calls this before its own try block, so a failed rescale must not escape it.
@@ -1449,7 +1449,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message),
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -1469,7 +1469,7 @@ namespace KillerPDF.Shell
                 signed = false;   // an unreadable destination is reported by the save itself
             }
             if (!signed) return true;
-            return KillerDialog.Show(this,
+            return JpdfsDialog.Show(this,
                 string.Format(Loc("Str_Dlg_SaveRemovesSignature"), System.IO.Path.GetFileName(destinationPath)),
                 Loc("Str_Dlg_AppTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Warning,
                 defaultResult: MessageBoxResult.Cancel) == MessageBoxResult.OK;
@@ -1511,7 +1511,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 // Still read-only on the unchanged original, with the typed values kept.
                 if (_doc is null)
@@ -1555,9 +1555,9 @@ namespace KillerPDF.Shell
         // which every caller already reads as a canceled save.
         private void SaveInPlace(bool otherPaneConfirmed, bool removeProtection = false)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!otherPaneConfirmed && !string.IsNullOrEmpty(_originalFile) && OtherPaneHasDirtyCopyOf(_originalFile)
-                && KillerDialog.Show(this,
+                && JpdfsDialog.Show(this,
                     string.Format(Loc("Str_Dlg_SaveOtherPaneDirty"), System.IO.Path.GetFileName(_originalFile)),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Warning,
                     defaultResult: MessageBoxResult.Cancel) != MessageBoxResult.OK)
@@ -1567,7 +1567,7 @@ namespace KillerPDF.Shell
                 // The same three answers as the regular save below: Save As opens the dialog.
                 if (Services.FileRevision.ConflictsWith(_loadedRevision, _originalFile!))
                 {
-                    var choice = KillerDialog.AskToSave(this,
+                    var choice = JpdfsDialog.AskToSave(this,
                         string.Format(Loc("Str_Dlg_SaveConflict"), System.IO.Path.GetFileName(_originalFile)),
                         Loc("Str_Btn_Replace"), Loc("Str_KS_SaveAs"), Loc("Str_Btn_CancelDlg"));
                     if (choice == MessageBoxResult.No) { SaveAs_Click(this, new RoutedEventArgs()); return; }
@@ -1587,7 +1587,7 @@ namespace KillerPDF.Shell
             // (Ctrl+S, the menu, tab close and quit all land here), so never replace that silently.
             if (Services.FileRevision.ConflictsWith(_loadedRevision, _originalFile!))
             {
-                var conflict = KillerDialog.AskToSave(this,
+                var conflict = JpdfsDialog.AskToSave(this,
                     string.Format(Loc("Str_Dlg_SaveConflict"), System.IO.Path.GetFileName(_originalFile)),
                     Loc("Str_Btn_Replace"), Loc("Str_KS_SaveAs"), Loc("Str_Btn_CancelDlg"));
                 if (conflict == MessageBoxResult.No) { SaveAsWithName(null, removeProtection: removeProtection); return; }
@@ -1662,7 +1662,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1707,7 +1707,7 @@ namespace KillerPDF.Shell
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             // No real path yet (repaired temp-backed open) -> go straight to Save As.
             if (string.IsNullOrEmpty(_originalFile)) { SaveAs_Click(sender, e); return; }
             var name = System.IO.Path.GetFileName(_originalFile);
@@ -1717,13 +1717,13 @@ namespace KillerPDF.Shell
             // suggest that - so say so before it happens rather than after.
             if (OtherPaneHasDirtyCopyOf(_originalFile))
             {
-                var warn = KillerDialog.Show(this,
+                var warn = JpdfsDialog.Show(this,
                     string.Format(Loc("Str_Dlg_SaveOtherPaneDirty"), name),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Warning,
                     defaultResult: MessageBoxResult.Cancel);
                 if (warn != MessageBoxResult.OK) return;
             }
-            var choice = KillerDialog.Show(this, string.Format(Loc("Str_Dlg_OverwriteMsg"), name), Loc("Str_Lbl_Save"),
+            var choice = JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_OverwriteMsg"), name), Loc("Str_Lbl_Save"),
                                            MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
             if (choice == MessageBoxResult.Yes)      SaveInPlace(otherPaneConfirmed: true);
             else if (choice == MessageBoxResult.No)  SaveAs_Click(sender, e);
@@ -1735,7 +1735,7 @@ namespace KillerPDF.Shell
         // Save As, offering the given file name in place of the current one when there is one.
         internal void SaveAsWithName(string? suggestedName, bool openCopy = false, bool removeProtection = false)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             bool restrictedFill = !removeProtection && CanSaveRestrictedFormFill();
             if (!restrictedFill && (!EnsureEditable() || !EnsureProtectionReadable())) return;
             OpenedProtection publishUnder = removeProtection ? OpenedProtection.None : _protection;
@@ -1773,7 +1773,7 @@ namespace KillerPDF.Shell
             if (dlg.ShowDialog(this) != true) return;
             if (App.IsCleanupOwnedPath(dlg.FileName))
             {
-                KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + dlg.FileName, "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + dlg.FileName, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -1795,12 +1795,12 @@ namespace KillerPDF.Shell
                 try { SaveExactCopy(unchanged, dlg.FileName, openCopy); }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "J-PDF's",
+                    JpdfsDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "J-PDF's",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 return;
             }
-            if (sourceSigned && KillerDialog.Show(this,
+            if (sourceSigned && JpdfsDialog.Show(this,
                     string.Format(Loc("Str_Dlg_SaveAsClearsSignature"), System.IO.Path.GetFileName(dlg.FileName)),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Warning,
                     defaultResult: MessageBoxResult.Cancel) != MessageBoxResult.OK)
@@ -1811,7 +1811,7 @@ namespace KillerPDF.Shell
                 try { SaveCopyAndOpen(dlg.FileName); }
                 catch (Exception ex)
                 {
-                    KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message,
+                    JpdfsDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message,
                         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 return;
@@ -1884,7 +1884,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1937,7 +1937,7 @@ namespace KillerPDF.Shell
 
         private async void SaveFlattened_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureMayWrite(PdfOutput.Printable, continueAfterUnlock: true)) return;
             var dlg = new Controls.FileDialog(Controls.FileDialogMode.Save)
                           { Filter = Loc("Str_Filter_Pdf") + "|*.pdf", Title = Loc("Str_Dlg_SaveFlattened"),
@@ -2000,7 +2000,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                try { KillerDialog.Show(this, Loc("Str_Err_FlattenFailed") + "\n" + ex.GetType().Name + ": " + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error); }
+                try { JpdfsDialog.Show(this, Loc("Str_Err_FlattenFailed") + "\n" + ex.GetType().Name + ": " + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error); }
                 catch { /* dialog failed; overlay still removed in finally */ }
             }
             finally
@@ -2020,7 +2020,7 @@ namespace KillerPDF.Shell
 
         private async void ExportDocument_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureEditable(continueAfterUnlock: false)) return;
             CommitActiveTextBox();
             Func<bool> sourceCurrent = CaptureDocumentOrigin();
@@ -2041,7 +2041,7 @@ namespace KillerPDF.Shell
                 pages = CliParsePageRange(options.Range, pageCount, out string rangeError);
                 if (pages is null)
                 {
-                    KillerDialog.Show(this, rangeError.Length > 0 ? rangeError : Loc("Str_InvalidRange"),
+                    JpdfsDialog.Show(this, rangeError.Length > 0 ? rangeError : Loc("Str_InvalidRange"),
                         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
@@ -2074,7 +2074,7 @@ namespace KillerPDF.Shell
             if (new[] { currentSource, originalSource }.Any(source => source is not null
                 && string.Equals(System.IO.Path.GetFullPath(source), destination, StringComparison.OrdinalIgnoreCase)))
             {
-                KillerDialog.Show(this, Loc("Str_Merge_SourceOutput"));
+                JpdfsDialog.Show(this, Loc("Str_Merge_SourceOutput"));
                 return;
             }
 
@@ -2105,7 +2105,7 @@ namespace KillerPDF.Shell
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_ExportFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_ExportFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -2120,7 +2120,7 @@ namespace KillerPDF.Shell
         /// (the Pages panel's "Export page as image", #207) while staying fully editable.</summary>
         private async Task ExportImagesFlow(string presetRange)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             // The images carry the page out of a restricted PDF, so they wait for the owner password.
             if (!EnsureMayWrite(PdfOutput.Printable)) return;
             CommitActiveTextBox();
@@ -2142,7 +2142,7 @@ namespace KillerPDF.Shell
                 selected = CliParsePageRange(opts.Range, pageCount, out string rangeErr);
                 if (selected is null)
                 {
-                    KillerDialog.Show(this, rangeErr.Length > 0 ? rangeErr : Loc("Str_InvalidRange"),
+                    JpdfsDialog.Show(this, rangeErr.Length > 0 ? rangeErr : Loc("Str_InvalidRange"),
                                       "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
@@ -2165,7 +2165,7 @@ namespace KillerPDF.Shell
             string[] outputPaths = PdfRasterize.PlanPageImagePaths(_originalFile ?? _currentFile,
                 selected, outDir, baseName, digits, opts.Jpeg);
             var approvedOverwrites = outputPaths.Where(System.IO.File.Exists).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            if (approvedOverwrites.Count > 0 && KillerDialog.Show(this,
+            if (approvedOverwrites.Count > 0 && JpdfsDialog.Show(this,
                     string.Format(Loc("Str_Dlg_OverwriteMsg"), string.Join("\n", approvedOverwrites.Select(System.IO.Path.GetFileName))),
                     Loc("Str_ExportImg_Suffix"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
@@ -2216,7 +2216,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_ExportFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_ExportFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -2233,7 +2233,7 @@ namespace KillerPDF.Shell
         {
             IReadOnlyList<int> pages = incomplete.Pages;
             if (pages.Count == 0) return;
-            KillerDialog.Show(this, string.Format(Loc("Str_Export_IncompletePages"), IncompletePageLog.Describe(pages)),
+            JpdfsDialog.Show(this, string.Format(Loc("Str_Export_IncompletePages"), IncompletePageLog.Describe(pages)),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
@@ -2277,7 +2277,7 @@ namespace KillerPDF.Shell
 
         private void Print_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             CommitActiveTextBox();
             if (!TryAllowPrinting(out double printDpi)) return;
 
@@ -2295,7 +2295,7 @@ namespace KillerPDF.Shell
         private bool TryAllowPrinting(out double printDpi)
         {
             OpenedProtection protection = _protection;
-            PrintAnswer answer = protection.AskToPrint(allowance => KillerDialog.PromptPassword(this,
+            PrintAnswer answer = protection.AskToPrint(allowance => JpdfsDialog.PromptPassword(this,
                 _originalFile ?? _currentFile ?? string.Empty,
                 Loc(allowance == PrintAllowance.Forbidden ? "Str_Print_Restricted_Prompt" : "Str_Print_LowQuality_Prompt"),
                 Loc("Str_Restricted_Unlock")));
@@ -2306,14 +2306,14 @@ namespace KillerPDF.Shell
             switch (notice)
             {
                 case PrintNotice.WrongPassword:
-                    KillerDialog.Show(this, Loc("Str_Restricted_WrongPassword"), "J-PDF's",
+                    JpdfsDialog.Show(this, Loc("Str_Restricted_WrongPassword"), "J-PDF's",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                     break;
                 case PrintNotice.RefusedQuietly:
                     SetStatus(Loc("Str_Print_Refused"));
                     break;
                 case PrintNotice.Refused or PrintNotice.RefusedCertificate:
-                    KillerDialog.Show(this, Loc(notice == PrintNotice.RefusedCertificate ? "Str_Print_Refused_Certificate" : "Str_Print_Refused"),
+                    JpdfsDialog.Show(this, Loc(notice == PrintNotice.RefusedCertificate ? "Str_Print_Refused_Certificate" : "Str_Print_Refused"),
                         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
                     break;
             }
@@ -2371,7 +2371,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 DeletePrintTemp(printPath);
-                KillerDialog.Show(this, Loc("Str_Err_PrintFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_PrintFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -2386,7 +2386,7 @@ namespace KillerPDF.Shell
 
             // Open the preview window immediately. Pages rasterize on a background thread and
             // stream in via SetRenderedPage, so the window appears at once and the app stays
-            // responsive on large files. WPF's OS PrintDialog can't show a preview, so KillerPDF
+            // responsive on large files. WPF's OS PrintDialog can't show a preview, so JPDFs
             // renders it and drives printing itself.
             string  renderPath = printPath;
             string? cleanup    = printPath;
@@ -2441,7 +2441,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                try { KillerDialog.Show(this, Loc("Str_Err_PrintFailed") + "\n" + ex.GetType().Name + ": " + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error); }
+                try { JpdfsDialog.Show(this, Loc("Str_Err_PrintFailed") + "\n" + ex.GetType().Name + ": " + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error); }
                 catch { }
             }
 

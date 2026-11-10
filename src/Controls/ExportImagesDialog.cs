@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF
+namespace JPDFs
 {
     // Export pages as images (#132): PNG/JPEG + DPI + page range, themed via DialogChrome like
     // Document Info. The destination and base file name are picked afterwards with the standard

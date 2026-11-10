@@ -37,7 +37,7 @@ using System.Windows.Interop;
 //      Fit(this, keepMargin: false) once the window has its HWND, instead of clamping to
 //      SystemParameters.WorkArea, which would drag a window on another monitor to the primary.
 // ============================================================
-namespace KillerFamily.Windowing
+namespace JpdfsUi.Windowing
 {
     public static class WorkAreaFit
     {

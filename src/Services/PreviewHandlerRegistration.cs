@@ -3,11 +3,11 @@ using System.IO;
 using System.Security;
 using Microsoft.Win32;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// PDF previews for File Explorer and Outlook (#410). The installed edition registers the
-/// KillerPDF.PreviewHandler COM server when the user chooses it in setup. It runs in its own
+/// JPDFs.PreviewHandler COM server when the user chooses it in setup. It runs in its own
 /// prevhost.exe surrogate so no other preview handler shares its .NET runtime. The .pdf preview
 /// it replaces is remembered and put back when it is removed. The portable edition never calls this.
 /// </summary>
@@ -16,7 +16,7 @@ internal static class PreviewHandlerRegistration
     /// <summary>Matches PdfPreviewHandler.ClassId in the PreviewHandler project.</summary>
     internal const string ClassId = "{0EB8F20D-6E18-4B80-9CDF-FF663C52B5BD}";
     internal const string AppId = "{CC8F3FF2-266A-4827-9CFA-964310EB6676}";
-    internal const string HostFileName = "KillerPDF.PreviewHandler.comhost.dll";
+    internal const string HostFileName = "JPDFs.PreviewHandler.comhost.dll";
     private const string PreviewExtension = "{8895b1c6-b41f-4c1c-a562-0d564250836f}";
     private const string DisplayName = "J-PDF's Preview Handler";
     private const string StateKey = @"Software\JPDFs\PreviewHandler";
@@ -50,7 +50,7 @@ internal static class PreviewHandlerRegistration
             key.SetValue("", DisplayName);
             key.SetValue("DisplayName", DisplayName);
             key.SetValue("AppID", AppId);
-            // The pane reads the font index from the user's KillerPDF data folder.
+            // The pane reads the font index from the user's JPDFs data folder.
             key.SetValue("DisableLowILProcessIsolation", 1, RegistryValueKind.DWord);
         }
         using (RegistryKey key = root.CreateSubKey(ClassKey + @"\InprocServer32"))

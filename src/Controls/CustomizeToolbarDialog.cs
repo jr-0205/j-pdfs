@@ -1,12 +1,12 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 // Customize toolbar: the toolbar's buttons in order, with a marker where the left side ends and
 // the right side begins, beside the More menu (the overflow chevron). Buttons move between the two
@@ -117,7 +117,7 @@ internal sealed class CustomizeToolbarDialog : Window
     private void UpdateRowHover()
     {
         _buttonRowHover = null;
-        if (ThemeManager.Current != Theme.SE98 && !SystemParameters.HighContrast
+        if (!SystemParameters.HighContrast
             && TryFindResource("PaneBrush") is SolidColorBrush pane
             && TryFindResource("TextBrush") is SolidColorBrush text
             && TryFindResource("RowHoverBrush") is SolidColorBrush hover

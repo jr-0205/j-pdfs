@@ -16,13 +16,13 @@ source, the same way as CoreJ2K, so it can be audited and patched in place.
 ## What was copied
 
 Only the `src/NTwain` library project. The upstream repository also holds the TWAIN
-specification, tests, samples and a solution file. None of those are used by KillerPDF
+specification, tests, samples and a solution file. None of those are used by JPDFs
 and none were copied. `Sign.snk` was left out because the vendored build is not
 strong-named.
 
 ## Who references it
 
-`KillerPDF.csproj` references this project. The engine does not.
+`JPDFs.csproj` references this project. The engine does not.
 
 ## Runtime requirement
 
@@ -37,10 +37,10 @@ install it. It is LGPL and is not bundled; when it is missing, Scan to PDF says 
 1. `TargetFrameworks` reduced from four frameworks to `net10.0-windows` only, matching
    the app.
 2. `IsPackable` set to `false` and the package properties, SourceLink reference and
-   signing key removed, since this builds as part of KillerPDF rather than as a package.
+   signing key removed, since this builds as part of JPDFs rather than as a package.
 3. The upstream version, author and copyright metadata are kept so the compiled assembly
    carries them.
-4. `UseWindowsForms` is off. KillerPDF uses the WPF message loop hook, and Windows Forms
+4. `UseWindowsForms` is off. JPDFs uses the WPF message loop hook, and Windows Forms
    would otherwise ship with the self-contained portable build.
 
 The library sources are unmodified apart from three documentation comments, two in

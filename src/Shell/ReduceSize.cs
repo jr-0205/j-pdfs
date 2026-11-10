@@ -1,16 +1,16 @@
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Writing;
-using KillerPDF.Services;
+using JPDFs.Engine.Writing;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Reduce File Size (#433): saves a smaller copy and leaves the open document as it is.
     public partial class MainWindow
     {
         private async void ReduceFileSize_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             if (!EnsureEditable() || !EnsureProtectionReadable()) return;
             CommitActiveTextBox();
             var options = new ReduceSizeDialog(this);
@@ -35,7 +35,7 @@ namespace KillerPDF.Shell
             catch (Exception ex) when (ex is not OutOfMemoryException) { sourceSigned = false; }   // an unreadable source is reported by the reduce itself
             if (sourceSigned)
             {
-                if (KillerDialog.Show(this,
+                if (JpdfsDialog.Show(this,
                         string.Format(Loc("Str_Reduce_ClearsSignature"), System.IO.Path.GetFileName(dlg.FileName)),
                         Loc("Str_Dlg_AppTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Warning,
                         defaultResult: MessageBoxResult.Cancel) != MessageBoxResult.OK)
@@ -78,7 +78,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Reduce_Failed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Reduce_Failed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

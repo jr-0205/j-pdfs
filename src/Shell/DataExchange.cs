@@ -1,10 +1,10 @@
 using System.IO;
 using System.Text;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -66,7 +66,7 @@ public partial class MainWindow
         if (bookmarks && !Path.GetExtension(destination).Equals(".json", StringComparison.OrdinalIgnoreCase))
         {
             destination += ".json";
-            if (File.Exists(destination) && KillerDialog.Show(this,
+            if (File.Exists(destination) && JpdfsDialog.Show(this,
                     string.Format(Loc("Str_Dlg_OverwriteMsg"), Path.GetFileName(destination)), title,
                     MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
@@ -167,7 +167,7 @@ public partial class MainWindow
         }
     }
 
-    private void ShowExchangeError(Exception error) => KillerDialog.Show(this,
+    private void ShowExchangeError(Exception error) => JpdfsDialog.Show(this,
         Loc("Str_DocumentTools_Failed") + "\n" + error.Message,
         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
 }

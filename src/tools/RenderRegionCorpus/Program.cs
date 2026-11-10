@@ -26,9 +26,9 @@ internal static class Program
         };
         Assembly assembly = Assembly.LoadFrom(app);
         string appHash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(app)));
-        Type type = assembly.GetType("KillerPDF.Services.PdfPageRenderSession", true)!;
+        Type type = assembly.GetType("JPDFs.Services.PdfPageRenderSession", true)!;
         // Builds since 1.9.2 take the protection of the tab whose file it is; a corpus file is no tab's.
-        Type protection = assembly.GetType("KillerPDF.Services.OpenedProtection", true)!;
+        Type protection = assembly.GetType("JPDFs.Services.OpenedProtection", true)!;
         var open = type.GetMethod("OpenEngineFirst", Flags, [typeof(string), typeof(int), typeof(int), protection, typeof(bool)])!;
         var render = type.GetMethod("RenderFittedPage", Flags)!;
         var regionRender = type.GetMethod("RenderFittedRegion", Flags)!;

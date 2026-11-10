@@ -19,8 +19,8 @@ save this as `Check.csproj`:
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="KillerPdf.Engine">
-      <HintPath>$(RepositoryRoot)/engine/KillerPdf.Engine/bin/Release/net10.0/KillerPdf.Engine.dll</HintPath>
+    <Reference Include="JPDFs.Engine">
+      <HintPath>$(RepositoryRoot)/engine/JPDFs.Engine/bin/Release/net10.0/JPDFs.Engine.dll</HintPath>
     </Reference>
     <Compile Include="$(RepositoryRoot)/Services/InstalledPdfFontResolver.cs" />
     <Compile Include="$(RepositoryRoot)/Services/PdfFontStyle.cs" />
@@ -32,7 +32,7 @@ save this as `Check.csproj`:
 Supply the absolute checkout path when running it from that temporary folder:
 
 ```powershell
-dotnet run --project Check.csproj -c Release -p:RepositoryRoot="C:\path\to\KillerPDF"
+dotnet run --project Check.csproj -c Release -p:RepositoryRoot="C:\path\to\JPDFs"
 ```
 
 Every check must print `PASS`, and the process must exit with code zero.
@@ -42,7 +42,7 @@ Every check must print `PASS`, and the process must exit with code zero.
 After a normal Debug build, use PowerShell 7 on .NET 10 with STA enabled:
 
 ```powershell
-pwsh -NoProfile -Sta -CommandWithArgs '& "build/Test-CrashDialog.ps1" -AssemblyPath "bin/Debug/net10.0-windows/KillerPDF.dll" -EvidenceDirectory "C:/Users/steve/scratch/kp-bench-render/crash-report-check"' --startup-smoke
+pwsh -NoProfile -Sta -CommandWithArgs '& "build/Test-CrashDialog.ps1" -AssemblyPath "bin/Debug/net10.0-windows/JPDFs.dll" -EvidenceDirectory "C:/Users/steve/scratch/kp-bench-render/crash-report-check"' --startup-smoke
 ```
 
 Use a fresh evidence directory. The literal process argument `--startup-smoke`

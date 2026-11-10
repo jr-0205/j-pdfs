@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>A command the user can move to another key: the cap it ships on, its label and
     /// the overlay section it is listed under.</summary>

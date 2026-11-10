@@ -4,10 +4,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Keeps the scrollbar reactive (thumb sized to the visible proportion) while guaranteeing it
-    // never shrinks below a grabbable floor. Ported from KillerPDF.
+    // never shrinks below a grabbable floor. Ported from JPDFs.
     //
     // WPF's Track sizes the thumb AND the repeat buttons from the raw proportional value
     // (trackLen * viewport / (range + viewport)). Thumb.MinHeight does NOT feed that math - it

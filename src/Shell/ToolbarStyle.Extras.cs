@@ -4,12 +4,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerFamily.Accessibility;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
-    /// APP-OWNED: KillerPDF's side of the family toolbar (Shell/ToolbarStyle.cs): which buttons
+    /// APP-OWNED: JPDFs's side of the family toolbar (Shell/ToolbarStyle.cs): which buttons
     /// are on the bar and their captions, the three glyphs drawn instead of typeset (Transform,
     /// Compare, Form field), the picker's shortcuts and its Customize and Hide rows, the Open,
     /// Save and OCR split buttons, the caption shed order, and the reflow after each restyle.

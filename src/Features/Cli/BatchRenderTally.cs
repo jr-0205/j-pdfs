@@ -1,4 +1,4 @@
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Counts batch-render page rows for the console summary and the exit code. A page kept by
     // --allow-incomplete is an OK page that is also counted as incomplete. A row whose PNG could

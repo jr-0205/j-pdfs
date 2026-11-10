@@ -3,9 +3,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
-using KillerPdf.Engine.Fonts;
+using JPDFs.Engine.Fonts;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// Document to PDF (#74): prints an Excel .xlsx workbook the way Excel pages it. Each visible

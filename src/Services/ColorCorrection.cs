@@ -1,7 +1,7 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed record ColorCorrectionSettings(
     double Exposure = 0, double Saturation = 1, double Warmth = 0, double Tint = 0)

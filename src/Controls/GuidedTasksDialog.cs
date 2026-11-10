@@ -4,10 +4,10 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal enum GuidedTaskKind { Email, Scan, Privacy, Form }
 internal sealed record GuidedTaskRequest(GuidedTaskKind Kind, string Output, bool Flatten, bool Ocr, bool Search);

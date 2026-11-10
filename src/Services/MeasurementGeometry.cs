@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// The value, label text and automatic label spot of a measurement, shared by the page overlay,

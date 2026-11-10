@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,9 +13,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -281,7 +281,7 @@ namespace KillerPDF.Shell
                 hold?.Hold();
                 try
                 {
-                    if (KillerDialog.Show(this, string.Format(Loc("Str_Dlg_CancelBusy"), _busyOpLabel), "J-PDF's",
+                    if (JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_CancelBusy"), _busyOpLabel), "J-PDF's",
                             MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                         _busyCts?.Cancel();
                 }
@@ -433,7 +433,7 @@ namespace KillerPDF.Shell
             else if (key == Key.Q && mods == ModifierKeys.Control)
             {
                 // The family quit: the same command QuitShortcut binds, so a moved key still quits.
-                KillerFamily.Shell.QuitShortcut.Command.Execute(null, this);
+                JpdfsUi.Shell.QuitShortcut.Command.Execute(null, this);
                 e.Handled = true;
             }
             else if (key == Key.Tab && mods == (ModifierKeys.Control | ModifierKeys.Shift))

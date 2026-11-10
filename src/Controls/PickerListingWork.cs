@@ -6,7 +6,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     public sealed class PickerListingWork : IDisposable
     {

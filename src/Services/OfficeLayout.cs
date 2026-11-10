@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Fonts;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Fonts;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 // Document to PDF (#74): the page model the Word and Excel converters fill, the installed fonts
 // they measure with, and the writer that turns finished pages into a PDF. Coordinates here are

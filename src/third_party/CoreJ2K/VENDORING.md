@@ -31,7 +31,7 @@ Only the `CoreJ2K` library project, which is the whole codec. The upstream
 repository also contains platform adapter projects (`CoreJ2K.Avalonia`,
 `CoreJ2K.Skia`, `CoreJ2K.ImageSharp`, `CoreJ2K.Pfim`, `CoreJ2K.Windows`), a test
 project, a fuzzing project, a codec test harness, and a solution file. None of
-those are used by KillerPDF and none were copied.
+those are used by JPDFs and none were copied.
 
 The encoder was deliberately kept. Removing it is possible, but the encode and
 decode APIs are interleaved in `J2kImage.cs`, `J2kImage.FastPath.cs`,
@@ -43,7 +43,7 @@ nothing else.
 
 ## Who references it
 
-`engine/KillerPdf.Engine` references this project for decoding. `engine/KillerPdf.Engine.Tests`
+`engine/JPDFs.Engine` references this project for decoding. `engine/JPDFs.Engine.Tests`
 references it directly as well, because three JPEG 2000 tests build their own input with the
 encoder and therefore use CoreJ2K types in their own source. A transitive reference through the
 engine resolves at the command line but not in the Visual Studio design-time build, so the test
@@ -61,7 +61,7 @@ properties that file supplied are reproduced inline. The changes are:
 
 1. `TargetFrameworks` reduced from five frameworks to `net10.0` only, matching the
    engine.
-2. `IsPackable` set to `false`, since this builds as part of KillerPDF rather than
+2. `IsPackable` set to `false`, since this builds as part of JPDFs rather than
    as its own package. The packaging metadata, package content items and the
    netstandard2.0 `System.Memory` and `System.Buffers` references were dropped with
    it. The bare `NETSTANDARD` define was dropped too; no source file tests for it.
@@ -76,7 +76,7 @@ properties that file supplied are reproduced inline. The changes are:
 
 `CoreJ2K/j2k/entropy/decoder/ByteInputBuffer.cs` seals the concrete buffer type,
 removes virtual dispatch from its methods, and requests inlining for the hot
-unchecked byte read. KillerPDF only creates this concrete type. The change keeps
+unchecked byte read. JPDFs only creates this concrete type. The change keeps
 decoded pixels identical while reducing JPEG 2000 entropy-decoding overhead.
 
 ## Keeping it in sync
@@ -93,7 +93,7 @@ file changes listed above, then update the commit hash and date in this file.
 
 Preserve the local changes above during a sync. Any additional optimization must
 be recorded in this section and should be offered upstream first when it is not
-specific to KillerPDF, so it can come back through a normal sync.
+specific to JPDFs, so it can come back through a normal sync.
 
 ## Verification after a sync
 

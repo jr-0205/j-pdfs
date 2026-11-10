@@ -11,7 +11,7 @@ Open both inputs with the credentials required to read their page content, then
 pass a cancellation token through the comparison.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfStructuralComparison CompareDocuments(
     byte[] originalBytes,

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows;
-using KillerPDF.Controls;
+using JPDFs.Controls;
 
 // The footer's portable badge: a PORTABLE label and an "Install <App>..." button, shown only when
 // the exe is running from somewhere other than an install location.
@@ -9,7 +9,7 @@ using KillerPDF.Controls;
 // This is the UI half of the family install system. The ENGINE - IsPortable, InstallAndRelaunch,
 // the /silent and machine-wide paths, shortcut creation, uninstall - lives in the host app's
 // App.xaml.cs, because it runs before any window exists. The kit does not ship it; copy it from
-// KillerNotes or Killendar, which have the current version. This file assumes only:
+// JpdfsNotes or Killendar, which have the current version. This file assumes only:
 //
 //     App.IsPortable()                                        -> bool
 //     App.InstallAndRelaunch(bool wantDesktop, bool allUsers) -> bool, false if it did not happen
@@ -20,7 +20,7 @@ using KillerPDF.Controls;
 // can call the install off, flushing before the relaunch and reopening after a failure, its own
 // install call (off the interface thread, or one that can defer the relaunch), and its own status
 // line. AfterPortableBadgeRefreshed runs after every badge refresh.
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {

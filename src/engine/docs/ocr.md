@@ -13,8 +13,8 @@ to the library; this API does not download or train them automatically.
 Open and authenticate the document before constructing the recognizer.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Rendering;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Rendering;
 
 static PdfOcrPageRecognition RecognizeEnglish(PdfDocument document,
     string modelDirectory, int pageIndex, int pixelWidth, int pixelHeight,
@@ -71,7 +71,7 @@ Choose the appropriate output writer after review.
 ## Review and persist corrections
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfOcrReview CorrectWord(PdfOcrReview review, string wordId,
     string replacement)
@@ -103,8 +103,8 @@ writer appends invisible text over the existing pages. It retains the source
 page content and does not convert OCR words into visible editable replacements.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Fonts;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Fonts;
 
 static byte[] WriteReviewedText(PdfDocument document, PdfOcrReview acceptedReview,
     TrueTypeFont font)

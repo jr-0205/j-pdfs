@@ -1,7 +1,7 @@
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
-    /// APP-OWNED: what the footer's Install button runs for a portable KillerPDF (Shell/Install.cs,
+    /// APP-OWNED: what the footer's Install button runs for a portable JPDFs (Shell/Install.cs,
     /// Shell/Install.Extras.cs). Pure, so the argument and target choice is testable without
     /// installing anything. The commands are the ones 1.8.x used, so install paths, registry keys,
     /// uninstall names and the exe name do not change.
@@ -12,7 +12,7 @@ namespace KillerPDF.Shell
         /// <summary>
         /// Chooses the install for the portable copy at <paramref name="currentExe"/>.
         /// A packaged portable asks its launcher for the in-app install
-        /// (KillerLauncher.PortableLauncherPolicy.InAppInstallArgument), elevated for all users.
+        /// (JpdfsLauncher.PortableLauncherPolicy.InAppInstallArgument), elevated for all users.
         /// The launcher refuses Setup's /install-user and /silent, so those are never sent to it.
         /// Without a launcher (old woven builds and developer runs), all users re-runs this exe
         /// elevated with /silent and a per-user install copies this exe in process. A per-user

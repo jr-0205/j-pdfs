@@ -315,21 +315,9 @@ Windows সেটিংস - ডিফল্ট অ্যাপ খুলবে�
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">গাঢ়</sys:String>
-    <sys:String x:Key="Str_Theme_Light">হালকা</sys:String>
-    <sys:String x:Key="Str_Theme_Black">কালো</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">রক্ত</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">লোভ</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">নীলাভ</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat হালকা</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">এক্টোপ্লাজম</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">ক্ষয়</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">শোক</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat হালকা</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat গাঢ়</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">ফিল্ম গ্রেইন</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">সমাধি</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">প্রলাপ</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">অস্বস্তি</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">প্রস্থ মেলান</sys:String>
@@ -1571,7 +1559,6 @@ Windows সেটিংস - ডিফল্ট অ্যাপ খুলবে�
     <sys:String x:Key="Str_KS_DisabledStatus">কীবোর্ড শর্টকাট বন্ধ আছে। চালু করতে Ctrl+Shift+K চাপুন।</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">অ্যাপ চালু হলে আপডেট পরীক্ষা করুন</sys:String>
     <sys:String x:Key="Str_PasswordProtected">“{0}” পাসওয়ার্ড দিয়ে সুরক্ষিত।</sys:String>
-    <sys:String x:Key="Str_About_Aka">অন্য নাম</sys:String>
     <sys:String x:Key="Str_Btn_Run">চালু করুন</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">ম্যাক্রো</sys:String>
     <sys:String x:Key="Str_Macro_Saved">সংরক্ষিত ম্যাক্রো</sys:String>

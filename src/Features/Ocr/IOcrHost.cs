@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     /// <summary>
     /// What OcrController needs from the window hosting it, beyond the shared shell services.
@@ -25,7 +25,7 @@ namespace KillerPDF.Features
         string? CurrentFile { get; }
         /// <summary>The protection of the tab whose file <see cref="CurrentFile"/> is, which every
         /// read of that file is handed.</summary>
-        KillerPDF.Services.OpenedProtection CurrentProtection { get; }
+        JPDFs.Services.OpenedProtection CurrentProtection { get; }
 
         /// <summary>Path of the file the user actually opened, for suggesting output names.
         /// Null for a document that never had an original (e.g. built from images).</summary>
@@ -58,7 +58,7 @@ namespace KillerPDF.Features
         /// to <paramref name="path"/> without changing the live document. Throws on failure.</summary>
         void SaveDocumentTo(string path);
         /// <summary>False until a restricted document has its owner password.</summary>
-        bool EnsureDocumentMayWrite(KillerPDF.Services.PdfOutput output);
+        bool EnsureDocumentMayWrite(JPDFs.Services.PdfOutput output);
 
         /// <summary>Registers the cancellable operation (Esc offers to cancel it) and puts up the
         /// busy overlay. Returns the token to thread through the work.</summary>

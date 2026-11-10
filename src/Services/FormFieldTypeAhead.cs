@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// Decides whether a key pressed over a selected text form field starts editing it. With the Select tool

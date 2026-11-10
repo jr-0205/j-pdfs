@@ -6,12 +6,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Threading.Tasks;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Parsing;
-using KillerPDF.Services;
-using KillerFamily.Accessibility;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Parsing;
+using JPDFs.Services;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -142,7 +142,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -163,13 +163,13 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_DataMerge_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_DataMerge_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
         if (records.Count == 0)
         {
-            KillerDialog.Show(this, Loc("Str_DataMerge_NoRecords"),
+            JpdfsDialog.Show(this, Loc("Str_DataMerge_NoRecords"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -201,7 +201,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_DataMerge_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_DataMerge_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
@@ -212,13 +212,13 @@ public partial class MainWindow
         if (destinations.Any(path => string.Equals(path, Path.GetFullPath(_currentFile), StringComparison.OrdinalIgnoreCase)
             || (_originalFile is not null && string.Equals(path, Path.GetFullPath(_originalFile), StringComparison.OrdinalIgnoreCase))))
         {
-            KillerDialog.Show(this, Loc("Str_Merge_SourceOutput")); return;
+            JpdfsDialog.Show(this, Loc("Str_Merge_SourceOutput")); return;
         }
-        if (destinations.Length == 0) { KillerDialog.Show(this, Loc("Str_Repair_NoChanges")); return; }
+        if (destinations.Length == 0) { JpdfsDialog.Show(this, Loc("Str_Repair_NoChanges")); return; }
         var approvedOverwrites = destinations.Where(File.Exists).ToHashSet(StringComparer.OrdinalIgnoreCase);
         int collisions = plan.OutputFileNames.Count(name =>
             File.Exists(Path.Combine(outputDirectory, name)));
-        if (collisions > 0 && KillerDialog.Show(this,
+        if (collisions > 0 && JpdfsDialog.Show(this,
                 string.Format(Loc("Str_DataMerge_Overwrite"), collisions), "J-PDF's",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
@@ -255,7 +255,7 @@ public partial class MainWindow
         catch (Exception ex)
         {
             HideBusyOverlay(busy);
-            KillerDialog.Show(this, Loc("Str_DataMerge_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_DataMerge_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -268,7 +268,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -278,7 +278,7 @@ public partial class MainWindow
             var initialPlan = PdfEngineIntegration.PlanTableOfContents(_currentFile, 6, _protection);
             if (initialPlan.Entries.Count == 0)
             {
-                KillerDialog.Show(this, Loc("Str_DocumentTools_TocNeedsBookmarks"),
+                JpdfsDialog.Show(this, Loc("Str_DocumentTools_TocNeedsBookmarks"),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
@@ -321,7 +321,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_DocumentTools_TocFailed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_DocumentTools_TocFailed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -330,7 +330,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -340,7 +340,7 @@ public partial class MainWindow
             var layers = PdfEngineIntegration.InspectLayers(_currentFile, _protection);
             if (layers.Groups.Count == 0)
             {
-                KillerDialog.Show(this, Loc("Str_DocumentTools_NoLayers"),
+                JpdfsDialog.Show(this, Loc("Str_DocumentTools_NoLayers"),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
@@ -358,7 +358,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_DocumentTools_LayersFailed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_DocumentTools_LayersFailed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -367,14 +367,14 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
         CommitActiveTextBox();
         try
         {
-            var information = KillerPdf.Engine.Documents.PdfDocumentInformation.Read(
+            var information = JPDFs.Engine.Documents.PdfDocumentInformation.Read(
                 EnsureEngineDocumentSession().Document);
             var dialog = new InitialViewDialog(
                 this, information.InitialView, information.PageCount);
@@ -390,7 +390,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_InitialView_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_InitialView_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -399,7 +399,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -429,7 +429,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_Portfolio_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_Portfolio_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -438,7 +438,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -461,7 +461,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_Portfolio_StructureFailed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_Portfolio_StructureFailed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -470,7 +470,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -481,7 +481,7 @@ public partial class MainWindow
                 PdfEngineIntegration.ReadAttachmentEditorItems(_currentFile, _protection);
             if (attachments.Count == 0)
             {
-                KillerDialog.Show(this, Loc("Str_Attachment_None"),
+                JpdfsDialog.Show(this, Loc("Str_Attachment_None"),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
@@ -499,7 +499,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_Attachment_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_Attachment_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -508,7 +508,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -536,7 +536,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_Navigation_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_Navigation_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -545,7 +545,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -558,7 +558,7 @@ public partial class MainWindow
                 PdfEngineIntegration.DetectBookmarkHeadings(_currentFile, detection.Options, _protection);
             if (proposals.Count == 0)
             {
-                KillerDialog.Show(this, Loc(PdfEngineIntegration.HasTextLayer(_currentFile, _protection)
+                JpdfsDialog.Show(this, Loc(PdfEngineIntegration.HasTextLayer(_currentFile, _protection)
                         ? "Str_AutoBookmarks_NoneFound" : "Str_AutoBookmarks_NoText"),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
@@ -579,7 +579,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_AutoBookmarks_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_AutoBookmarks_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -588,7 +588,7 @@ public partial class MainWindow
     {
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -610,7 +610,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_PageLabels_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_PageLabels_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -626,7 +626,7 @@ public partial class MainWindow
         string? right = ViewerB.CurrentFilePathExt;
         if (!IsSplit || string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
         {
-            KillerDialog.Show(this, Loc("Str_DocumentTools_ComparisonNeedsTwo"),
+            JpdfsDialog.Show(this, Loc("Str_DocumentTools_ComparisonNeedsTwo"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -640,7 +640,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_DocumentTools_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_DocumentTools_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -650,7 +650,7 @@ public partial class MainWindow
     {
         if (_doc is null)
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -658,7 +658,7 @@ public partial class MainWindow
         string? path = _currentFile ?? _originalFile;
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
-            KillerDialog.Show(this, Loc("Str_DocumentTools_Failed"),
+            JpdfsDialog.Show(this, Loc("Str_DocumentTools_Failed"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
@@ -669,7 +669,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, Loc("Str_DocumentTools_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_DocumentTools_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }

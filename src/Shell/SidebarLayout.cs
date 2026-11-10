@@ -1,13 +1,13 @@
 using System;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Configurable sidebar placement: left, right, top or bottom. MainContentGrid has three
     // columns (a sized sidebar column, an empty zero column, a star document column) and two rows.
@@ -197,21 +197,19 @@ namespace KillerPDF.Shell
         // moves. With the sidebar at the top or bottom both sides are window edges, so both get the
         // inset. Top and bottom stay 0: PaneShadow is Direction 270 and draws outside the element's
         // bounds without taking layout space, so a bottom gap would be real padding lifting the
-        // card off the footer, not room for the shadow (KillerShell's ResultsPane comment).
+        // card off the footer, not room for the shadow (JpdfsShell's ResultsPane comment).
         //
-        // The sidebar side is 0, not a pull-back. That 6px column is a plain gap - KillerShell's
+        // The sidebar side is 0, not a pull-back. That 6px column is a plain gap - JpdfsShell's
         // TreeGapCol - because the grip lives inside the sidebar, so nothing sits there and the
         // grain layer paints it like the rest of the surface.
-        // Top is -1, KillerShell's ResultsPane margin verbatim: the card's own top border tucks
+        // Top is -1, JpdfsShell's ResultsPane margin verbatim: the card's own top border tucks
         // UNDER the tab band, which is opaque, so the active tab and the pane read as one surface
         // instead of being split by a hairline under the active tab. With no tabs open the band is
         // collapsed and the -1 just eats a pixel against the toolbar. Below a top sidebar the
         // card meets the rail instead, which it must not tuck under, so the top is 0 there.
         private Thickness DocPaneInsetMargin()
         {
-            // This is layout geometry, not a palette value. Keep the zero-inset exception scoped
-            // to 98SE so it cannot leak into the rounded themes after a live theme switch.
-            double inset = Services.ThemeManager.Current == Services.Theme.SE98 ? 0 : 8;
+            const double inset = 8;
             return _sidebarSide switch
             {
                 SidebarSide.Right => new Thickness(inset, -1, 0, 0),
@@ -751,9 +749,9 @@ namespace KillerPDF.Shell
             e.Handled = true;
         }
 
-        // ── Page-list edge fades - KillerShell's transparent-content mask ──
+        // ── Page-list edge fades - JpdfsShell's transparent-content mask ──
         // Each edge fades only while there is a row past it. PageList has no horizontal scrollbar,
-        // so KillerShell's narrow scrollbar-restoration stops are not needed here.
+        // so JpdfsShell's narrow scrollbar-restoration stops are not needed here.
 
         /// <summary>Called once from the window ctor, beside InitSplitPanes.</summary>
         private void WirePageListEdgeFades()

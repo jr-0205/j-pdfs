@@ -1,12 +1,12 @@
 using System.Threading.Tasks;
 using System.Windows;
-using KillerPDF.Controls;
-using KillerPDF.Features;
+using JPDFs.Controls;
+using JPDFs.Features;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
-    /// APP-OWNED: KillerPDF's side of the family install badge (Shell/Install.cs). The confirm
+    /// APP-OWNED: JPDFs's side of the family install badge (Shell/Install.cs). The confirm
     /// carries the all-users checkbox, locked when a machine-wide copy already exists. Unsaved
     /// documents hold the install, because the installed copy replaces this process. The install
     /// itself is App.InstallAndRelaunch with the command PortableInstallPlan chooses: the packaged
@@ -25,7 +25,7 @@ namespace KillerPDF.Shell
             options.CanInstallAsync = () =>
             {
                 if (!((IAboutUpdateRestart)this).IsDirty) return Task.FromResult(true);
-                KillerDialog.Show(this, Loc("Str_Dlg_SaveBeforeInstall"), "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Dlg_SaveBeforeInstall"), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return Task.FromResult(false);
             };

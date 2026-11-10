@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace KillerFamily.Layout
+namespace JpdfsUi.Layout
 {
     /// <summary>
     /// Centers a glyph's ink instead of its advance box. Icon fonts draw many glyphs off-center

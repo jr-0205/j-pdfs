@@ -3,7 +3,7 @@ param([string]$OutputDirectory, [string]$SourcePath, [switch]$Smoke, [switch]$Wi
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $name = Split-Path -Leaf $repo
-$target = if ($name -in @('KillerNotes', 'KillerShell', 'KillerScan', 'Killendar', 'KillerUI')) { 'net48' } else { 'net10.0-windows' }
+$target = if ($name -in @('JpdfsNotes', 'JpdfsShell', 'JpdfsScan', 'Killendar', 'JpdfsUiKit')) { 'net48' } else { 'net10.0-windows' }
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path ([IO.Path]::GetTempPath()) ('submenu-' + [Guid]::NewGuid().ToString('N')) }
 if (Test-Path -LiteralPath $OutputDirectory) { throw 'Use a fresh output directory.' }
 $fixture = Join-Path $OutputDirectory 'fixture'
@@ -22,7 +22,7 @@ try {
     $arguments = @($repo, $OutputDirectory)
     if ($SourcePath) { $arguments += $SourcePath }
     elseif ($Smoke -or $Windowless) {
-        $source = if ($name.StartsWith('KillerPDF')) { 'MainWindow.xaml' } elseif ($name -eq 'KillerScan') { 'App.xaml' } else { 'Controls\Controls.xaml' }
+        $source = if ($name.StartsWith('JPDFs')) { 'MainWindow.xaml' } elseif ($name -eq 'JpdfsScan') { 'App.xaml' } else { 'Controls\Controls.xaml' }
         $arguments += (Join-Path $repo $source)
     }
     if ($Smoke) { $arguments += '--smoke' }

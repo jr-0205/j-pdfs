@@ -4,9 +4,9 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // The screen-reader view of this pane's document (BF-U001): page text in the same reading
     // order selection and search use, mapped back to characters so a reader's range can be
@@ -50,7 +50,7 @@ namespace KillerPDF.Controls
 
             // Each page's comments as readable lines: the PDF's own review comments, read after the
             // page body so a screen reader reaches them in page order.
-            private readonly Dictionary<int, List<KillerPdf.Engine.Documents.PdfCommentInfo>> _comments = [];
+            private readonly Dictionary<int, List<JPDFs.Engine.Documents.PdfCommentInfo>> _comments = [];
             private readonly Dictionary<int, (double Left, double Bottom)> _cropOrigins = [];
 
             private List<string> PageComments(string file, int page)
@@ -60,7 +60,7 @@ namespace KillerPDF.Controls
                 if (_comments.TryGetValue(page, out var saved))
                     foreach (var comment in saved)
                         if (DescribeAnnotation(file, page, comment) is { } line) lines.Add(line);
-                // Text boxes added in KillerPDF and not yet saved are on screen too.
+                // Text boxes added in JPDFs and not yet saved are on screen too.
                 if (viewer._annotations.TryGetValue(page, out var placed))
                     foreach (var text in placed.OfType<TextAnnotation>())
                         if (!string.IsNullOrWhiteSpace(text.Content)) lines.Add(text.Content.Trim());
@@ -69,7 +69,7 @@ namespace KillerPDF.Controls
 
             // One readable line for a page annotation: its comment text, or for bare markup what it
             // is, quoting the text a highlight, underline or strikeout covers.
-            private string? DescribeAnnotation(string file, int page, KillerPdf.Engine.Documents.PdfCommentInfo comment)
+            private string? DescribeAnnotation(string file, int page, JPDFs.Engine.Documents.PdfCommentInfo comment)
             {
                 var origin = _cropOrigins.TryGetValue(page, out var crop) ? crop : (0, 0);
                 return ReadingAnnotationText.Describe(comment, () => viewer._textRuns.GetPage(file, viewer._protection,page),
@@ -82,25 +82,25 @@ namespace KillerPDF.Controls
                 _factsVersion = facts;
                 _comments.Clear();
                 _cropOrigins.Clear();
-                KillerPdf.Engine.Documents.PdfDocument document;
+                JPDFs.Engine.Documents.PdfDocument document;
                 // The tab's file, read under the tab's protection like every other reader of it.
                 try { document = PdfEngineIntegration.OpenForReading(System.IO.File.ReadAllBytes(file), viewer._protection); }
                 catch (Exception ex) when (ex is not OutOfMemoryException) { _structureOrder = null; return; }
                 try
                 {
-                    foreach (var comment in KillerPdf.Engine.Documents.PdfCommentReader.Read(document, includeMarkupWithoutText: true))
+                    foreach (var comment in JPDFs.Engine.Documents.PdfCommentReader.Read(document, includeMarkupWithoutText: true))
                     {
                         if (!_comments.TryGetValue(comment.PageIndex, out var list)) _comments[comment.PageIndex] = list = [];
                         list.Add(comment);
                     }
-                    foreach (var box in KillerPdf.Engine.Documents.PdfPageInformation.Read(document).Select((info, index) => (info, index)))
+                    foreach (var box in JPDFs.Engine.Documents.PdfPageInformation.Read(document).Select((info, index) => (info, index)))
                         _cropOrigins[box.index] = (box.info.Left, box.info.Bottom);
                 }
                 catch (Exception ex) when (ex is not OutOfMemoryException) { _comments.Clear(); _cropOrigins.Clear(); }
                 try
                 {
                     var order = new Dictionary<int, List<int>>();
-                    foreach (var item in KillerPdf.Engine.Diagnostics.PdfAccessibilityReadingOrder.Read(document)
+                    foreach (var item in JPDFs.Engine.Diagnostics.PdfAccessibilityReadingOrder.Read(document)
                                  .Items.OrderBy(item => item.Sequence))
                     {
                         if (item.MarkedContentId is not int mcid) continue;

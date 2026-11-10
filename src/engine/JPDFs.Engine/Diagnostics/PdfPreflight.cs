@@ -1,0 +1,337 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text;
+using JPDFs.Engine.Documents;
+
+namespace JPDFs.Engine.Diagnostics;
+
+/// <summary>A repeatable check available to a preflight profile.</summary>
+public enum PdfPreflightCheck
+{
+    /// <summary>Checks the PDF header, cross references, objects, and catalog.</summary>
+    StructuralIntegrity,
+    /// <summary>Checks for a declared primary document language.</summary>
+    DocumentLanguage,
+    /// <summary>Checks for a structure tree and marked-content declaration.</summary>
+    TaggedStructure,
+    /// <summary>Checks interactive form fields for user-facing descriptions.</summary>
+    FormAccessibility,
+    /// <summary>Checks link annotations for user-facing descriptions.</summary>
+    LinkAccessibility,
+    /// <summary>Checks effective media and crop boxes on every page.</summary>
+    PageBoxes,
+    /// <summary>Checks for a usable document output intent and ICC profile.</summary>
+    OutputIntent,
+    /// <summary>Checks the effective resolution of every placed image.</summary>
+    ImageResolution,
+    /// <summary>Checks that page and form fonts include an embedded font program.</summary>
+    FontEmbedding,
+    /// <summary>Checks for transparency, soft masks, and non-normal blend modes.</summary>
+    Transparency,
+    /// <summary>Checks device color, ICC profiles, spot colors, and overprint settings.</summary>
+    ColorUsage,
+    /// <summary>Validates declared PDF/A and PDF/UA boundaries and reports unsupported PDF/X checks.</summary>
+    ConformanceDeclarations,
+    /// <summary>Checks PDF layer structure and reports effective layer state.</summary>
+    OptionalContent,
+    /// <summary>Checks descriptive document metadata for completeness and validity.</summary>
+    DocumentMetadata,
+    /// <summary>Checks measurement annotation calibration dictionaries.</summary>
+    MeasurementAnnotations,
+    /// <summary>Checks embedded files for unsafe names, executable content, and integrity failures.</summary>
+    AttachmentSafety
+}
+
+/// <summary>A named, shareable selection of preflight checks.</summary>
+public sealed partial record PdfPreflightProfile
+{
+    private static readonly PdfPreflightProfileCompactJsonContext CompactJson = new(
+        JsonOptions(false));
+    private static readonly PdfPreflightProfileIndentedJsonContext IndentedJson = new(
+        JsonOptions(true));
+
+    /// <summary>Creates a validated profile.</summary>
+    public PdfPreflightProfile(string name, IEnumerable<PdfPreflightCheck> checks,
+        double minimumImageDpi = 300, double maximumInkCoveragePercent = 300)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("A preflight profile name is required.", nameof(name));
+        ArgumentNullException.ThrowIfNull(checks);
+        PdfPreflightCheck[] selected = [.. checks.Distinct()];
+        if (selected.Length == 0)
+            throw new ArgumentException("A preflight profile requires at least one check.", nameof(checks));
+        if (selected.Any(check => !Enum.IsDefined(check)))
+            throw new ArgumentOutOfRangeException(nameof(checks), "A preflight check is not defined.");
+        if (!double.IsFinite(minimumImageDpi) || minimumImageDpi <= 0)
+            throw new ArgumentOutOfRangeException(nameof(minimumImageDpi));
+        if (!double.IsFinite(maximumInkCoveragePercent)
+            || maximumInkCoveragePercent <= 0 || maximumInkCoveragePercent > 400)
+            throw new ArgumentOutOfRangeException(nameof(maximumInkCoveragePercent));
+        Name = name;
+        Checks = Array.AsReadOnly(selected);
+        MinimumImageDpi = minimumImageDpi;
+        MaximumInkCoveragePercent = maximumInkCoveragePercent;
+    }
+
+    /// <summary>Gets a structural validation profile suitable for ordinary PDFs.</summary>
+    public static PdfPreflightProfile General { get; } =
+        new("General PDF", [PdfPreflightCheck.StructuralIntegrity]);
+
+    /// <summary>Gets a profile for embedded-file safety and integrity checks.</summary>
+    public static PdfPreflightProfile Attachments { get; } =
+        new("Attachment safety", [PdfPreflightCheck.StructuralIntegrity,
+            PdfPreflightCheck.AttachmentSafety]);
+
+    /// <summary>Gets the current print-production profile.</summary>
+    public static PdfPreflightProfile PrintProduction { get; } = new("Print production", [
+        PdfPreflightCheck.StructuralIntegrity,
+        PdfPreflightCheck.PageBoxes,
+        PdfPreflightCheck.OutputIntent,
+        PdfPreflightCheck.ImageResolution,
+        PdfPreflightCheck.FontEmbedding,
+        PdfPreflightCheck.Transparency,
+        PdfPreflightCheck.ColorUsage,
+        PdfPreflightCheck.ConformanceDeclarations,
+        PdfPreflightCheck.OptionalContent,
+        PdfPreflightCheck.DocumentMetadata
+    ]);
+
+    /// <summary>Gets the profile name.</summary>
+    public string Name { get; }
+    /// <summary>Gets the selected checks in profile order.</summary>
+    public IReadOnlyList<PdfPreflightCheck> Checks { get; }
+    /// <summary>Gets the minimum effective image resolution in dots per inch.</summary>
+    public double MinimumImageDpi { get; }
+    /// <summary>Gets the maximum allowed total process-ink coverage percentage.</summary>
+    public double MaximumInkCoveragePercent { get; }
+
+    /// <summary>Serializes the profile with stable camel-case names.</summary>
+    public string ToJson(bool indented = false) => JsonSerializer.Serialize(
+        new PdfPreflightProfileFile(1, Name, [.. Checks], MinimumImageDpi,
+            MaximumInkCoveragePercent), indented
+                ? IndentedJson.PdfPreflightProfileFile
+                : CompactJson.PdfPreflightProfileFile);
+
+    /// <summary>Reads and validates a serialized profile.</summary>
+    public static PdfPreflightProfile FromJson(string json)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        PdfPreflightProfileFile file = JsonSerializer.Deserialize(
+            json, CompactJson.PdfPreflightProfileFile)
+            ?? throw new JsonException("The preflight profile is empty.");
+        if (file.Version != 1)
+            throw new NotSupportedException(
+                $"Preflight profile version {file.Version} is not supported.");
+        return new PdfPreflightProfile(file.Name, file.Checks, file.MinimumImageDpi ?? 300,
+            file.MaximumInkCoveragePercent ?? 300);
+    }
+
+    private static JsonSerializerOptions JsonOptions(bool indented)
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = indented
+        };
+        options.Converters.Add(
+            new JsonStringEnumConverter<PdfPreflightCheck>(JsonNamingPolicy.CamelCase));
+        return options;
+    }
+
+    private sealed record PdfPreflightProfileFile(
+        int Version, string Name, PdfPreflightCheck[] Checks, double? MinimumImageDpi,
+        double? MaximumInkCoveragePercent);
+
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true)]
+    [JsonSerializable(typeof(PdfPreflightProfileFile))]
+    private sealed partial class PdfPreflightProfileCompactJsonContext : JsonSerializerContext;
+
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true, WriteIndented = true)]
+    [JsonSerializable(typeof(PdfPreflightProfileFile))]
+    private sealed partial class PdfPreflightProfileIndentedJsonContext : JsonSerializerContext;
+}
+
+/// <summary>One finding produced by a preflight profile.</summary>
+public sealed record PdfPreflightFinding(
+    string Code, PdfDiagnosticSeverity Severity, string Message,
+    int? PageIndex = null, int? ObjectNumber = null);
+
+/// <summary>The repeatable result of running one preflight profile.</summary>
+public sealed partial class PdfPreflightReport
+{
+    private static readonly PdfPreflightReportCompactJsonContext CompactJson = new(
+        JsonOptions(false));
+    private static readonly PdfPreflightReportIndentedJsonContext IndentedJson = new(
+        JsonOptions(true));
+
+    internal PdfPreflightReport(string profileName, IEnumerable<PdfPreflightFinding> findings)
+    {
+        ProfileName = profileName;
+        Findings = Array.AsReadOnly(findings.ToArray());
+    }
+
+    /// <summary>Gets the profile that produced the report.</summary>
+    public string ProfileName { get; }
+    /// <summary>Gets findings in deterministic check order.</summary>
+    public IReadOnlyList<PdfPreflightFinding> Findings { get; }
+    /// <summary>Gets whether every selected implemented check passed.</summary>
+    public bool Passed => !Findings.Any(finding => finding.Severity == PdfDiagnosticSeverity.Error);
+    /// <summary>Gets whether every selected check was available.</summary>
+    public bool Complete => !Findings.Any(finding =>
+        finding.Severity == PdfDiagnosticSeverity.Unsupported);
+
+    /// <summary>Formats a readable report with page and object locations.</summary>
+    public string ToText()
+    {
+        var output = new StringBuilder()
+            .Append("Preflight profile: ").AppendLine(ProfileName)
+            .Append("Result: ").AppendLine(!Passed ? "Failed" : Complete ? "Passed" : "Incomplete");
+        if (Findings.Count == 0) return output.AppendLine("No findings.").ToString();
+        foreach (PdfPreflightFinding finding in Findings)
+        {
+            output.Append('[').Append(finding.Severity).Append("] ")
+                .Append(finding.Code);
+            if (finding.PageIndex is int pageIndex)
+                output.Append(" | Page ").Append(pageIndex + 1);
+            if (finding.ObjectNumber is int objectNumber)
+                output.Append(" | Object ").Append(objectNumber);
+            output.Append(": ").AppendLine(finding.Message);
+        }
+        return output.ToString();
+    }
+
+    /// <summary>Serializes the report with stable camel-case names.</summary>
+    public string ToJson(bool indented = false)
+    {
+        var report = new PdfPreflightReportJson(ProfileName, Passed, Complete, Findings);
+        return JsonSerializer.Serialize(report, indented
+            ? IndentedJson.PdfPreflightReportJson
+            : CompactJson.PdfPreflightReportJson);
+    }
+
+    private static JsonSerializerOptions JsonOptions(bool indented)
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = indented
+        };
+        options.Converters.Add(
+            new JsonStringEnumConverter<PdfDiagnosticSeverity>(JsonNamingPolicy.CamelCase));
+        return options;
+    }
+
+    private sealed record PdfPreflightReportJson(
+        string ProfileName, bool Passed, bool Complete, IReadOnlyList<PdfPreflightFinding> Findings);
+
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    [JsonSerializable(typeof(PdfPreflightReportJson))]
+    private sealed partial class PdfPreflightReportCompactJsonContext : JsonSerializerContext;
+
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+        WriteIndented = true)]
+    [JsonSerializable(typeof(PdfPreflightReportJson))]
+    private sealed partial class PdfPreflightReportIndentedJsonContext : JsonSerializerContext;
+}
+
+/// <summary>Runs selected structural and document-level accessibility checks.</summary>
+public static class PdfPreflightRunner
+{
+    /// <summary>Runs a profile without changing the source document.</summary>
+    public static PdfPreflightReport Run(ReadOnlyMemory<byte> source,
+        PdfPreflightProfile profile, string? password = null)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        PdfInspectionReport inspection = password is null
+            ? PdfDocumentInspector.Inspect(source)
+            : PdfDocumentInspector.InspectAuthenticated(source, password);
+        return RunCore(inspection, profile, () => password is null
+            ? PdfDocument.Open(source) : PdfDocument.Open(source, password));
+    }
+
+    /// <summary>
+    /// Runs a profile on a document the caller has already opened and authenticated, such as one
+    /// opened under encryption held from an earlier open, where no password is at hand.
+    /// </summary>
+    public static PdfPreflightReport Run(PdfDocument document, PdfPreflightProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(profile);
+        return RunCore(PdfDocumentInspector.InspectAuthenticated(document), profile, () => document);
+    }
+
+    private static PdfPreflightReport RunCore(PdfInspectionReport inspection,
+        PdfPreflightProfile profile, Func<PdfDocument> open)
+    {
+        var findings = new List<PdfPreflightFinding>();
+        if (profile.Checks.Contains(PdfPreflightCheck.StructuralIntegrity))
+            findings.AddRange(inspection.Diagnostics.Select(diagnostic => new PdfPreflightFinding(
+                $"Structural.{diagnostic.Code}", diagnostic.Severity, diagnostic.Message,
+                ObjectNumber: diagnostic.ObjectNumber)));
+        if (!inspection.IsStructurallyValid || inspection.RequiresAuthentication)
+        {
+            if (profile.Checks.Any(check => check != PdfPreflightCheck.StructuralIntegrity))
+                findings.Add(new PdfPreflightFinding("DocumentChecksUnavailable",
+                    PdfDiagnosticSeverity.Error,
+                    "Document checks require a structurally valid, authenticated PDF."));
+            return new PdfPreflightReport(profile.Name, findings);
+        }
+
+        PdfDocument checkedDocument = open();
+        if (profile.Checks.Contains(PdfPreflightCheck.DocumentLanguage)
+            || profile.Checks.Contains(PdfPreflightCheck.TaggedStructure)
+            || profile.Checks.Contains(PdfPreflightCheck.FormAccessibility)
+            || profile.Checks.Contains(PdfPreflightCheck.LinkAccessibility))
+        {
+            foreach (PdfAccessibilityFinding finding in
+                PdfAccessibilityInspector.Inspect(checkedDocument).Findings)
+            {
+                bool selected = finding.Code switch
+                {
+                    PdfAccessibilityFindingCode.MissingDocumentLanguage =>
+                        profile.Checks.Contains(PdfPreflightCheck.DocumentLanguage),
+                    PdfAccessibilityFindingCode.InvalidDocumentLanguage =>
+                        profile.Checks.Contains(PdfPreflightCheck.DocumentLanguage),
+                    PdfAccessibilityFindingCode.MissingFormFieldDescription =>
+                        profile.Checks.Contains(PdfPreflightCheck.FormAccessibility),
+                    PdfAccessibilityFindingCode.MissingLinkDescription =>
+                        profile.Checks.Contains(PdfPreflightCheck.LinkAccessibility)
+                        || profile.Checks.Contains(PdfPreflightCheck.TaggedStructure),
+                    _ => profile.Checks.Contains(PdfPreflightCheck.TaggedStructure)
+                };
+                if (selected)
+                    findings.Add(new PdfPreflightFinding(
+                        $"Accessibility.{finding.Code}", finding.Severity, finding.Message,
+                        finding.PageIndex, finding.ObjectNumber));
+            }
+        }
+        if (profile.Checks.Contains(PdfPreflightCheck.PageBoxes))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckPageBoxes(checkedDocument));
+        if (profile.Checks.Contains(PdfPreflightCheck.OutputIntent))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckOutputIntent(checkedDocument));
+        if (profile.Checks.Contains(PdfPreflightCheck.ImageResolution))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckImageResolution(
+                checkedDocument, profile.MinimumImageDpi));
+        if (profile.Checks.Contains(PdfPreflightCheck.FontEmbedding))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckFontEmbedding(checkedDocument));
+        if (profile.Checks.Contains(PdfPreflightCheck.Transparency))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckTransparency(checkedDocument));
+        if (profile.Checks.Contains(PdfPreflightCheck.ColorUsage))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckColorUsage(
+                checkedDocument, profile.MaximumInkCoveragePercent));
+        if (profile.Checks.Contains(PdfPreflightCheck.ConformanceDeclarations))
+            findings.AddRange(PdfConformanceInspection.Check(checkedDocument));
+        if (profile.Checks.Contains(PdfPreflightCheck.OptionalContent))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckOptionalContent(checkedDocument));
+        if (profile.Checks.Contains(PdfPreflightCheck.DocumentMetadata))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckDocumentMetadata(checkedDocument));
+        if (profile.Checks.Contains(PdfPreflightCheck.MeasurementAnnotations))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckMeasurementAnnotations(checkedDocument));
+        if (profile.Checks.Contains(PdfPreflightCheck.AttachmentSafety))
+            findings.AddRange(PdfPreflightDocumentChecks.CheckAttachmentSafety(checkedDocument));
+        return new PdfPreflightReport(profile.Name, findings);
+    }
+}

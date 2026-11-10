@@ -3,7 +3,7 @@ using System.Printing;
 using System.Printing.Interop;
 using System.Runtime.InteropServices;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Opens a printer driver's own preferences dialog and returns the settings chosen there.</summary>
 internal static partial class PrinterDriverProperties

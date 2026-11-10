@@ -13,4 +13,4 @@ keyboard, screen reader, or hardware.
 The application and engine xUnit projects each have a separate job. The isolated FlaUI project
 is compiled and runs its windowless synthetic PDF parse/render/save/reopen assertion.
 Its FlaUI desktop tests are not run. The SDK follows global.json.
-See ../tests/KillerPDF.UiSmoke/README.md.
+See ../tests/JPDFs.UiSmoke/README.md.

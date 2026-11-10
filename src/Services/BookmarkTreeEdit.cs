@@ -1,6 +1,6 @@
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Where a dragged bookmark lands relative to the bookmark it is dropped on.</summary>
 internal enum BookmarkDropPlace

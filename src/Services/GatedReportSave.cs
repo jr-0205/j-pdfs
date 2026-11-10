@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Saving a report out of a document to a file the user chooses. A saved report is a data
 /// export, so the gate answers first; reading it on screen and copying it are not outputs.</summary>

@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     public partial class FileDialog
     {

@@ -1,6 +1,6 @@
 using System;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,10 +9,10 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 
-namespace KillerPDF
+namespace JPDFs
 {
-    // Chrome for modal dialog windows (KillerPDF-owned; the kit DialogChrome in Controls/DialogChrome.cs is the shared wordmark and close): Configure (borderless window setup), Frame (the rounded card +
-    // title bar + grain), and BuildTitleBar (the KillerPDF wordmark + red close button).
+    // Chrome for modal dialog windows (JPDFs-owned; the kit DialogChrome in Controls/DialogChrome.cs is the shared wordmark and close): Configure (borderless window setup), Frame (the rounded card +
+    // title bar + grain), and BuildTitleBar (the JPDFs wordmark + red close button).
     internal static class DialogFrame
     {
         // Keep generated dialog captions on the same close mark as the main window.
@@ -30,7 +30,7 @@ namespace KillerPDF
         {
             var frames = BitmapDecoder.Create(new Uri("pack://application:,,,/Resources/kp-icon.ico"),
                 BitmapCreateOptions.None, BitmapCacheOption.OnLoad).Frames;
-            var icon = new KillerPDF.Controls.AppIcon
+            var icon = new JPDFs.Controls.AppIcon
             {
                 Width = Value(owner, "TitleIconSize", 27.0),
                 Height = Value(owner, "TitleIconSize", 27.0),
@@ -86,7 +86,7 @@ namespace KillerPDF
 
             var grid = new Grid
             {
-                // KillerNotes uses the shared title-bar inset for its dialog caption too.  In
+                // JpdfsNotes uses the shared title-bar inset for its dialog caption too.  In
                 // particular, the 2px top inset keeps the 16px caption button centered in the
                 // 20px classic band instead of riding against its upper edge.
                 Margin = caption
@@ -111,9 +111,9 @@ namespace KillerPDF
                 int kp = fullTitle?.IndexOf("J-PDF's", StringComparison.Ordinal) ?? -1;
                 if (kp >= 0)
                 {
-                    // Killer + PDF in one TextBlock so the two sizes share a baseline (cohesive wordmark).
+                    // Jpdfs + PDF in one TextBlock so the two sizes share a baseline (cohesive wordmark).
                     var logoTb = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
-                    logoTb.Inlines.Add(new System.Windows.Documents.Run("Killer") { FontFamily = wordmark, FontWeight = FontWeights.Normal, FontSize = Value(owner, "TitleWordmarkSize", 15.0), Foreground = primary });
+                    logoTb.Inlines.Add(new System.Windows.Documents.Run("Jpdfs") { FontFamily = wordmark, FontWeight = FontWeights.Normal, FontSize = Value(owner, "TitleWordmarkSize", 15.0), Foreground = primary });
                     logoTb.Inlines.Add(new System.Windows.Documents.Run("PDF") { FontFamily = wordmarkPdf, FontWeight = FontWeights.Normal, FontSize = Value(owner, "TitleWordmarkBoldSize", 22.52), Foreground = logo });
                     // The qualifier ("- Transform") rides in the same TextBlock so it shares the
                     // wordmark's baseline instead of centring on its own and floating high.
@@ -124,7 +124,7 @@ namespace KillerPDF
                 }
                 else
                 {
-                    // A title without the wordmark reads as the qualifier does: Killer Sans at 18.
+                    // A title without the wordmark reads as the qualifier does: Jpdfs Sans at 18.
                     sp.Children.Add(new TextBlock { Text = fullTitle ?? "", FontFamily = UiKit.BrandSansFont, FontSize = 18, Foreground = primary, VerticalAlignment = VerticalAlignment.Center });
                 }
                 foreach (var text in sp.Children.OfType<TextBlock>())
@@ -133,7 +133,7 @@ namespace KillerPDF
                     foreach (var run in text.Inlines.OfType<System.Windows.Documents.Run>())
                     {
                         run.SetResourceReference(System.Windows.Documents.TextElement.FontSizeProperty,
-                            run.Text == "Killer" ? "TitleWordmarkSize" : run.Text == "PDF" ? "TitleWordmarkBoldSize" : "TitleSubtitleSize");
+                            run.Text == "Jpdfs" ? "TitleWordmarkSize" : run.Text == "PDF" ? "TitleWordmarkBoldSize" : "TitleSubtitleSize");
                         if (!shadow) run.SetResourceReference(System.Windows.Documents.TextElement.ForegroundProperty,
                             run.Text == "PDF" ? "AccentLogo" : "ChromeTextBrush");
                     }
@@ -385,7 +385,7 @@ namespace KillerPDF
             return host;
         }
 
-        // Standard dialog: content is inset from the same five-layer frame used by KillerNotes.
+        // Standard dialog: content is inset from the same five-layer frame used by JpdfsNotes.
         // A scale other than 1 draws the framed card at the app's scale, title bar included, and
         // grows the window with it; the halo around the card keeps its size.
         public static UIElement Frame(

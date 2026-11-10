@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Macros from the command line: run a saved macro, an exported macro file or one of the
     // starters through the same engine dispatcher the Macros dialog uses, with the OCR, Redact,
@@ -15,9 +15,9 @@ namespace KillerPDF.Features
     internal static partial class CliRunner
     {
         private const string MacroUsage =
-            "Usage: KillerPDF.exe --macro <in.pdf> <macro> <out.pdf> [--lang <code>] [--text <phrase>] [--terms <file>]\n"
+            "Usage: JPDFs.exe --macro <in.pdf> <macro> <out.pdf> [--lang <code>] [--text <phrase>] [--terms <file>]\n"
             + "                     [--data <records.csv|json|xlsx>] [--rasterize] [--json] [--password <p>]\n"
-            + "       KillerPDF.exe --macro --list\n"
+            + "       JPDFs.exe --macro --list\n"
             + "  <macro> is a saved macro's name, an exported macro .json file, or starter:archival, starter:sharing,\n"
             + "  starter:scanning or starter:privacy. --list shows the saved macros and the starters.\n"
             + "  --password opens a protected input for every step; a macro writes new PDFs, so a PDF that limits\n"

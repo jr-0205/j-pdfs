@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal sealed class SignatureStore
     {

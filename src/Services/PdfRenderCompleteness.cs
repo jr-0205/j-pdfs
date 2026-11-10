@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal enum PdfRenderDiagnosticKind { Information, Recovery, Degraded, OmittedContent }
 

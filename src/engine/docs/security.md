@@ -1,6 +1,6 @@
 # Encryption and signature integration
 
-KillerPDF.Engine exposes authentication, encryption, permission, and signature
+JPDFs.Engine exposes authentication, encryption, permission, and signature
 APIs independently of the desktop app. The host supplies passwords, certificates,
 signing services, trust policy, and the user's choice of output file.
 These examples describe the 1.9 source.
@@ -20,8 +20,8 @@ access. An empty user password permits opening without a password prompt in
 viewers that try it automatically.
 
 ```csharp
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Security;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Security;
 
 static byte[] CreateProtectedPage(string userPassword, string ownerPassword)
 {
@@ -59,8 +59,8 @@ The host owns certificate loading and disposal.
 
 ```csharp
 using System.Security.Cryptography.X509Certificates;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Security;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Security;
 
 static byte[] CreateRecipientDocument(X509Certificate2 recipient)
 {
@@ -94,9 +94,9 @@ variants return a `PdfDocumentWriteResult` that lists explicit dangling-referenc
 repairs.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Security;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Security;
+using JPDFs.Engine.Writing;
 
 static byte[] Protect(byte[] source, string userPassword, string ownerPassword)
 {
@@ -124,8 +124,8 @@ session, the writer also requires document-modification permission. Authenticate
 with credentials authorized for the intended operation before calling it.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
 
 static byte[] RewriteProtectedDocument(byte[] source, string password,
     bool removeEncryption)
@@ -160,8 +160,8 @@ certificate downloads; it deliberately does not check revocation.
 
 ```csharp
 using System.Security.Cryptography.X509Certificates;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
 
 static PdfSignatureInspectionReport InspectOffline(PdfDocument document)
 {

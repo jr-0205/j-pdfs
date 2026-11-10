@@ -27,7 +27,7 @@ internal static class Program
         _ = Task.Run(async () => { await Task.Delay(TimeSpan.FromSeconds(120)); Environment.Exit(124); });
         string launcher = Path.Combine(output, "test-launcher.exe");
         File.WriteAllBytes(launcher, []);
-        Environment.SetEnvironmentVariable("KILLERPDF_LAUNCHER_PATH", launcher);
+        Environment.SetEnvironmentVariable("JPDFS_LAUNCHER_PATH", launcher);
         AssemblyLoadContext.Default.Resolving += (_, name) =>
         {
             string dll = Path.Combine(Path.GetDirectoryName(path)!, name.Name + ".dll");
@@ -44,17 +44,17 @@ internal static class Program
         var resources = applicationSource.Root!.Element(presentation + "Application.Resources")!.Elements().Single();
         foreach (var element in resources.DescendantsAndSelf())
         {
-            if (element.Name.NamespaceName == "clr-namespace:KillerPDF")
-                element.Name = XName.Get(element.Name.LocalName, "clr-namespace:KillerPDF;assembly=KillerPDF");
-            foreach (var declaration in element.Attributes().Where(a => a.IsNamespaceDeclaration && a.Value == "clr-namespace:KillerPDF"))
-                declaration.Value = "clr-namespace:KillerPDF;assembly=KillerPDF";
+            if (element.Name.NamespaceName == "clr-namespace:JPDFs")
+                element.Name = XName.Get(element.Name.LocalName, "clr-namespace:JPDFs;assembly=JPDFs");
+            foreach (var declaration in element.Attributes().Where(a => a.IsNamespaceDeclaration && a.Value == "clr-namespace:JPDFs"))
+                declaration.Value = "clr-namespace:JPDFs;assembly=JPDFs";
         }
-        var context = new ParserContext { BaseUri = new Uri("pack://application:,,,/KillerPDF;component/") };
+        var context = new ParserContext { BaseUri = new Uri("pack://application:,,,/JPDFs;component/") };
         context.XmlnsDictionary.Add("x", "http://schemas.microsoft.com/winfx/2006/xaml");
-        context.XmlnsDictionary.Add("local", "clr-namespace:KillerPDF;assembly=KillerPDF");
+        context.XmlnsDictionary.Add("local", "clr-namespace:JPDFs;assembly=JPDFs");
         app.Resources = (ResourceDictionary)XamlReader.Parse(resources.ToString(), context);
-        var manager = assembly.GetType("KillerPDF.Services.ThemeManager", true)!;
-        var themeType = assembly.GetType("KillerPDF.Services.Theme", true)!;
+        var manager = assembly.GetType("JPDFs.Services.ThemeManager", true)!;
+        var themeType = assembly.GetType("JPDFs.Services.Theme", true)!;
         manager.GetMethod("LoadDict", Flags)!.Invoke(null, [Enum.Parse(themeType, "Dark"), null]);
         int exit = 1;
         // A real viewer in an unshown test-owned window. No app startup or user document is used.
@@ -64,7 +64,7 @@ internal static class Program
             try
             {
                 File.WriteAllText(Path.Combine(output, "progress.txt"), "constructing viewer");
-                window = (Window)Activator.CreateInstance(assembly.GetType("KillerPDF.Shell.MainWindow", true)!)!;
+                window = (Window)Activator.CreateInstance(assembly.GetType("JPDFs.Shell.MainWindow", true)!)!;
                 var viewer = (FrameworkElement)Get(window, "ActiveViewer");
                 if (viewer.Parent is Panel originalParent) originalParent.Children.Remove(viewer);
                 viewer.Resources.MergedDictionaries.Add(window.Resources);
@@ -73,12 +73,12 @@ internal static class Program
                 window.Show();
                 string fixture = Path.Combine(output, "navigation.pdf");
                 File.WriteAllBytes(fixture, Fixture());
-                object working = assembly.GetType("KillerPDF.Services.PdfWorkingDocument", true)!
+                object working = assembly.GetType("JPDFs.Services.PdfWorkingDocument", true)!
                     .GetMethod("Open", Flags)!.Invoke(null, [fixture, false])!;
                 Set(viewer, "_doc", working);
                 Set(viewer, "_currentFile", fixture);
                 object state = Get(viewer, "State");
-                Set(state, "Mode", Enum.Parse(assembly.GetType("KillerPDF.ViewMode", true)!, "Single"));
+                Set(state, "Mode", Enum.Parse(assembly.GetType("JPDFs.ViewMode", true)!, "Single"));
                 Set(state, "CurrentPage", 0);
                 Call(viewer, "EnsureInitialSession");
                 for (DependencyObject? node = (Image)Get(state, "PageImage"); node is not null; node = VisualTreeHelper.GetParent(node))
@@ -171,7 +171,7 @@ internal static class Program
                 Set(state, "ZoomLevel", 3.0);
                 ((FrameworkElement)Get(state, "PageContentGrid")).LayoutTransform = new ScaleTransform(3, 3);
                 Set(state, "CurrentPage", 0);
-                var modeType = assembly.GetType("KillerPDF.ViewMode", true)!;
+                var modeType = assembly.GetType("JPDFs.ViewMode", true)!;
                 Call(viewer, "ApplyViewMode", Enum.Parse(modeType, "TwoPage"), true);
                 await Until(() => ((System.Collections.IDictionary)Get(viewer, "_continuousCanvases")).Contains(1), app);
                 await ((Task)Get(viewer, "PrimaryRenderTask"));

@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class PageLabelsDialog : Window
 {
@@ -124,7 +124,7 @@ internal sealed class PageLabelsDialog : Window
         Close();
     }
 
-    private void ShowInvalid() => KillerDialog.Show(this,
+    private void ShowInvalid() => JpdfsDialog.Show(this,
         string.Format(L("Str_PageLabels_Invalid"), _pageCount),
         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
 

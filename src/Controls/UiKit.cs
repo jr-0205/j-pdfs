@@ -9,7 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 
-namespace KillerPDF
+namespace JPDFs
 {
     // WPF has no built-in animation for GridLength, so grid columns (the sidebar) can only snap.
     // This drives a pixel-unit GridLength between From and To so a column glides instead.
@@ -68,17 +68,17 @@ namespace KillerPDF
         public static FontFamily WordmarkFont => Res("WordmarkFont", _wordmarkFallback);
         public static FontFamily WordmarkFontPdf => Res("WordmarkFontPdf", _wordmarkPdfFallback);
         public static FontFamily BrandSansFont => Res("BrandSansFont", _brandSansFallback);
-        /// <summary>Primary headings: Lacquer with Killer Sans UI behind it (ThemeManager; Killer Sans on 98SE).</summary>
+        /// <summary>Primary headings: Lacquer with Jpdfs Sans UI behind it (ThemeManager; Jpdfs Sans on 98SE).</summary>
         public static FontFamily HeadingFont => Res("HeadingFont", LacquerHeadingStack);
-        /// <summary>Killer Sans UI (Killer Sans scaled to Segoe UI proportions) with the Segoe fallback stack.</summary>
-        public static readonly FontFamily KillerSansUiStack = new(new Uri($"pack://application:,,,/{typeof(UiKit).Assembly.GetName().Name};component/"), "./Fonts/#Killer Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI");
-        public static readonly FontFamily LacquerHeadingStack = new(new Uri("pack://application:,,,/"), "./Fonts/#Lacquer, ./Fonts/#Killer Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI");
+        /// <summary>Jpdfs Sans UI (Jpdfs Sans scaled to Segoe UI proportions) with the Segoe fallback stack.</summary>
+        public static readonly FontFamily JpdfsSansUiStack = new(new Uri($"pack://application:,,,/{typeof(UiKit).Assembly.GetName().Name};component/"), "./Fonts/#Jpdfs Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI");
+        public static readonly FontFamily LacquerHeadingStack = new(new Uri("pack://application:,,,/"), "./Fonts/#Lacquer, ./Fonts/#Jpdfs Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI");
         private static readonly FontFamily _uiFallback   = new("Segoe UI, Microsoft JhengHei UI, Nirmala UI");
         private static readonly FontFamily _monoFallback = new("Consolas");
         private static readonly FontFamily _iconFallback = new("Segoe MDL2 Assets");
         private static readonly FontFamily _wordmarkFallback = new("Segoe UI Semibold, Segoe UI, Consolas");
         private static readonly FontFamily _wordmarkPdfFallback = new("Segoe UI Semibold, Segoe UI, Consolas");
-        private static readonly FontFamily _brandSansFallback = new("Killer Sans, Consolas");
+        private static readonly FontFamily _brandSansFallback = new("Jpdfs Sans, Consolas");
 
         public static CornerRadius RadControl => Rad("RadControl", 4);
         public static CornerRadius RadCard    => Rad("RadCard", 6);
@@ -315,7 +315,7 @@ namespace KillerPDF
             b.SetBinding(Border.BorderBrushProperty, new Binding("BorderBrush") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
             b.SetBinding(Border.BorderThicknessProperty, new Binding("BorderThickness") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
             b.SetValue(Border.CornerRadiusProperty, RadControl);
-            var sv = new FrameworkElementFactory(typeof(KillerFamily.Controls.InputContentHost)) { Name = "PART_ContentHost" };
+            var sv = new FrameworkElementFactory(typeof(JpdfsUi.Controls.InputContentHost)) { Name = "PART_ContentHost" };
             sv.SetValue(Control.PaddingProperty, new Thickness(0));
             b.AppendChild(sv);
             root.AppendChild(b);
@@ -379,7 +379,7 @@ namespace KillerPDF
             b.SetBinding(Border.BorderBrushProperty, new Binding("BorderBrush") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
             b.SetBinding(Border.BorderThicknessProperty, new Binding("BorderThickness") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
             b.SetValue(Border.CornerRadiusProperty, RadControl);
-            var sv = new FrameworkElementFactory(typeof(KillerFamily.Controls.InputContentHost)) { Name = "PART_ContentHost" };
+            var sv = new FrameworkElementFactory(typeof(JpdfsUi.Controls.InputContentHost)) { Name = "PART_ContentHost" };
             sv.SetValue(Control.PaddingProperty, new Thickness(0));
             b.AppendChild(sv);
             root.AppendChild(b);
@@ -424,7 +424,7 @@ namespace KillerPDF
                     { RelativeSource = new RelativeSource(RelativeSourceMode.Self) }, false));
             compact.Setters.Add(new Setter(FrameworkElement.MinHeightProperty,
                 new DynamicResourceExtension("CompactInputMinHeight")) { TargetName = "InputRoot" });
-            compact.Setters.Add(new Setter(KillerFamily.Controls.InputContentHost.CompactPaddingProperty,
+            compact.Setters.Add(new Setter(JpdfsUi.Controls.InputContentHost.CompactPaddingProperty,
                 new DynamicResourceExtension("CompactInputPadding")) { TargetName = "PART_ContentHost" });
             compact.Setters.Add(new Setter(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center)
                 { TargetName = "PART_ContentHost" });

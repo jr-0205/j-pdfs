@@ -11,11 +11,11 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Features;
-using KillerPDF.Services;
-using KillerFamily.Accessibility;
+using JPDFs.Features;
+using JPDFs.Services;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow : ISearchHost
     {
@@ -522,14 +522,14 @@ namespace KillerPDF.Shell
 
         // Replaced text no longer reads as the search text, so the fresh search moves the cursor
         // on to the next match still showing.
-        private void AfterReplace(string find, KillerPDF.Controls.TextReplaceResult result)
+        private void AfterReplace(string find, JPDFs.Controls.TextReplaceResult result)
         {
             _searchDebounce?.Stop();
             Search.Run(find);
             ActiveViewer.ReportResult(ReplaceStatus(result));
         }
 
-        private string ReplaceStatus(KillerPDF.Controls.TextReplaceResult result)
+        private string ReplaceStatus(JPDFs.Controls.TextReplaceResult result)
         {
             string message = result.Occurrences == 0
                 ? Loc("Str_Replace_None")

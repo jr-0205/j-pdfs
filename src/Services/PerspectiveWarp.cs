@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal static class PerspectiveWarp
     {

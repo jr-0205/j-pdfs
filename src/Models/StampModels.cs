@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace KillerPDF
+namespace JPDFs
 {
     internal enum StampKind { PageNumber, Watermark }
 

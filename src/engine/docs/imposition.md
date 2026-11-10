@@ -10,7 +10,7 @@ All dimensions, margins, gutters, overlap, and creep use PDF points. Source,
 sheet, and slot indices are zero-based. Null source entries represent blanks.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfImpositionPreset CreateTwoUpPreset()
 {
@@ -46,7 +46,7 @@ sheet size, enum values, margins, gutters, and available grid area.
 This example uses the same two-up preset and its default options:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] BuildTwoUp(PdfDocument source)
 {
@@ -103,7 +103,7 @@ and trim allowances for the requested offset.
 ## Tile a poster at full size
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] BuildFirstPagePoster(PdfDocument source)
 {

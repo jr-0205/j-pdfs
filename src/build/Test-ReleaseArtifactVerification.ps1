@@ -18,7 +18,7 @@ $fixtureRoot = Join-Path $evidence 'fixture'
 $null = [IO.Directory]::CreateDirectory((Join-Path $fixtureRoot 'build'))
 $payload = Join-Path $fixtureRoot 'payload'
 $null = [IO.Directory]::CreateDirectory($payload)
-foreach ($name in @('KillerPDF.App.exe', 'KillerPDF.App.dll', 'KillerPdf.Engine.dll')) {
+foreach ($name in @('JPDFs.App.exe', 'JPDFs.App.dll', 'JPDFs.Engine.dll')) {
     [IO.File]::WriteAllBytes((Join-Path $payload $name), [byte[]]@(1, 2, 3))
 }
 $zip = Join-Path $fixtureRoot 'payload.zip'
@@ -31,11 +31,11 @@ $compilers = @(& $dotnet --list-sdks | ForEach-Object {
 } | Where-Object { Test-Path -LiteralPath $_ })
 if ($compilers.Count -eq 0) { throw 'A local .NET SDK compiler is required for the package fixtures.' }
 $compiler = $compilers[-1]
-foreach ($name in @('KillerPDF.exe', 'KillerPDF-Portable.exe', 'KillerPDF-Store.exe')) {
+foreach ($name in @('JPDFs.exe', 'JPDFs-Portable.exe', 'JPDFs-Store.exe')) {
     $path = Join-Path $fixtureRoot $name
     $typeName = 'SyntheticPackage' + [guid]::NewGuid().ToString('N')
-    $fixtureVersion = if ($Mode -eq 'mismatched-store-version' -and $name -eq 'KillerPDF-Store.exe') { '1.8.91.0' } else { '1.9.0.0' }
-    $resourceName = if ($Mode -eq 'missing-store-payload' -and $name -eq 'KillerPDF-Store.exe') { 'Wrong.payload.zip' } else { 'KillerLauncher.payload.zip' }
+    $fixtureVersion = if ($Mode -eq 'mismatched-store-version' -and $name -eq 'JPDFs-Store.exe') { '1.8.91.0' } else { '1.9.0.0' }
+    $resourceName = if ($Mode -eq 'missing-store-payload' -and $name -eq 'JPDFs-Store.exe') { 'Wrong.payload.zip' } else { 'JpdfsLauncher.payload.zip' }
     $definition = '[assembly: System.Reflection.AssemblyVersion("' + $fixtureVersion + '")] public static class ' + $typeName + ' {}'
     $sourcePath = Join-Path $fixtureRoot ($typeName + '.cs')
     [IO.File]::WriteAllText($sourcePath, $definition, [Text.UTF8Encoding]::new($false))
@@ -47,8 +47,8 @@ foreach ($name in @('KillerPDF.exe', 'KillerPDF-Portable.exe', 'KillerPDF-Store.
         throw 'Synthetic package version control failed.'
     }
     $assembly = [Reflection.Assembly]::Load([IO.File]::ReadAllBytes($path))
-    $resource = $assembly.GetManifestResourceStream('KillerLauncher.payload.zip')
-    if (($resourceName -eq 'KillerLauncher.payload.zip') -ne ($null -ne $resource)) {
+    $resource = $assembly.GetManifestResourceStream('JpdfsLauncher.payload.zip')
+    if (($resourceName -eq 'JpdfsLauncher.payload.zip') -ne ($null -ne $resource)) {
         throw 'Synthetic embedded-payload presence/absence control failed.'
     }
     if ($null -ne $resource) { $resource.Dispose() }
@@ -83,10 +83,10 @@ function Get-AuthenticodeSignature {
     param([Parameter(Mandatory)][string]$LiteralPath)
     $name = [IO.Path]::GetFileName($LiteralPath)
     $script:SignatureChecks.Add($name)
-    if ($name -in @('KillerPDF.exe', 'KillerPDF-Portable.exe', 'KillerPDF-Store.exe')) { $script:CurrentPackage = $name }
+    if ($name -in @('JPDFs.exe', 'JPDFs-Portable.exe', 'JPDFs-Store.exe')) { $script:CurrentPackage = $name }
     [pscustomobject]@{
-        Status = if (($Mode -eq 'unsigned-store' -and $name -eq 'KillerPDF-Store.exe') -or
-            ($Mode -eq 'unsigned-store-inner' -and $script:CurrentPackage -eq 'KillerPDF-Store.exe' -and $name -eq 'KillerPdf.Engine.dll')) {
+        Status = if (($Mode -eq 'unsigned-store' -and $name -eq 'JPDFs-Store.exe') -or
+            ($Mode -eq 'unsigned-store-inner' -and $script:CurrentPackage -eq 'JPDFs-Store.exe' -and $name -eq 'JPDFs.Engine.dll')) {
             [Management.Automation.SignatureStatus]::NotSigned
         } else { [Management.Automation.SignatureStatus]::Valid }
         SignatureType = 'Authenticode'
@@ -94,15 +94,15 @@ function Get-AuthenticodeSignature {
 }
 function Start-Process { throw 'An offline artifact test attempted to launch a process.' }
 
-$installerExe = Join-Path $fixtureRoot 'KillerPDF.exe'
-$portableExe = Join-Path $fixtureRoot 'KillerPDF-Portable.exe'
-$storeExe = Join-Path $fixtureRoot 'KillerPDF-Store.exe'
+$installerExe = Join-Path $fixtureRoot 'JPDFs.exe'
+$portableExe = Join-Path $fixtureRoot 'JPDFs-Portable.exe'
+$storeExe = Join-Path $fixtureRoot 'JPDFs-Store.exe'
 $expectedAssemblyVersion = '1.9.0.0'
 $SkipSign = $false
 $ReuseDryRun = $false
 if ($Mode.StartsWith('checksum-', [StringComparison]::Ordinal)) {
     $publishDir = $fixtureRoot
-    $srcPath = Join-Path $fixtureRoot 'KillerPDF-1.9.0-src.zip'
+    $srcPath = Join-Path $fixtureRoot 'JPDFs-1.9.0-src.zip'
     [IO.File]::Copy($zip, $srcPath)
     $srcZip = Get-Item -LiteralPath $srcPath
     $sumsFile = Join-Path $fixtureRoot 'SHA256SUMS.txt'
@@ -143,13 +143,13 @@ if ($Mode.StartsWith('checksum-', [StringComparison]::Ordinal)) {
             throw 'PublishOnly rewrote the valid checksum file.'
         }
     } elseif ($PublishOnly) {
-        if ($observed -notlike '*SHA256SUMS.txt does not match KillerPDF-Store.exe*') {
+        if ($observed -notlike '*SHA256SUMS.txt does not match JPDFs-Store.exe*') {
             throw "WIRE-003: PublishOnly accepted a replaced same-version Store artifact. Observed: $observed"
         }
     } else {
         if ($observed) { throw "Checksum creation failed: $observed" }
         $expectedHash = (Get-FileHash -LiteralPath $storeExe -Algorithm SHA256).Hash
-        if ([IO.File]::ReadAllText($sumsFile) -notmatch ('(?m)^KillerPDF-Store\.exe\s+' + $expectedHash + '\s*$')) {
+        if ([IO.File]::ReadAllText($sumsFile) -notmatch ('(?m)^JPDFs-Store\.exe\s+' + $expectedHash + '\s*$')) {
             throw 'WIRE-003: newly created checksums omit the exact Store artifact.'
         }
     }
@@ -170,14 +170,14 @@ finally { $env:TEMP = $previousTemp; $env:TMP = $previousTmp }
     ($script:SignatureChecks -join "`n"), [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $evidence 'observed.txt'), $observed, [Text.UTF8Encoding]::new($false))
 $expected = switch ($Mode) {
-    'unsigned-store' { '*Authenticode validation failed for*KillerPDF-Store.exe*NotSigned*' }
-    'missing-store-payload' { '*Missing embedded payload:*KillerPDF-Store.exe*' }
-    'unsigned-store-inner' { '*First-party Authenticode validation failed for*KillerPdf.Engine.dll*NotSigned*' }
-    'mismatched-store-version' { '*KillerPDF-Store.exe is version 1.8.91.0, expected 1.9.0.0*' }
+    'unsigned-store' { '*Authenticode validation failed for*JPDFs-Store.exe*NotSigned*' }
+    'missing-store-payload' { '*Missing embedded payload:*JPDFs-Store.exe*' }
+    'unsigned-store-inner' { '*First-party Authenticode validation failed for*JPDFs.Engine.dll*NotSigned*' }
+    'mismatched-store-version' { '*JPDFs-Store.exe is version 1.8.91.0, expected 1.9.0.0*' }
     'valid-store' { 'Offline GUI boundary reached.' }
 }
 if ($observed -notlike $expected) { throw "Final release gate case $Mode did not produce its specific outcome. Observed: $observed" }
-if ($Mode -ne 'mismatched-store-version' -and -not $script:SignatureChecks.Contains('KillerPDF-Store.exe')) {
+if ($Mode -ne 'mismatched-store-version' -and -not $script:SignatureChecks.Contains('JPDFs-Store.exe')) {
     throw 'Store signature boundary was not inspected.'
 }
 if ($Mode -eq 'valid-store' -and $script:SignatureChecks.Count -ne 12) {

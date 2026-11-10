@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Reduce File Size (#433). The lossless cleanup always runs: unused and duplicate objects go,
 // streams are compressed and packed. Downsampling images is the optional, lossy part.

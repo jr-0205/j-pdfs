@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace KillerPDF.Services.Signing;
+namespace JPDFs.Services.Signing;
 
 internal static class SigningOutputPath
 {

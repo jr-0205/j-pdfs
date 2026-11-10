@@ -1,0 +1,19 @@
+// Derived from Apache PDFBox JBIG2 ImageIO Plugin and its C# port.
+// Modified for the JPDFs engine.
+#nullable disable
+
+namespace JPDFs.Engine.Filters.Jbig2
+{
+    using static HuffmanTable;
+
+    /// <summary>
+    /// Represents an out of band node in a Huffman tree.
+    /// </summary>
+    internal sealed class OutOfBandNode : Node
+    {
+        public override long Decode(IImageInputStream iis)
+        {
+            return long.MaxValue;
+        }
+    }
+}

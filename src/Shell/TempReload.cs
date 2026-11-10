@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -84,7 +84,7 @@ namespace KillerPDF.Shell
             }
 
             // Structural operations can finalize the freshly serialized working file through
-            // KillerPDF.Engine before PdfSharpCore reopens it. The callback owns atomic replacement
+            // JPDFs.Engine before PdfSharpCore reopens it. The callback owns atomic replacement
             // of tempPath and runs only after the base save or repair path has completed.
             Controls.RedactionMarkSnapshot? remappedMarks = null;
             if (remapRedactionMarks && finalizeSavedFile is not null)

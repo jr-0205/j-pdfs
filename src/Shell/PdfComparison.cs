@@ -2,11 +2,11 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using KillerPDF.Controls;
-using KillerPDF.Services;
-using KillerPdf.Engine.Documents;
+using JPDFs.Controls;
+using JPDFs.Services;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {

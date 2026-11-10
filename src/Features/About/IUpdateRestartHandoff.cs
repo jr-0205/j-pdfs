@@ -1,4 +1,4 @@
-namespace KillerPDF.Features;
+namespace JPDFs.Features;
 
 /// <summary>A captured saved session held stable while the verified updater starts.</summary>
 internal interface IUpdateRestartHandoff : System.IDisposable
@@ -7,7 +7,7 @@ internal interface IUpdateRestartHandoff : System.IDisposable
     void Commit();
 }
 
-/// <summary>APP-OWNED capability of KillerPDF's About host: the unsaved-changes gate and the
+/// <summary>APP-OWNED capability of JPDFs's About host: the unsaved-changes gate and the
 /// document reopen the kit About core reaches through its update hooks.</summary>
 internal interface IAboutUpdateRestart
 {

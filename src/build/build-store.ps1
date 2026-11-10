@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Builds the signed Microsoft Store installer, KillerPDF-Store.exe.
+    Builds the signed Microsoft Store installer, JPDFs-Store.exe.
 .DESCRIPTION
     The Microsoft Store runs an EXE submission silently and installs nothing else first, so this
     package carries its own .NET runtime. release.ps1 runs this script, attaches the result to the
@@ -35,7 +35,7 @@ Set-StrictMode -Version Latest
 $projectDir = Split-Path -Parent $PSScriptRoot
 $packageBuild = Join-Path $PSScriptRoot 'build-portable.ps1'
 $payloadDir = Join-Path $projectDir 'bin\Release\net10.0-windows\store-package\payload'
-$storeExe = Join-Path $projectDir 'bin\Release\net10.0-windows\publish\KillerPDF-Store.exe'
+$storeExe = Join-Path $projectDir 'bin\Release\net10.0-windows\publish\JPDFs-Store.exe'
 . (Join-Path $PSScriptRoot 'payload-security.ps1')
 
 $tsaList = @(
@@ -46,7 +46,7 @@ $tsaList = @(
 
 function Invoke-Sign([string]$Signtool, [string[]]$CertArgs, [string]$Path, [string]$Description) {
     foreach ($tsa in $tsaList) {
-        & $Signtool sign /fd sha256 /tr $tsa /td sha256 @CertArgs /d $Description /du "https://killerpdf.net" /v $Path
+        & $Signtool sign /fd sha256 /tr $tsa /td sha256 @CertArgs /d $Description /du "https://jpdfs.net" /v $Path
         if ($LASTEXITCODE -eq 0) {
             & $Signtool verify /pa /v $Path
             if ($LASTEXITCODE -ne 0) { throw "Signature verification failed: $Path" }
@@ -79,14 +79,14 @@ if ($SkipSign) {
     # Signing changes the payload hashes, so the payload is repacked before the public EXE is signed.
     Write-Host "`n==> Signing the payload's first-party files..." -ForegroundColor Cyan
     foreach ($inner in @(Get-FirstPartyPayloadFiles $payloadDir)) {
-        Invoke-Sign $signtool $certArgs $inner "KillerPDF Application"
+        Invoke-Sign $signtool $certArgs $inner "JPDFs Application"
     }
     Write-Host "`n==> Repacking the signed payload..." -ForegroundColor Cyan
     & powershell -NoProfile -ExecutionPolicy Bypass -File $packageBuild -PackageKind Store -RepackOnly -RequireSignature
     if ($LASTEXITCODE -ne 0) { throw 'Signed Store payload repack failed.' }
 
-    Write-Host "`n==> Signing KillerPDF-Store.exe..." -ForegroundColor Cyan
-    Invoke-Sign $signtool $certArgs $storeExe "KillerPDF"
+    Write-Host "`n==> Signing JPDFs-Store.exe..." -ForegroundColor Cyan
+    Invoke-Sign $signtool $certArgs $storeExe "JPDFs"
 }
 
 $hash = (Get-FileHash $storeExe -Algorithm SHA256).Hash

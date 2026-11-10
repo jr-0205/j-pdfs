@@ -1,12 +1,12 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPDF.Services;
-using ContentDoc = KillerPDF.Services.PdfContentDocument;
-using EngineDocs = KillerPdf.Engine.Documents;
+using JPDFs.Services;
+using ContentDoc = JPDFs.Services.PdfContentDocument;
+using EngineDocs = JPDFs.Engine.Documents;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>What a Find and Replace pass changed.</summary>
     internal readonly record struct TextReplaceResult(int Occurrences, int Lines, int SkippedTurnedLines, bool Failed = false);
@@ -102,7 +102,7 @@ namespace KillerPDF.Controls
 
                     var words = page.GetWords().ToList();
                     var level = new List<ReplaceWord>();
-                    var levelSource = new List<KillerPdf.Engine.Documents.PdfExtractedWord>();
+                    var levelSource = new List<JPDFs.Engine.Documents.PdfExtractedWord>();
                     int sourceStart = 0;
                     foreach (var word in words)
                     {
@@ -251,7 +251,7 @@ namespace KillerPDF.Controls
 
         // A matched line of page text, with what its fallback edit needs if the page content cannot take it.
         private readonly record struct DirectReplacement(int Page, CanvasFrame Frame, ReplaceLine Plan,
-            KillerPdf.Engine.Documents.PdfExtractedWord First, EngineDocs.PdfContentBounds Region);
+            JPDFs.Engine.Documents.PdfExtractedWord First, EngineDocs.PdfContentBounds Region);
 
         // A clone carries each new text, so an undo snapshot taken before keeps the original.
         private void ApplyAnnotationEdits(List<(int Page, TextAnnotation Original, string Content)> edits)
@@ -268,8 +268,8 @@ namespace KillerPDF.Controls
 
         // The installed face for a line whose own font cannot show its new text, from the font the
         // line was found in. The command line's --replace-text picks faces the same way.
-        internal static KillerPdf.Engine.Fonts.TrueTypeFont? SubstituteFont(
-            KillerPdf.Engine.Documents.PdfExtractedWord firstWord, string text)
+        internal static JPDFs.Engine.Fonts.TrueTypeFont? SubstituteFont(
+            JPDFs.Engine.Documents.PdfExtractedWord firstWord, string text)
         {
             string family = "Segoe UI";
             bool bold = false, italic = false;
@@ -287,7 +287,7 @@ namespace KillerPDF.Controls
         // One replaced line edited the fallback way: a cover over the original text and the paired
         // replacement text, placed and styled the way StartCoverTextEdit and CommitActiveTextBox do it.
         private void AddReplacementEdit(int pageIndex, CanvasFrame frame, ReplaceLine plan,
-            KillerPdf.Engine.Documents.PdfExtractedWord firstWord)
+            JPDFs.Engine.Documents.PdfExtractedWord firstWord)
         {
             Rect line = plan.Bounds;
             var cover = new CoverAnnotation

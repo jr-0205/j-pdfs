@@ -1,7 +1,7 @@
 using System.IO;
-using PdfDocument = KillerPDF.Services.PdfContentDocument;
+using PdfDocument = JPDFs.Services.PdfContentDocument;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>One selectable character on a page, in reading order. Coordinates are PDF space
     /// (points, bottom-left origin), matching SearchService and ExtractTextFromRegion.</summary>
@@ -30,9 +30,9 @@ namespace KillerPDF.Services
         public double Left;
         public double Right;
         public bool RightToLeft;
-        public KillerPdf.Engine.Documents.PdfWritingDirection WritingDirection;
-        public bool Vertical => WritingDirection is KillerPdf.Engine.Documents.PdfWritingDirection.BottomToTop
-            or KillerPdf.Engine.Documents.PdfWritingDirection.TopToBottom;
+        public JPDFs.Engine.Documents.PdfWritingDirection WritingDirection;
+        public bool Vertical => WritingDirection is JPDFs.Engine.Documents.PdfWritingDirection.BottomToTop
+            or JPDFs.Engine.Documents.PdfWritingDirection.TopToBottom;
         public int End => Start + Count;
     }
 
@@ -90,8 +90,8 @@ namespace KillerPDF.Services
 
         // #185 helper: see the call site comment. Bands arrive top-to-bottom; the result is the
         // same tuple shape, reordered so the flattened char order reads one column at a time.
-        private static List<(List<KillerPdf.Engine.Documents.PdfExtractedWord> Words, double Top, double Bottom)>
-            OrderColumnAware(List<(List<KillerPdf.Engine.Documents.PdfExtractedWord> Words, double Top, double Bottom)> bands)
+        private static List<(List<JPDFs.Engine.Documents.PdfExtractedWord> Words, double Top, double Bottom)>
+            OrderColumnAware(List<(List<JPDFs.Engine.Documents.PdfExtractedWord> Words, double Top, double Bottom)> bands)
         {
             if (bands.Count < 2) return bands;
 
@@ -104,8 +104,8 @@ namespace KillerPDF.Services
                 }
             double wideW = (textR - textL) * 0.62;   // spans most of the text width = not a column line
 
-            var reordered = new List<(List<KillerPdf.Engine.Documents.PdfExtractedWord>, double, double)>();
-            var pending = new List<(List<KillerPdf.Engine.Documents.PdfExtractedWord> Words, double Top, double Bottom, double L, double R)>();
+            var reordered = new List<(List<JPDFs.Engine.Documents.PdfExtractedWord>, double, double)>();
+            var pending = new List<(List<JPDFs.Engine.Documents.PdfExtractedWord> Words, double Top, double Bottom, double L, double R)>();
 
             void Flush()
             {
@@ -145,7 +145,7 @@ namespace KillerPDF.Services
                 foreach (var w in sorted) { tw += w.BoundingBox.Width; tn += Math.Max(1, w.Text.Length); }
                 double gapT = Math.Max(10, (tn > 0 ? tw / tn : 5) * 3);
 
-                var segs = new List<List<KillerPdf.Engine.Documents.PdfExtractedWord>> { new() { sorted[0] } };
+                var segs = new List<List<JPDFs.Engine.Documents.PdfExtractedWord>> { new() { sorted[0] } };
                 for (int i = 1; i < sorted.Count; i++)
                 {
                     if (sorted[i].BoundingBox.Left - sorted[i - 1].BoundingBox.Right > gapT)
@@ -172,14 +172,14 @@ namespace KillerPDF.Services
 
         // Splits vertical lines into top-to-bottom sections wherever their Y spans do not touch,
         // keeping the given order inside each section.
-        private static List<List<List<KillerPdf.Engine.Documents.PdfExtractedWord>>> VerticalSections(
-            List<List<KillerPdf.Engine.Documents.PdfExtractedWord>> lines)
+        private static List<List<List<JPDFs.Engine.Documents.PdfExtractedWord>>> VerticalSections(
+            List<List<JPDFs.Engine.Documents.PdfExtractedWord>> lines)
         {
-            var sections = new List<(List<List<KillerPdf.Engine.Documents.PdfExtractedWord>> Lines, double Top, double Bottom)>();
+            var sections = new List<(List<List<JPDFs.Engine.Documents.PdfExtractedWord>> Lines, double Top, double Bottom)>();
             foreach (var line in lines)
             {
                 double top = line.Max(w => w.BoundingBox.Top), bottom = line.Min(w => w.BoundingBox.Bottom);
-                var members = new List<List<KillerPdf.Engine.Documents.PdfExtractedWord>>();
+                var members = new List<List<JPDFs.Engine.Documents.PdfExtractedWord>>();
                 for (int i = sections.Count - 1; i >= 0; i--)
                 {
                     if (sections[i].Top < bottom || sections[i].Bottom > top) continue;
@@ -194,7 +194,7 @@ namespace KillerPDF.Services
             return [.. sections.OrderByDescending(section => section.Top).Select(section => section.Lines)];
         }
 
-        private static PageTextRuns Build(KillerPdf.Engine.Documents.PdfPageContent page)
+        private static PageTextRuns Build(JPDFs.Engine.Documents.PdfPageContent page)
         {
             var result = new PageTextRuns { PdfWidth = page.Width, PdfHeight = page.Height };
             var words = page.GetWords().ToList();
@@ -202,7 +202,7 @@ namespace KillerPDF.Services
 
             // Group words into lines: a word joins a line when its vertical band overlaps the line's
             // band by at least half the smaller height. Bands grow as members join.
-            var lineWords = new List<(List<KillerPdf.Engine.Documents.PdfExtractedWord> Words, double Top, double Bottom)>();
+            var lineWords = new List<(List<JPDFs.Engine.Documents.PdfExtractedWord> Words, double Top, double Bottom)>();
             var verticalWords = words.Where(w => IsVertical(w.Letters[0].WritingDirection)).ToList();
             foreach (var w in words.Except(verticalWords))
             {
@@ -217,7 +217,7 @@ namespace KillerPDF.Services
                     if (minH > 0 && overlap >= minH * 0.5) { found = i; break; }
                 }
                 if (found < 0)
-                    lineWords.Add((new List<KillerPdf.Engine.Documents.PdfExtractedWord> { w }, wTop, wBottom));
+                    lineWords.Add((new List<JPDFs.Engine.Documents.PdfExtractedWord> { w }, wTop, wBottom));
                 else
                 {
                     var (Words, Top, Bottom) = lineWords[found];
@@ -242,7 +242,7 @@ namespace KillerPDF.Services
 
             // Vertical baselines share an X band, not a Y band. Keep their directions separate
             // so crossing or oppositely rotated text cannot become one selectable line.
-            var verticalLines = new List<List<KillerPdf.Engine.Documents.PdfExtractedWord>>();
+            var verticalLines = new List<List<JPDFs.Engine.Documents.PdfExtractedWord>>();
             foreach (var word in verticalWords)
             {
                 var bounds = word.BoundingBox;
@@ -268,7 +268,7 @@ namespace KillerPDF.Services
             foreach (var direction in orderedVertical.Select(g => g[0].Letters[0].WritingDirection).Distinct().ToArray())
             {
                 var parallel = orderedVertical.Where(g => g[0].Letters[0].WritingDirection == direction)
-                    .OrderBy(g => direction == KillerPdf.Engine.Documents.PdfWritingDirection.BottomToTop
+                    .OrderBy(g => direction == JPDFs.Engine.Documents.PdfWritingDirection.BottomToTop
                         ? g.Min(w => w.BoundingBox.Left) : -g.Max(w => w.BoundingBox.Right)).ToArray();
                 int next = 0;
                 for (int i = 0; i < orderedVertical.Count; i++)
@@ -309,7 +309,7 @@ namespace KillerPDF.Services
                 bool rtl = IsRightToLeftText(ws.Select(w => w.Text));
                 var lineDirection = ws[0].Letters[0].WritingDirection;
                 ws.Sort(IsVertical(lineDirection)
-                    ? lineDirection == KillerPdf.Engine.Documents.PdfWritingDirection.BottomToTop
+                    ? lineDirection == JPDFs.Engine.Documents.PdfWritingDirection.BottomToTop
                         ? (a, b) => a.BoundingBox.Bottom.CompareTo(b.BoundingBox.Bottom)
                         : (a, b) => b.BoundingBox.Top.CompareTo(a.BoundingBox.Top)
                     : rtl
@@ -330,9 +330,9 @@ namespace KillerPDF.Services
                     // Rotated and vertical text advances along Y. Sorting its ink bounds by X
                     // permutes characters according to glyph shape instead of reading order.
                     var direction = letters[0].WritingDirection;
-                    if (direction == KillerPdf.Engine.Documents.PdfWritingDirection.BottomToTop)
+                    if (direction == JPDFs.Engine.Documents.PdfWritingDirection.BottomToTop)
                         letters.Sort((a, b) => a.StartBaseLine.Y.CompareTo(b.StartBaseLine.Y));
-                    else if (direction == KillerPdf.Engine.Documents.PdfWritingDirection.TopToBottom)
+                    else if (direction == JPDFs.Engine.Documents.PdfWritingDirection.TopToBottom)
                         letters.Sort((a, b) => b.StartBaseLine.Y.CompareTo(a.StartBaseLine.Y));
                     else
                         letters.Sort(rtl
@@ -355,9 +355,9 @@ namespace KillerPDF.Services
             return result;
         }
 
-        private static bool IsVertical(KillerPdf.Engine.Documents.PdfWritingDirection direction)
-            => direction is KillerPdf.Engine.Documents.PdfWritingDirection.BottomToTop
-                or KillerPdf.Engine.Documents.PdfWritingDirection.TopToBottom;
+        private static bool IsVertical(JPDFs.Engine.Documents.PdfWritingDirection direction)
+            => direction is JPDFs.Engine.Documents.PdfWritingDirection.BottomToTop
+                or JPDFs.Engine.Documents.PdfWritingDirection.TopToBottom;
 
         internal static bool IsRightToLeftText(IEnumerable<string> values)
         {
@@ -419,7 +419,7 @@ namespace KillerPDF.Services
             if (target is null) return 0;
             if (target.Vertical)
             {
-                bool upward = target.WritingDirection == KillerPdf.Engine.Documents.PdfWritingDirection.BottomToTop;
+                bool upward = target.WritingDirection == JPDFs.Engine.Documents.PdfWritingDirection.BottomToTop;
                 for (int i = target.Start; i < target.End; i++)
                 {
                     var c = runs.Chars[i];
@@ -495,7 +495,7 @@ namespace KillerPDF.Services
         }
 
         /// <summary>Unpadded character bounds, retaining the line band for horizontal and legacy runs.</summary>
-        public static KillerPdf.Engine.Documents.PdfContentBounds CharacterBounds(RunChar character, RunLine line)
+        public static JPDFs.Engine.Documents.PdfContentBounds CharacterBounds(RunChar character, RunLine line)
         {
             bool hasVerticalBounds = line.Vertical && double.IsFinite(character.Bottom)
                 && double.IsFinite(character.Top) && character.Bottom <= character.Top;
@@ -504,9 +504,9 @@ namespace KillerPDF.Services
         }
 
         /// <summary>Page-space selection bounds shared by painting, highlights and reading ranges.</summary>
-        public static List<KillerPdf.Engine.Documents.PdfContentBounds> SelectionBounds(PageTextRuns runs, int start, int end)
+        public static List<JPDFs.Engine.Documents.PdfContentBounds> SelectionBounds(PageTextRuns runs, int start, int end)
         {
-            var result = new List<KillerPdf.Engine.Documents.PdfContentBounds>();
+            var result = new List<JPDFs.Engine.Documents.PdfContentBounds>();
             int i = Math.Max(0, start);
             end = Math.Min(end, runs.Chars.Count);
             while (i < end)

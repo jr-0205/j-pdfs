@@ -32,7 +32,7 @@ internal static class Program
     {
         Root = Path.GetFullPath(args[0]); Output = Path.GetFullPath(args[1]);
         var name = Path.GetFileName(Root);
-        Source = args.Length > 2 ? args[2] : Path.Combine(Root, name.StartsWith("KillerPDF") ? "MainWindow.xaml" : name == "KillerScan" ? "App.xaml" : "Controls/Controls.xaml");
+        Source = args.Length > 2 ? args[2] : Path.Combine(Root, name.StartsWith("JPDFs") ? "MainWindow.xaml" : name == "JpdfsScan" ? "App.xaml" : "Controls/Controls.xaml");
         Directory.CreateDirectory(Output);
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         // Only this fixture's cached WPF value is substituted, never SPI_SET or registry.

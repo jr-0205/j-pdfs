@@ -3,10 +3,10 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
-    /// APP-OWNED: KillerPDF's side of the kit app size (Shell/AppScale.cs). Only the chrome scales:
+    /// APP-OWNED: JPDFs's side of the kit app size (Shell/AppScale.cs). Only the chrome scales:
     /// the toolbar row, the sidebar, the footer document controls and both panes' tab strips. The
     /// document pane is deliberately untouched, so the app size and the page zoom stay two separate
     /// controls. The sidebar column keeps its logical width across a change (SbPx), and the
@@ -14,7 +14,7 @@ namespace KillerPDF.Shell
     /// </summary>
     public partial class MainWindow
     {
-        // The kit's text-mode switch targets ScaleHost. KillerPDF has no single scaled element, so
+        // The kit's text-mode switch targets ScaleHost. JPDFs has no single scaled element, so
         // ScaleHost is the toolbar row, one of the five hosts; ApplyAppScaleTo below gives the
         // others the same text mode and transform.
         private FrameworkElement ScaleHost => ToolbarRowBorder;

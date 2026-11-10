@@ -5,7 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // ============================================================
     // Visual keyboard for the shortcuts overlay.
@@ -19,7 +19,7 @@ namespace KillerPDF.Shell
     public partial class MainWindow
     {
         // KbLayer, the binding table and its types live in Services/ShortcutTable.cs, which is free
-        // of WPF so KillerPDF.Tests can link it.
+        // of WPF so JPDFs.Tests can link it.
         private KbLayer _kbLayer = KbLayer.Base;
         private bool _kbBuilt;
         private TextBlock? _kbDetail;
@@ -213,7 +213,7 @@ namespace KillerPDF.Shell
                     key.SetResourceReference(Border.CornerRadiusProperty, "ControlCornerRadius");
                     key.SetResourceReference(Border.BackgroundProperty, "KeyboardKeyBrush");
                     key.SetResourceReference(Border.BorderBrushProperty, "CardBorderBrush");
-                    // Hover: the keycap lifts a few pixels, like the cards on the killertools.net front page.
+                    // Hover: the keycap lifts a few pixels, like the cards on the jpdfstools.net front page.
                     var lift = new TranslateTransform();
                     key.RenderTransform = lift;
                     string keyId = id;

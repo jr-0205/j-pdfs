@@ -6,7 +6,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-// App-wide accessibility size, the family feature from KillerNotes and KillerPDF: roll the mouse
+// App-wide accessibility size, the family feature from JpdfsNotes and JPDFs: roll the mouse
 // wheel over the title-bar wordmark and everything under the title bar grows or shrinks in small
 // steps. A LayoutTransform reflows and re-rasterizes text instead of stretching a bitmap, so the
 // UI stays crisp at any size. The title bar itself stays fixed, so the wordmark being scrolled
@@ -22,7 +22,7 @@ using System.Windows.Threading;
 //
 // A document or canvas that has its own zoom (a PDF page, an image) should sit OUTSIDE ScaleHost
 // or reset the transform for itself: app size and content zoom are two separate controls.
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -38,7 +38,7 @@ namespace KillerPDF.Shell
 
         /// <summary>Optional app hook: set unroundedLayout true to turn layout rounding off on
         /// ScaleHost at fractional sizes (it comes back on at 100%). Rounded edges under a
-        /// fractional scale can leave a one-pixel stripe between panes (KillerNotes at 108%).</summary>
+        /// fractional scale can leave a one-pixel stripe between panes (JpdfsNotes at 108%).</summary>
         partial void ConfigureAppScaleLayout(ref bool unroundedLayout);
 
         private void EnsureAppScaleConfigured()
@@ -116,7 +116,7 @@ namespace KillerPDF.Shell
             }
 
             // The app hook runs last, so whatever it sets wins over the kit defaults above. An app
-            // whose scaled content is not one element (KillerScan's scan bar rides in the title bar)
+            // whose scaled content is not one element (JpdfsScan's scan bar rides in the title bar)
             // implements ApplyAppScaleTo and sets handled; everyone else scales ScaleHost.
             bool handled = false;
             ApplyAppScaleTo(scale, ref handled);

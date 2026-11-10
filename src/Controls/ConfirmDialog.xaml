@@ -2,11 +2,11 @@
      main window. Used anywhere a MessageBox would break the look - install prompts,
      the self-update prompt, destructive confirms. Each app writes its own wording at the
      call site; this file is the shared frame. -->
-<Window x:Class="KillerPDF.Controls.ConfirmDialog"
+<Window x:Class="JPDFs.Controls.ConfirmDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:theme="clr-namespace:KillerFamily.Theming"
-        xmlns:local="clr-namespace:KillerPDF.Controls"
+        xmlns:theme="clr-namespace:JpdfsUi.Theming"
+        xmlns:local="clr-namespace:JPDFs.Controls"
         Title="J-PDF's"
         Width="390" SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
@@ -21,7 +21,7 @@
         ShowInTaskbar="False">
 
     <!-- Margin is a transparent halo so the drop shadow has room to render. Same shadow
-         language as the KillerPDF KillerDialog / KillerScan ConfirmDialog. -->
+         language as the JPDFs JpdfsDialog / JpdfsScan ConfirmDialog. -->
     <!-- BackgroundBrush (the titlebar dark), not SurfaceBrush: on Surface the
          Surface-filled checkbox boxes were invisible. -->
     <!-- CornerRadius and the halo margin come from the theme. The halo is the transparent gutter

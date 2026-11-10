@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <RootNamespace>JPDFs.Engine</RootNamespace>
+    <AssemblyName>JPDFs.Engine</AssemblyName>
+    <Version>1.0.0</Version>
+    <PackageId>JPDFs.Engine</PackageId>
+    <Title>The JPDFs.Engine</Title>
+    <Authors>J-PDF's</Authors>
+    <Copyright>Copyright (c) 2026 J-PDF's</Copyright>
+    <Description>An independent .NET PDF 2.0 engine for reading, text extraction, rendering, search, editing, redaction, forms including XFA, signing and timestamp validation, certificate encryption, OCR, export to Office, HTML, Markdown and JSON, optimization, preflight, imposition, measurement, and comparison.</Description>
+    <PackageTags>pdf;pdf-2.0;pdf-a;pdf-ua;pdf-x;validation;preflight;authoring;editing;rendering;text-extraction;ocr;redaction;forms;acroform;xfa;signing;digital-signature;timestamp;encryption;export;docx;accessibility;imposition;document-processing;csharp</PackageTags>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageProjectUrl>https://jpdfs.net/engine.html</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JPDFs/JPDFs</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>https://github.com/JPDFs/JPDFs/blob/main/engine/CHANGELOG.md</PackageReleaseNotes>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Packs the vendored JPEG 2000 codec (IncludeVendoredCodec below). Kept in this one
+         PropertyGroup: release.ps1 reads Project.PropertyGroup.Version under StrictMode, which
+         throws when a second PropertyGroup has no Version. -->
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeVendoredCodec</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="VerifyAppEngineVersion" BeforeTargets="PrepareForBuild;GenerateNuspec">
+    <XmlPeek XmlInputPath="$(MSBuildThisFileDirectory)../../JPDFs.csproj" Query="/Project/PropertyGroup/Version/text()">
+      <Output TaskParameter="Result" PropertyName="JpdfsAppVersion" />
+    </XmlPeek>
+    <Error Condition="'$(Version)' != '$(JpdfsAppVersion)'" Text="Engine version $(Version) must match app version $(JpdfsAppVersion). Update both before building or packaging." />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.29.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Vendored JPEG 2000 codec. See third_party/CoreJ2K/VENDORING.md. -->
+    <ProjectReference Include="..\..\third_party\CoreJ2K\CoreJ2K\CoreJ2K.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <Target Name="IncludeVendoredCodec" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)"
+                            Condition="'%(ReferenceCopyLocalPaths.Filename)' == 'CoreJ2K' and '%(ReferenceCopyLocalPaths.Extension)' == '.dll'" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+    <None Update="Resources\Fonts\LIBERATION-LICENSE.txt" Pack="true"
+          PackagePath="\" />
+    <None Update="Filters\Jbig2\LICENSE.txt" Pack="true"
+          PackagePath="third_party\jbig2\LICENSE.txt" />
+    <None Update="Filters\Jbig2\NOTICE.txt" Pack="true"
+          PackagePath="third_party\jbig2\NOTICE.txt" />
+    <EmbeddedResource Include="Resources\Fonts\Liberation*.ttf"
+                      LogicalName="JPDFs.Engine.Fonts.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

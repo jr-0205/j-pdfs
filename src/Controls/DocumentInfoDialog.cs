@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF
+namespace JPDFs
 {
     // Read/edit the PDF Document Info dictionary (Title, Author, Subject, Keywords, Creator). Themed via
     // DialogChrome, no preview pane. Producer/dates/structure are shown read-only.

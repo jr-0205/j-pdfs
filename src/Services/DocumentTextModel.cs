@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>A place in the document's readable text: a page and an offset into that page's text.</summary>
     internal readonly record struct TextPosition(int Page, int Offset) : IComparable<TextPosition>

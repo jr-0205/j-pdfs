@@ -1,6 +1,6 @@
 # A release-triggered run starts seconds after release.ps1 finished creating the release and
 # uploading its assets, and GitHub throttles the branch push komac needs on the way out. It
-# surfaces as "Ref cannot be created" or "SteveTheKiller does not have the correct permissions
+# surfaces as "Ref cannot be created" or "JPDFs does not have the correct permissions
 # to execute CreateRef", which reads like a bad token and is not: the same secret succeeds on a
 # later retry. 1.7.5 failed this way and its workflow_dispatch retry succeeded 23 minutes later.
 # The submit step now settles first and retries with backoff.

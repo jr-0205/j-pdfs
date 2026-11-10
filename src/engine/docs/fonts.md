@@ -17,10 +17,10 @@ This complete example inspects the standard Symbol font without an installed
 font or an embedded program:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Fonts;
-using KillerPdf.Engine.Objects;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Fonts;
+using JPDFs.Engine.Objects;
 
 static PdfExtractionFont ReadStandardSymbol()
 {
@@ -95,7 +95,7 @@ font programs by the host.
 This resolver uses exact requests and retains private copies of supplied bytes:
 
 ```csharp
-using KillerPdf.Engine.Fonts;
+using JPDFs.Engine.Fonts;
 
 sealed class MappedFontResolver : IPdfFontResolver
 {
@@ -134,8 +134,8 @@ The following function authors a small page with an embedded font and Unicode
 mapping:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Fonts;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Fonts;
 
 static byte[] CreateUnicodePage(byte[] fontBytes, string text)
 {

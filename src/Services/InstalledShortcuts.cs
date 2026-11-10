@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static class InstalledShortcuts
 {
@@ -14,7 +14,7 @@ internal static class InstalledShortcuts
             : Environment.SpecialFolder.DesktopDirectory, Environment.SpecialFolderOption.DoNotVerify);
         if (!Path.IsPathFullyQualified(directory))
             throw new DirectoryNotFoundException("The Windows desktop folder is unavailable.");
-        return Path.Combine(directory, "KillerPDF.lnk");
+        return Path.Combine(directory, "JPDFs.lnk");
     }
 
     internal static void Create(string linkPath, string targetPath)

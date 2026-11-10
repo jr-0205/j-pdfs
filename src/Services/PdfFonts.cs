@@ -2,7 +2,7 @@ using System.IO;
 using System.Text;
 using SixLabors.Fonts;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // ============================================================
     // Font resolution for the SAVE path (#168).

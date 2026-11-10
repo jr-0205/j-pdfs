@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Holds a page job still while the app asks whether to cancel it, so nothing more is
 /// written behind the question.</summary>

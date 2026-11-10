@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Shares one spare output buffer between sequential encoding sessions.</summary>
 internal sealed class PdfEncodingBufferPool

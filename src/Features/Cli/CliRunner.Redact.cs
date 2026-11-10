@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Windows.Media;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // The Redact tool from the command line (#341): find words, patterns or sensitive numbers,
     // mark whole pages or apply the marks saved in the file, then permanently remove everything
@@ -16,7 +16,7 @@ namespace KillerPDF.Features
     internal static partial class CliRunner
     {
         private const string RedactUsage =
-            "Usage: KillerPDF.exe --redact <in.pdf> <out.pdf> [what] [how] [--dry-run]\n"
+            "Usage: JPDFs.exe --redact <in.pdf> <out.pdf> [what] [how] [--dry-run]\n"
             + "  what (any mix): --text <phrase>  --terms <file with one phrase per line>  --regex <pattern>\n"
             + "                  --find email,phone,ssn,card,iban  --whole-pages <range>  --marked (marks saved in the file)\n"
             + "                  [--match-case]\n"

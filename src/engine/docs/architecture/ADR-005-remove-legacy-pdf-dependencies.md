@@ -2,11 +2,11 @@
 
 **Status:** Accepted
 **Date:** 2026-09-06
-**Decider:** Steve the Killer
+**Decider:** J-PDF's
 
 ## Context
 
-KillerPDF previously depended on several separate PDF libraries across its desktop pipeline. PdfSharpCore owned document state and save operations, PDFsharp supported detached signing, PdfPig supplied text extraction, and Docnet.Core with its bundled PDFium native library supplied page rendering. The split gave the application proven capability while The KillerPDF.Engine was being built, but it also created overlapping document models, managed and native dependency chains, different parser and rendering behavior, and separate update and security responsibilities.
+JPDFs previously depended on several separate PDF libraries across its desktop pipeline. PdfSharpCore owned document state and save operations, PDFsharp supported detached signing, PdfPig supplied text extraction, and Docnet.Core with its bundled PDFium native library supplied page rendering. The split gave the application proven capability while The JPDFs.Engine was being built, but it also created overlapping document models, managed and native dependency chains, different parser and rendering behavior, and separate update and security responsibilities.
 
 ADR-001 established an independent .NET 10 document engine. ADR-002 chose an incremental migration so each replacement could be tested without combining every PDF behavior change into one unreviewable cutover. That migration is now complete for the desktop application: the engine provides document parsing, text extraction, structural editing, writing, signing, and bounded CPU rendering. The final rendering migration removed Docnet.Core and the PDFium native runtime from the application package.
 
@@ -14,7 +14,7 @@ The goal is not to eliminate every dependency. Some focused dependencies remain 
 
 ## Decision
 
-KillerPDF will use The KillerPDF.Engine as its sole PDF processing boundary for the Windows application. The application will not retain direct references to PdfSharpCore, PDFsharp, PdfPig, Docnet.Core, or PDFium.
+JPDFs will use The JPDFs.Engine as its sole PDF processing boundary for the Windows application. The application will not retain direct references to PdfSharpCore, PDFsharp, PdfPig, Docnet.Core, or PDFium.
 
 The engine owns PDF parsing, text and image extraction, document editing, deterministic and incremental writing, detached signing, and page rendering. The WPF shell owns user interaction, display composition, file workflows, and platform-specific OCR bootstrapping, but it passes PDF work through the engine's typed APIs rather than reaching into a legacy library or native renderer.
 
@@ -36,9 +36,9 @@ This produces one maintained PDF processing boundary, removes the PDFium native 
 
 ## Consequences
 
-- KillerPDF has one PDF processing implementation to test, audit, package, and evolve.
+- JPDFs has one PDF processing implementation to test, audit, package, and evolve.
 - The application package no longer carries Docnet.Core or the PDFium native runtime.
-- PDF behavior fixes and capability work belong in The KillerPDF.Engine unless they are strictly WPF interaction or presentation concerns.
+- PDF behavior fixes and capability work belong in The JPDFs.Engine unless they are strictly WPF interaction or presentation concerns.
 - An engine regression has no production legacy fallback. It must be corrected in the engine, covered by a focused regression test when practical, and revalidated against the applicable corpus gate.
 - Security review can focus on the remaining declared dependencies and vendored assets instead of maintaining retired PDF libraries and native binaries.
 - Removing a dependency does not prove visual equivalence by itself. Rendering, extraction, editing, signing, packaging, and launch gates remain required evidence for their respective surfaces.
@@ -46,7 +46,7 @@ This produces one maintained PDF processing boundary, removes the PDFium native 
 ## Implementation requirements
 
 1. Keep the Windows application free of direct package, project, P/Invoke, and runtime-file references to PdfSharpCore, PDFsharp, PdfPig, Docnet.Core, and PDFium.
-2. Keep the engine UI-free and independent of WPF, KillerPDF application code, PDFium, PdfPig, PdfSharpCore, and PDFsharp.
+2. Keep the engine UI-free and independent of WPF, JPDFs application code, PDFium, PdfPig, PdfSharpCore, and PDFsharp.
 3. Validate a dependency removal with focused replacement tests, the applicable engine and application test suites, corpus gates, package-manifest inspection, and a clean launch check.
 4. Preserve the distinction between a deliberate engine limitation and an unexpected failure in corpus and release results. Do not reintroduce a legacy fallback merely to hide either result.
 5. Record any future exception as a new ADR before adding a replacement PDF processing dependency or native renderer.

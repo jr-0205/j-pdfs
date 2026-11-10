@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 /// <summary>A comb text field: one character drawn in each printed cell over the real editor, whose
 /// own text stays transparent so the raw string never shows on top of the cells. The characters are

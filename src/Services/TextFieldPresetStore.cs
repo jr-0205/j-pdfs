@@ -1,7 +1,7 @@
 using System.IO;
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Persists validated text-field presets for the desktop application.</summary>
 internal sealed class TextFieldPresetStore

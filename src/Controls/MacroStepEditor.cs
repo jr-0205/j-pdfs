@@ -1,11 +1,11 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Windows;
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal static class MacroStepEditor
 {
@@ -119,7 +119,7 @@ internal static class MacroStepEditor
                 || (step.Operation == PdfMacroOperation.EditAttachments && Current("action") is not ("" or "rename" or "description"))
                 || (step.Operation == PdfMacroOperation.EditPortfolio && Current("action") is not ("" or "presentation" or "clear")))
             {
-                KillerDialog.Show(owner, L("Str_Macro_NoSettings"));
+                JpdfsDialog.Show(owner, L("Str_Macro_NoSettings"));
                 return null;
             }
             int ChooseSelected(string title, int selected, params string[] keys)
@@ -213,7 +213,7 @@ internal static class MacroStepEditor
             {
                 if (step.Settings?.ContainsKey("batesOptions") == true)
                 {
-                    KillerDialog.Show(owner, L("Str_Macro_NoSettings"));
+                    JpdfsDialog.Show(owner, L("Str_Macro_NoSettings"));
                     return null;
                 }
                 PdfPageNumberMacroOptions current = step.Settings?.TryGetValue("options", out string? json) == true
@@ -246,12 +246,12 @@ internal static class MacroStepEditor
                 settings["acceptDetectedHeadings"] = "true";
                 return new(step.Operation, settings);
             }
-            KillerDialog.Show(owner, L("Str_Macro_NoSettings"));
+            JpdfsDialog.Show(owner, L("Str_Macro_NoSettings"));
         }
         catch (Exception error) when (error is ArgumentException or FormatException or OverflowException
             or JsonException or InvalidOperationException or NotSupportedException)
         {
-            KillerDialog.Show(owner, L("Str_Macro_Invalid") + "\n" + error.Message);
+            JpdfsDialog.Show(owner, L("Str_Macro_Invalid") + "\n" + error.Message);
         }
         return null;
     }

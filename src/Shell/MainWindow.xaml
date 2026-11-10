@@ -1,15 +1,15 @@
-<Window x:Class="KillerPDF.Shell.MainWindow" Icon="pack://application:,,,/Resources/kp-icon.ico"
+<Window x:Class="JPDFs.Shell.MainWindow" Icon="pack://application:,,,/Resources/kp-icon.ico"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:kl="clr-namespace:KillerFamily.Layout"
+        xmlns:kl="clr-namespace:JpdfsUi.Layout"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:theme="clr-namespace:KillerFamily.Theming"
-        xmlns:a11y="clr-namespace:KillerFamily.Accessibility"
-        xmlns:icons="clr-namespace:KillerPDF.Controls"
+        xmlns:theme="clr-namespace:JpdfsUi.Theming"
+        xmlns:a11y="clr-namespace:JpdfsUi.Accessibility"
+        xmlns:icons="clr-namespace:JPDFs.Controls"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:KillerPDF"
-        xmlns:ctrl="clr-namespace:KillerPDF.Controls"
-        xmlns:snap="clr-namespace:KillerFamily.Windowing"
+        xmlns:local="clr-namespace:JPDFs"
+        xmlns:ctrl="clr-namespace:JPDFs.Controls"
+        xmlns:snap="clr-namespace:JpdfsUi.Windowing"
         mc:Ignorable="d"
         Title="J-PDF's" Height="700" Width="1000" MinHeight="480" MinWidth="620"
         WindowStartupLocation="CenterScreen"
@@ -387,13 +387,13 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- Inset overlay close: the KillerNotes about-card geometry. Unlike the main
+        <!-- Inset overlay close: the JpdfsNotes about-card geometry. Unlike the main
              caption close, its hover face rounds on all four corners. -->
         <Style x:Key="DialogCloseButton" TargetType="Button" BasedOn="{StaticResource ChromeCloseButton}">
             <Setter Property="Tag" Value="{DynamicResource SmallCornerRadius}"/>
         </Style>
 
-        <!-- Shared close for the About and shortcuts cards (KillerScan is the family reference):
+        <!-- Shared close for the About and shortcuts cards (JpdfsScan is the family reference):
              a bare muted X that turns red on hover, no caption-style hover box. 98SE swaps the
              glyph, font, metrics, and colors through the AboutClose* theme keys. -->
         <Style x:Key="OverlayCloseButton" TargetType="Button">
@@ -581,7 +581,7 @@
         </Style>
 
         <!-- ============================================================
-             Family flyout standard (from KillerUI Controls.xaml): the rail's theme and language
+             Family flyout standard (from JpdfsUiKit Controls.xaml): the rail's theme and language
              flyouts are ContextMenus whose chrome comes ONLY from FlyoutCard + FlyoutGrain, with
              PanelMenuItem stripping the MenuItem container for panel content. The grain tile's
              ImageSource is wired in code beside the document grain brushes (Shell/ContextMenu.cs).
@@ -1881,7 +1881,7 @@
              from. Measured on the running app: the card's canvas is BgCanvas #3a3a3a (lum 58) and
              SurfaceBrush is #333333 (lum 51) - seven steps apart, so the 8px gutter read as the
              same gray as the card and the whole thing looked like one flat field with a hairline
-             in it, shadow and all. KillerShell gets its lift from PaneBrush #3a3a3a on
+             in it, shadow and all. JpdfsShell gets its lift from PaneBrush #3a3a3a on
              BackgroundBrush #1c1c1c, thirty steps; this is the identical relationship, and it also
              matches the sidebar and footer, which already paint BackgroundBrush. The sidebar and
              the card both paint over this, so only the exposed gutter changes. -->
@@ -1895,10 +1895,10 @@
                      sidebar spans all three columns and takes a row instead (see the rows below). -->
                 <ColumnDefinition x:Name="SidebarCol" Width="180" MinWidth="24" MaxWidth="234"/>
                 <!-- Was a 6px drag-handle column. The splitter has since moved INSIDE the sidebar
-                     (SidebarSplitter, Grid.Column 0, right-aligned, ZIndex 50 - the KillerNotes
+                     (SidebarSplitter, Grid.Column 0, right-aligned, ZIndex 50 - the JpdfsNotes
                      pattern), so nothing lives here any more and the 6px was pure dead space
-                     between the rail and the document card. Killendar and KillerShell butt the
-                     card straight against the rail; this made KillerPDF's rail read ~7px wider
+                     between the rail and the document card. Killendar and JpdfsShell butt the
+                     card straight against the rail; this made JPDFs's rail read ~7px wider
                      than the rest of the family. Kept as a zero column rather than deleted so
                      DocCol stays index 2 and every Grid.Column in this grid, plus
                      ApplySidebarSide, keeps working unchanged. -->
@@ -2052,7 +2052,7 @@
                                        Margin="2,0,0,0"/>
                         </DockPanel><!-- /PageControlsRow -->
                         </StackPanel><!-- /SidebarHeaderStack -->
-                        <!-- Scrollable page list (virtualized). As in KillerShell, the opacity mask
+                        <!-- Scrollable page list (virtualized). As in JpdfsShell, the opacity mask
                              fades the list itself so the real themed sidebar and grain remain visible
                              behind it. SyncPageListEdgeFades drives the stops; 98SE makes the mask
                              fully opaque because that theme deliberately has no edge fades. -->
@@ -2405,7 +2405,7 @@
                     </Grid>
                 </Border>
 
-            <!-- RESIZE GRIP - KillerShell's TreeResizeGrip, verbatim in shape and reasoning. With the
+            <!-- RESIZE GRIP - JpdfsShell's TreeResizeGrip, verbatim in shape and reasoning. With the
                  sidebar at the top or bottom it lies along the content row's inner edge instead.
                  A Thumb rather than a GridSplitter: a splitter resizes the two columns either side
                  of it, and this handle's neighbor is the 24px rail, which must never move. Driving
@@ -2430,7 +2430,7 @@
                 <Thumb.Template>
                     <ControlTemplate TargetType="Thumb">
                         <!-- Transparent, not empty: a Border with no Background is not hit-testable
-                             and the grip would be unusable (KillerShell's note). -->
+                             and the grip would be unusable (JpdfsShell's note). -->
                         <Border Background="Transparent">
                             <Border x:Name="line" Width="1" HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
                                     VerticalAlignment="{TemplateBinding VerticalAlignment}"
@@ -2493,7 +2493,7 @@
                  line with no border, so there is no corner to join and a cap would draw a stray
                  rule across the gap. -->
             <!-- Document pane: row 1 of the document column.
-                 A lifted card, matching KillerShell's ResultsPane and the rest of the family:
+                 A lifted card, matching JpdfsShell's ResultsPane and the rest of the family:
                  RadCard corners, 1px pane border, PaneShadow cast DOWN over the footer, and an
                  8px inset on the outer side (ApplySidebarSide moves the inset to whichever side
                  the document is on). No bottom margin - a DropShadowEffect draws outside the
@@ -2523,7 +2523,7 @@
                  TWO HANDLES, not one. Whichever you grab is the pane you are sizing: the left handle
                  sits on A's inner edge, the right on B's. Both clamp against BOTH minimums, so
                  neither pane can be squeezed below MinPaneWidth from either side. Deliberately not
-                 KillerShell's single PaneSplitV. -->
+                 JpdfsShell's single PaneSplitV. -->
             <!-- RowSpan 2: each pane contains its own tab strip in its first row, so the panes have
                  to occupy the row a window-level tab band would use. The -1 top margin lives on the
                  card INSIDE the control, since it tucks the card under that pane's own strip. -->
@@ -2699,7 +2699,7 @@
              painted over by it: root-grid children all default to 0 and ties break on declaration
              order, and this is declared after MainContentGrid. Pushing the footer down rather than
              lifting the content keeps the About overlay - declared later still - on top of both.
-             (Family rule; see KillerShell and Killendar.) -->
+             (Family rule; see JpdfsShell and Killendar.) -->
         <Border Grid.Row="4" x:Name="FooterBorder" Panel.ZIndex="-1"
                 MinHeight="24" Background="{DynamicResource FooterBackgroundBrush}" SizeChanged="FooterAnchor_SizeChanged">
             <Grid>
@@ -2963,7 +2963,7 @@
                 <Border Grid.RowSpan="2" Panel.ZIndex="1" IsHitTestVisible="False" BorderBrush="{DynamicResource BevelLightBrush}" BorderThickness="{DynamicResource BevelLightThickness}"/>
                 <Border Grid.RowSpan="2" Panel.ZIndex="1" IsHitTestVisible="False" BorderBrush="{DynamicResource BevelDarkBrush}" BorderThickness="{DynamicResource BevelDarkThickness}"/>
                 <Border Grid.RowSpan="2" CornerRadius="{DynamicResource FlyoutCornerRadius}" IsHitTestVisible="False" Opacity="{DynamicResource GrainOpacity}" Background="{StaticResource GrainBrushShared}"/>
-                <!-- Modern close follows the KillerNotes shortcut card: it is anchored to the
+                <!-- Modern close follows the JpdfsNotes shortcut card: it is anchored to the
                      card itself, not pushed inward by the content padding. -->
                 <Button Grid.RowSpan="2" Click="ShortcutOverlayClose_Click"
                         HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -2993,7 +2993,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Family overlay title, KillerShell's SectionHeader recipe: Consolas 13
+                        <!-- Family overlay title, JpdfsShell's SectionHeader recipe: Consolas 13
                              SemiBold in PrimaryBrush. HeaderLineBrush was the rule color, dark on
                              dark and unreadable, and the shadow rasterized the text. -->
                         <TextBlock Text="{DynamicResource Str_KS_Title}"
@@ -3096,9 +3096,9 @@
                 </Border>
                 <Grid Grid.Row="1" Margin="8,10,8,18">
                     <StackPanel Margin="0">
-                    <!-- Header: bloody KillerPDF icon to the left of the title + tagline.
+                    <!-- Header: bloody JPDFs icon to the left of the title + tagline.
                          A Grid (not a horizontal StackPanel) so the text column is bounded and the
-                         tagline wraps to fill two lines (same pattern as KillerScan's About).
+                         tagline wraps to fill two lines (same pattern as JpdfsScan's About).
                          Width is pinned to the info panel below, so the card's width is still
                          determined by the SHA256 line - never by the tagline text. -->
                     <Grid Margin="0,4,0,14" Width="{Binding ActualWidth, ElementName=AboutInfoGrid}">
@@ -3118,7 +3118,7 @@
                             <!-- Logo (populated in code-behind), with a soft layered shadow -->
                             <Grid Margin="0,0,0,4">
                                 <!-- Shadow copy populated in code-behind (BuildAboutLogo) with the SAME
-                                     runs as the real wordmark. A static flat-size "KillerPDF" here sat
+                                     runs as the real wordmark. A static flat-size "JPDFs" here sat
                                      at different metrics than the two-run logo and read as a long smear
                                      floating above the word instead of a shadow behind it. -->
                                 <TextBlock x:Name="AboutLogoShadowBlock"
@@ -3178,13 +3178,6 @@
                                 <TextBlock x:Name="AboutPublisherBlock"
                                            FontFamily="{DynamicResource UiFont}" FontSize="12"
                                            Foreground="{DynamicResource TextBrush}"/>
-                                <!-- Shown only on an exe signed by Steve; the certificate subject is
-                                     the legal name, this ties it back to the name people know.
-                                     The kit About core fills AboutAkaRun and shows the line. -->
-                                <TextBlock x:Name="AboutAkaBlock" Visibility="Collapsed"
-                                           FontFamily="{DynamicResource UiFont}" FontSize="11"
-                                           Foreground="{DynamicResource MutedTextBrush}" Margin="0,3,0,0"><Run Text="{DynamicResource Str_About_Aka}"/><Run Text=" "/><Hyperlink NavigateUri="https://thekiller.net" RequestNavigate="AboutLink_Navigate"
-                                               Foreground="{DynamicResource PrimaryBrush}" TextDecorations="{x:Null}" ToolTip="thekiller.net"><Run x:Name="AboutAkaRun"/></Hyperlink></TextBlock>
                             </StackPanel>
                             <StackPanel Margin="0,0,0,10">
                                 <TextBlock Text="{DynamicResource Str_About_Thumbprint}" Foreground="{DynamicResource MutedTextBrush}"
@@ -3224,7 +3217,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <!-- First, like every Killer Tools About card: the way back after the
+                        <!-- First, like every Jpdfs Tools About card: the way back after the
                              update prompt's "Always check on startup" box was cleared. -->
                         <CheckBox x:Name="AboutStartupUpdateCheck" Margin="0" Padding="10,0,10,0"
                                   Style="{StaticResource ThemeCheck}" FontSize="11"
@@ -3279,7 +3272,7 @@
                     </StackPanel>
                 </Grid>
                 <!-- Modern close: anchored to the CARD's corner (root grid), not pushed inward by
-                     the content padding - KillerScan's geometry, taken as the reference. -->
+                     the content padding - JpdfsScan's geometry, taken as the reference. -->
                 <Button Grid.RowSpan="2" Click="AboutClose_Click"
                         HorizontalAlignment="Right" VerticalAlignment="Top" Panel.ZIndex="7"
                         Width="{DynamicResource AboutCloseWidth}" Height="{DynamicResource AboutCloseHeight}"

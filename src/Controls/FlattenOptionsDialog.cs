@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class FlattenOptionsDialog : Window
 {

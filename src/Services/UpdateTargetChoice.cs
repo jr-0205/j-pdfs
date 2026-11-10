@@ -1,26 +1,26 @@
 using System;
 using System.IO;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
-    /// <summary>How one KillerPDF copy updates, as UpdateService.Extras.cs hands it to the kit.</summary>
+    /// <summary>How one JPDFs copy updates, as UpdateService.Extras.cs hands it to the kit.</summary>
     internal readonly record struct UpdateTargetChoice(bool Unsupported, string Asset, string? Replace,
         int WaitForProcess, bool Machine, string? InstallerArguments)
     {
         internal const string InstallerAsset = "JPDFs.exe";
-        internal const string StoreAsset = "KillerPDF-Store.exe";
-        internal const string PortableAsset = "KillerPDF-Portable.exe";
+        internal const string StoreAsset = "JPDFs-Store.exe";
+        internal const string PortableAsset = "JPDFs-Portable.exe";
 
         private static readonly UpdateTargetChoice None = new(true, InstallerAsset, null, 0, false, null);
 
         /// <summary>
-        /// An installed copy runs the signed installer (KillerPDF.exe) with the same /install-user or
+        /// An installed copy runs the signed installer (JPDFs.exe) with the same /install-user or
         /// /silent command a manual upgrade uses, into the folder it is installed in, and asks it to
-        /// start the new copy afterward. An installation carrying its runtime uses KillerPDF-Store.exe
+        /// start the new copy afterward. An installation carrying its runtime uses JPDFs-Store.exe
         /// so its update keeps that runtime. A machine-wide copy is one registered under HKLM, or one in a
         /// folder this process cannot write; an administrator running the Program Files copy can write
         /// there and must still update it machine-wide. A packaged portable copy replaces its launcher
-        /// (KillerPDF-Portable.exe) once the launcher and this process have exited, and only when the
+        /// (JPDFs-Portable.exe) once the launcher and this process have exited, and only when the
         /// launcher's folder is writable, because the portable update never elevates. A portable copy
         /// without a launcher (a development build) is not updated.
         /// </summary>

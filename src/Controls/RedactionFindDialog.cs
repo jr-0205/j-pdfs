@@ -2,9 +2,9 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Find text to redact: words, phrases, a regular expression or a common pattern such as email
 // addresses is searched across the whole document, every result is listed for review, and only

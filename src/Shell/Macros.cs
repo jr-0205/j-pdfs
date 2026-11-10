@@ -1,10 +1,10 @@
 using System.IO;
 using System.Text;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -63,7 +63,7 @@ public partial class MainWindow
         }
         if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
         {
-            KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+            JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
             return;
         }
 
@@ -106,7 +106,7 @@ public partial class MainWindow
         string message = string.Format(Loc("Str_Macro_Preview"), preview.Name,
             sourceName, string.Join(Environment.NewLine, plannedFiles.Select(path => path
                 + (overwrite.Contains(path) ? " (" + Loc("Str_Macro_Replace") + ")" : ""))), steps);
-        if (KillerDialog.Show(this, message, Loc("Str_DocumentTools_Macros"),
+        if (JpdfsDialog.Show(this, message, Loc("Str_DocumentTools_Macros"),
                 MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes)
             return;
         if (!IsSourceCurrent()) return;
@@ -164,7 +164,7 @@ public partial class MainWindow
             and not StackOverflowException and not AccessViolationException)
         {
             HideBusyOverlay(busy);
-            KillerDialog.Show(this, Loc("Str_Macro_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, Loc("Str_Macro_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -229,13 +229,13 @@ public partial class MainWindow
             SourceDocument = sourceViewer.DocumentRef,
             Marked = sourceViewer.PendingRedactionRegions()
         };
-        string? text = KillerDialog.PromptLines(this, Loc("Str_Lbl_Redact"),
+        string? text = JpdfsDialog.PromptLines(this, Loc("Str_Lbl_Redact"),
             Loc("Str_Macro_RedactPrompt"), Loc("Str_Btn_OK"));
         if (text is null) return false;
         _macroRedaction.Terms = [.. text.Split('\n')
             .Select(line => line.Trim()).Where(line => line.Length > 0).Distinct(StringComparer.Ordinal)];
         if (_macroRedaction.Terms.Length > 0 || _macroRedaction.Marked.Count > 0) return true;
-        KillerDialog.Show(this, Loc("Str_Macro_RedactNothing"), Loc("Str_DocumentTools_Macros"),
+        JpdfsDialog.Show(this, Loc("Str_Macro_RedactNothing"), Loc("Str_DocumentTools_Macros"),
             MessageBoxButton.OK, MessageBoxImage.Information);
         return false;
     }

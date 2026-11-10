@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
-using KillerPDF.Controls;
-using KillerPDF.Services;
+using JPDFs.Controls;
+using JPDFs.Services;
 
-namespace KillerPDF.Features.About
+namespace JPDFs.Features.About
 {
     /// <summary>
     /// The About card's content: version and release date, the code-signing publisher and
@@ -20,29 +20,29 @@ namespace KillerPDF.Features.About
         /// <summary>App hook: fill the app's own rows; runs as the card is filled, before it shows.</summary>
         partial void OnShow();
 
-        /// <summary>App hook: adjust the signature the card shows (KillerScan's --demo preview).</summary>
+        /// <summary>App hook: adjust the signature the card shows (JpdfsScan's --demo preview).</summary>
         partial void AdjustSignature(ref bool valid, ref string subject, ref string thumbprint);
 
         /// <summary>App hook: replace a raw placeholder value ("(none)", "(unavailable)") with
         /// localized text.</summary>
         partial void ShownValue(ref string value);
 
-        /// <summary>App hook: skip the startup update prompt (KillerScan skips it under --demo).</summary>
+        /// <summary>App hook: skip the startup update prompt (JpdfsScan skips it under --demo).</summary>
         partial void SkipStartupCheck(ref bool skip);
 
         /// <summary>App hook: hold the update back, checked before the download starts and again
-        /// once it is verified (KillerBench holds it while a repair is running). A held download
+        /// once it is verified (JpdfsBench holds it while a repair is running). A held download
         /// is discarded and the update button comes back.</summary>
         partial void HoldUpdate(ref bool hold);
 
         /// <summary>App hook: the last word before the swap helper starts and the app closes,
-        /// after the download, since documents can change while it runs (KillerShell's unsaved
-        /// documents check, KillerNotes saving the open note). Set proceed false to cancel; the
+        /// after the download, since documents can change while it runs (JpdfsShell's unsaved
+        /// documents check, JpdfsNotes saving the open note). Set proceed false to cancel; the
         /// download is discarded and the update button comes back.</summary>
         partial void ConfirmUpdateShutdown(ref bool proceed);
 
         /// <summary>App hook: the helper did not start after ConfirmUpdateShutdown agreed (UAC
-        /// declined), so the app stays open; undo whatever the confirmation set up (KillerShell's
+        /// declined), so the app stays open; undo whatever the confirmation set up (JpdfsShell's
         /// CancelShutdown).</summary>
         partial void UpdateShutdownCanceled();
 
@@ -53,11 +53,11 @@ namespace KillerPDF.Features.About
         /// <summary>App hook: runs immediately before the verified update is handed off (the swap
         /// helper or installer starts), after ConfirmUpdateShutdown agreed. Set proceed false to cancel
         /// without starting anything; the download is discarded and the update button comes back
-        /// (KillerPDF records its open documents here and refuses a session it cannot reopen).</summary>
+        /// (JPDFs records its open documents here and refuses a session it cannot reopen).</summary>
         partial void BeforeUpdateHandoff(ref bool proceed);
 
         /// <summary>App hook: the handoff BeforeUpdateHandoff prepared has ended. Started is true once
-        /// the helper or installer is running and the app is about to close (KillerPDF commits the
+        /// the helper or installer is running and the app is about to close (JPDFs commits the
         /// documents to reopen); false when it did not start, so the app stays open and undoes what it
         /// prepared.</summary>
         partial void AfterUpdateHandoff(bool started);
@@ -91,19 +91,19 @@ namespace KillerPDF.Features.About
         /// registry actually holds, so a refused write unchecks the box again.</summary>
         internal void SetStartWithWindows(bool enabled)
         {
-            KillerFamily.Deployment.StartupRegistration.Set(AppInfo.DisplayName, enabled);
+            JpdfsUi.Deployment.StartupRegistration.Set(AppInfo.DisplayName, enabled);
             if (_host is IAboutStartup startup)
-                startup.StartWithWindows = KillerFamily.Deployment.StartupRegistration.IsEnabled(AppInfo.DisplayName);
+                startup.StartWithWindows = JpdfsUi.Deployment.StartupRegistration.IsEnabled(AppInfo.DisplayName);
         }
 
         /// <summary>Whether closing the main window hides it to the notification area. Read by
         /// CloseToTray each time the window closes, so the checkbox takes effect at once.</summary>
-        internal static bool CloseToTrayEnabled => ThemeManager.GetSetting(KillerFamily.Shell.CloseToTray.SettingName) == "1";
+        internal static bool CloseToTrayEnabled => ThemeManager.GetSetting(JpdfsUi.Shell.CloseToTray.SettingName) == "1";
 
         /// <summary>Saves the Close to system tray choice from the About checkbox.</summary>
         internal void SetCloseToTray(bool enabled)
         {
-            ThemeManager.SetSetting(KillerFamily.Shell.CloseToTray.SettingName, enabled ? "1" : "0");
+            ThemeManager.SetSetting(JpdfsUi.Shell.CloseToTray.SettingName, enabled ? "1" : "0");
             if (_host is IAboutTray tray) tray.CloseToTray = enabled;
         }
 
@@ -146,16 +146,6 @@ namespace KillerPDF.Features.About
             AdjustSignature(ref sigValid, ref subject, ref thumb);
             _host.Publisher = sigValid ? subject : _host.Loc("Str_About_Unsigned");
 
-            // Shown only when the exe is signed by the expected publisher AND the signature actually
-            // verifies: reading a certificate out of a file does not prove the file is untampered.
-            bool signedByPublisher = sigValid &&
-                subject.IndexOf(AppInfo.SignerName, StringComparison.OrdinalIgnoreCase) >= 0;
-
-            // Only the quoted alias goes here; the prefix and the surrounding hyperlink live in the
-            // XAML. 0x201C / 0x201D are the curly quotes, built from codepoints so this line adds no
-            // non-ASCII bytes to the source.
-            _host.Alias        = (char)0x201C + AppInfo.AkaName + (char)0x201D;
-            _host.AliasVisible = signedByPublisher;
             string shownThumb  = thumb;
             ShownValue(ref shownThumb);
             _host.Thumbprint   = shownThumb;
@@ -163,7 +153,7 @@ namespace KillerPDF.Features.About
             _host.UpdateVisible = false;
             _host.StartupUpdateCheck = StartupCheckEnabled;
             if (_host is IAboutStartup startup)
-                startup.StartWithWindows = KillerFamily.Deployment.StartupRegistration.IsEnabled(AppInfo.DisplayName);
+                startup.StartWithWindows = JpdfsUi.Deployment.StartupRegistration.IsEnabled(AppInfo.DisplayName);
             if (_host is IAboutTray tray) tray.CloseToTray = CloseToTrayEnabled;
             OnShow();
 

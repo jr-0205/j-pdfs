@@ -3,9 +3,9 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class BookmarkReviewDialog : Window
 {
@@ -107,20 +107,20 @@ internal sealed class BookmarkReviewDialog : Window
         if (_rows.Where(row => row.Include.IsChecked == true)
             .Any(row => string.IsNullOrWhiteSpace(row.Title.Text)))
         {
-            KillerDialog.Show(this, L("Str_AutoBookmarks_InvalidTitle"),
+            JpdfsDialog.Show(this, L("Str_AutoBookmarks_InvalidTitle"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         if (_rows.Where(row => row.Include.IsChecked == true)
             .Any(row => !TryLevel(row.Level.Text, out _)))
         {
-            KillerDialog.Show(this, L("Str_AutoBookmarks_InvalidLevel"),
+            JpdfsDialog.Show(this, L("Str_AutoBookmarks_InvalidLevel"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         if (_rows.All(row => row.Include.IsChecked != true))
         {
-            KillerDialog.Show(this, L("Str_AutoBookmarks_NoneSelected"),
+            JpdfsDialog.Show(this, L("Str_AutoBookmarks_NoneSelected"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

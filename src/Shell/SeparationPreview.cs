@@ -1,7 +1,7 @@
 using System.Windows;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Separations in the Document tools (#264): the page plate by plate, with the earlier text
     // report one click away.
@@ -11,7 +11,7 @@ namespace KillerPDF.Shell
         {
             if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
             {
-                KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+                JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
                 return;
             }
             CommitActiveTextBox();
@@ -34,7 +34,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Sep_Failed"), ex.Message), "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Sep_Failed"), ex.Message), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

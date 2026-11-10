@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The size a signature takes while it is being placed.</summary>
 internal static class SignaturePlacementScale

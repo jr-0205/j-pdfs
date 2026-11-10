@@ -9,7 +9,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 
-namespace KillerFamily.Theming
+namespace JpdfsUi.Theming
 {
     /// <summary>Uses the logo color for headings, raised with the family bevel.</summary>
     public static class HeadingAccent

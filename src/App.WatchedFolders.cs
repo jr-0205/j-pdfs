@@ -1,8 +1,8 @@
 using System.IO;
 using System.Threading;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 public partial class App
 {

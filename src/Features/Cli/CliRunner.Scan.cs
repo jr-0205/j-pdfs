@@ -5,17 +5,17 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Interop;
 using System.Windows.Threading;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Scan to PDF from the command line: scans through the scanner's TWAIN driver into a new PDF,
     // without the scanner's settings window unless asked for.
     internal static partial class CliRunner
     {
         private const string ScanUsage =
-            "Usage: KillerPDF.exe --scan <out.pdf> [--scanner <name>] [--show-settings]\n"
-            + "       KillerPDF.exe --scan --list\n"
+            "Usage: JPDFs.exe --scan <out.pdf> [--scanner <name>] [--show-settings]\n"
+            + "       JPDFs.exe --scan --list\n"
             + "  Uses the named scanner, or the one last used for Scan to PDF, or the first one found.\n"
             + "  --show-settings opens the scanner's own settings window; without it the scan starts at once.";
 
@@ -35,7 +35,7 @@ namespace KillerPDF.Features
             // TWAIN talks to the driver through a window's messages, so the scan gets an invisible one
             // and this thread keeps its messages flowing until the scanner is done.
             using var window = new HwndSource(new HwndSourceParameters("J-PDF's scan") { Width = 0, Height = 0, WindowStyle = 0 });
-            string folder = Path.Combine(Path.GetTempPath(), $"KillerPDF-scan-{DateTime.Now:yyyyMMdd-HHmmss-fff}");
+            string folder = Path.Combine(Path.GetTempPath(), $"JPDFs-scan-{DateTime.Now:yyyyMMdd-HHmmss-fff}");
             bool publishedCompleteScan = false;
             try
             {

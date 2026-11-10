@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,10 +13,10 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerFamily.Windowing;
-using KillerPDF.Services;
+using JpdfsUi.Windowing;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow : Window
     {
@@ -309,7 +309,7 @@ namespace KillerPDF.Shell
         // parks and restores them per tab through its AllSearchRects/ResultPages/PageCursor.
 
         private readonly Controls.PdfViewer.DocumentSession? _startupTearOutSession;
-        private readonly KillerFamily.Shell.CloseToTray _tray;
+        private readonly JpdfsUi.Shell.CloseToTray _tray;
         private readonly bool _ownsWindowGeometry;
 
         public MainWindow() : this(null)
@@ -322,11 +322,11 @@ namespace KillerPDF.Shell
             InitializeComponent();
             _about = new Features.About.AboutController(this);
             _ownsWindowGeometry = App.RegisterDocumentWindow(this);
-            _tray = KillerFamily.Shell.CloseToTray.Attach(this, "J-PDF's", Loc,
-                () => App.GetSetting(KillerFamily.Shell.CloseToTray.SettingName) == "1");
+            _tray = JpdfsUi.Shell.CloseToTray.Attach(this, "J-PDF's", Loc,
+                () => App.GetSetting(JpdfsUi.Shell.CloseToTray.SettingName) == "1");
             // Ctrl+Q quits the app through the tray's Exit, so the save and quit prompts still run.
-            KillerFamily.Shell.QuitShortcut.Attach(this, _tray.Exit);
-            new KillerFamily.Accessibility.OverlayFocus(this).Track(ShortcutsOverlay, AboutOverlay);
+            JpdfsUi.Shell.QuitShortcut.Attach(this, _tray.Exit);
+            new JpdfsUi.Accessibility.OverlayFocus(this).Track(ShortcutsOverlay, AboutOverlay);
             InitRailOrder();
             var titleFrames = BitmapDecoder.Create(
                 new Uri("pack://application:,,,/Resources/kp-icon.ico"),
@@ -948,7 +948,7 @@ namespace KillerPDF.Shell
         /// dynamic threshold (~40% of average word height) so words at slightly
         /// different baselines still land on the correct line.
         /// </summary>
-        private static string WordsToText(IEnumerable<KillerPdf.Engine.Documents.PdfExtractedWord> source)
+        private static string WordsToText(IEnumerable<JPDFs.Engine.Documents.PdfExtractedWord> source)
         {
             var words = source
                 .OrderByDescending(w => w.BoundingBox.Top)
@@ -960,7 +960,7 @@ namespace KillerPDF.Shell
             double avgH   = words.Average(w => w.BoundingBox.Height);
             double thresh = Math.Max(4.0, avgH * 0.4);
 
-            var lines = new List<List<KillerPdf.Engine.Documents.PdfExtractedWord>>();
+            var lines = new List<List<JPDFs.Engine.Documents.PdfExtractedWord>>();
             double lineY = double.MaxValue;
             foreach (var w in words)
             {

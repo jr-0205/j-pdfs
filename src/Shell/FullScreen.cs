@@ -7,7 +7,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -135,7 +135,7 @@ namespace KillerPDF.Shell
 
                 var b = CurrentMonitorBoundsPixels();
                 Topmost = true;
-                // #215: Topmost exists only to cover the always-on-top taskbar while KillerPDF is
+                // #215: Topmost exists only to cover the always-on-top taskbar while JPDFs is
                 // the ACTIVE window. Held unconditionally, it sat over every other program the user
                 // switched to. Yield it on deactivate, take it back on return - browser behavior.
                 Deactivated += FsYieldTopmost;

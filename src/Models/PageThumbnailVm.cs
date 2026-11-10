@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
     /// ViewModel for a single page thumbnail in the sidebar PageList.

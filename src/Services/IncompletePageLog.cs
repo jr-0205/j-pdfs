@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Pages a print or image export kept although some content could not be drawn exactly.
 /// The shell names them once the job finishes; the command line refuses such pages unless

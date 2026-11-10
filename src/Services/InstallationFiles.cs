@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>Removes the single file owned by the portable installer.</summary>
     internal static class InstallationFiles
@@ -51,8 +51,8 @@ namespace KillerPDF.Services
         internal static void RemoveShortcut(string path)
         {
             string full = Path.GetFullPath(path);
-            if (!string.Equals(Path.GetFileName(full), "KillerPDF.lnk", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("Cleanup only owns the KillerPDF shortcut.", nameof(path));
+            if (!string.Equals(Path.GetFileName(full), "JPDFs.lnk", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Cleanup only owns the JPDFs shortcut.", nameof(path));
             using (PinDirectory(Path.GetDirectoryName(full)!)) File.Delete(full);
         }
 

@@ -1,6 +1,6 @@
 using System.Windows.Threading;
 
-namespace KillerPDF.PreviewHandler;
+namespace JPDFs.PreviewHandler;
 
 internal static class PreviewUiThread
 {
@@ -31,7 +31,7 @@ internal static class PreviewUiThread
                 Dispatcher.Run();
             }
             catch (Exception error) { ready.TrySetException(error); }
-        }) { IsBackground = true, Name = "KillerPDF preview UI" };
+        }) { IsBackground = true, Name = "JPDFs preview UI" };
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         return ready.Task.GetAwaiter().GetResult();

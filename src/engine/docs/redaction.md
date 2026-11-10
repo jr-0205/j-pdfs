@@ -17,7 +17,7 @@ Extract page content, search it, and present the proposed matches to a person or
 an application policy before changing anything.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfRedactionReview FindAccountNumbers(
     byte[] sourceBytes,
@@ -80,7 +80,7 @@ reason code, overlay text, and a `FillColor`. The fill is black when not set.
 redacted.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] Redact(
     PdfDocument document,
@@ -155,7 +155,7 @@ own renderer, it can rebuild an image-only PDF from the finished pixels. Pass
 only the finished pixels and the intended PDF page size.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] BuildVerifiedRedactedPdf(
     IReadOnlyList<PdfSanitizedRasterPage> sanitizedPages,

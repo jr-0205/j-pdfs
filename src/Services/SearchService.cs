@@ -1,6 +1,6 @@
-using PdfDocument = KillerPDF.Services.PdfContentDocument;
+using PdfDocument = JPDFs.Services.PdfContentDocument;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal sealed record SearchHit(int page, double left, double bottom, double right, double top,
         int Start, int Length)
@@ -16,7 +16,7 @@ namespace KillerPDF.Services
         internal string? WidgetId { get; init; }
         internal bool Findable { get; init; } = true;
         internal int MaximumLength { get; init; }
-        internal KillerPdf.Engine.Documents.PdfContentBounds? RedactionBounds { get; init; }
+        internal JPDFs.Engine.Documents.PdfContentBounds? RedactionBounds { get; init; }
     }
 
     internal sealed record CurrentSearchSnapshot(byte[] Bytes, IReadOnlyList<SearchTextSource> Text)
@@ -37,7 +37,7 @@ namespace KillerPDF.Services
         }
         internal bool SameContent(CurrentSearchSnapshot other) => Bytes.AsSpan().SequenceEqual(other.Bytes)
             && Text.SequenceEqual(other.Text) && Covers.SequenceEqual(other.Covers) && UnreadablePages.SequenceEqual(other.UnreadablePages);
-        internal bool IsCovered(int page, KillerPdf.Engine.Documents.PdfContentBounds bounds) => Covers.Any(cover =>
+        internal bool IsCovered(int page, JPDFs.Engine.Documents.PdfContentBounds bounds) => Covers.Any(cover =>
             cover.Page == page && Math.Max(0, Math.Min(bounds.Right, cover.Right) - Math.Max(bounds.Left, cover.Left))
                 * Math.Max(0, Math.Min(bounds.Top, cover.Top) - Math.Max(bounds.Bottom, cover.Bottom))
                 > bounds.Width * bounds.Height * .5);
@@ -134,25 +134,25 @@ namespace KillerPDF.Services
 
     internal sealed class SearchService
     {
-        internal static (IReadOnlyList<KillerPdf.Engine.Documents.PdfRedactionMatch> Matches, IReadOnlyList<int> Unreadable)
-            FindCurrentRedaction(CurrentSearchSnapshot snapshot, KillerPdf.Engine.Documents.PdfRedactionSearchOptions options)
+        internal static (IReadOnlyList<JPDFs.Engine.Documents.PdfRedactionMatch> Matches, IReadOnlyList<int> Unreadable)
+            FindCurrentRedaction(CurrentSearchSnapshot snapshot, JPDFs.Engine.Documents.PdfRedactionSearchOptions options)
         {
             var (pages, unreadable) = LoadPagesForReview(snapshot.Bytes, snapshot.Protection);
-            var result = KillerPdf.Engine.Documents.PdfRedactionSearch.Find(pages, options).Matches
+            var result = JPDFs.Engine.Documents.PdfRedactionSearch.Find(pages, options).Matches
                 .Where(match => !(match.Areas.Count > 0 ? match.Areas : [match.Bounds])
                     .Any(area => snapshot.IsCovered(match.PageIndex, area))).ToList();
-            var annotations = KillerPdf.Engine.Documents.PdfRedactionSearch.FindInAnnotations(
+            var annotations = JPDFs.Engine.Documents.PdfRedactionSearch.FindInAnnotations(
                 PdfEngineIntegration.OpenForReading(snapshot.Bytes, snapshot.Protection), options);
             result.AddRange(annotations.Matches.Where(match => !snapshot.Text.Any(source => source.WidgetId == match.Id)
                 && !snapshot.IsCovered(match.PageIndex, match.Bounds)));
             foreach (SearchTextSource source in snapshot.Text)
-                foreach (var match in KillerPdf.Engine.Documents.PdfRedactionSearch.FindInText(source.Content, options))
-                    result.Add(new KillerPdf.Engine.Documents.PdfRedactionMatch(
+                foreach (var match in JPDFs.Engine.Documents.PdfRedactionSearch.FindInText(source.Content, options))
+                    result.Add(new JPDFs.Engine.Documents.PdfRedactionMatch(
                         $"current:{source.WidgetId ?? source.AnnotationId.ToString()}:{source.Page}:{match.Start}:{match.Length}",
                         source.Page, match.Value, source.RedactionBounds ?? new(source.Left, source.Bottom, source.Right, source.Top),
                         -1, 0, options.ReasonCode, options.OverlayText,
-                        source.FieldName is null ? KillerPdf.Engine.Documents.PdfRedactionTargetKind.Text
-                            : KillerPdf.Engine.Documents.PdfRedactionTargetKind.FormField));
+                        source.FieldName is null ? JPDFs.Engine.Documents.PdfRedactionTargetKind.Text
+                            : JPDFs.Engine.Documents.PdfRedactionTargetKind.FormField));
             return (result.AsReadOnly(), unreadable.Concat(annotations.UnreadableAnnotationPages)
                 .Concat(snapshot.UnreadablePages).Distinct().Order().ToArray());
         }
@@ -220,7 +220,7 @@ namespace KillerPDF.Services
             for (int pi = 0; pi < doc.NumberOfPages; pi++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                KillerPdf.Engine.Documents.PdfPageContent page;
+                JPDFs.Engine.Documents.PdfPageContent page;
                 List<(double Left, double Bottom, double Right, double Top)> hits;
                 try
                 {
@@ -271,7 +271,7 @@ namespace KillerPDF.Services
             }
 
             // The reader's note when this page lost content, otherwise null.
-            internal string? LostContent(KillerPdf.Engine.Documents.PdfPageContent page)
+            internal string? LostContent(JPDFs.Engine.Documents.PdfPageContent page)
             {
                 string? lost = page.Diagnostics.FirstOrDefault(LostContentNotes.Contains);
                 if (lost is not null && page.Words.Count == 0) Refused(new System.IO.InvalidDataException(lost));
@@ -299,28 +299,28 @@ namespace KillerPDF.Services
         }
 
         internal static List<(double Left, double Bottom, double Right, double Top)> FindMatchesOnPage(
-            KillerPdf.Engine.Documents.PdfPageContent page, string query, bool matchCase = false, bool wholeWord = false)
+            JPDFs.Engine.Documents.PdfPageContent page, string query, bool matchCase = false, bool wholeWord = false)
             => [.. FindHitsOnPage(page, 0, query, matchCase, wholeWord)
                 .Select(hit => (hit.left, hit.bottom, hit.right, hit.top))];
 
-        private static List<SearchHit> FindHitsOnPage(KillerPdf.Engine.Documents.PdfPageContent page,
+        private static List<SearchHit> FindHitsOnPage(JPDFs.Engine.Documents.PdfPageContent page,
             int pageIndex, string query, bool matchCase, bool wholeWord)
         {
             var result = new List<SearchHit>();
-            query = KillerPdf.Engine.Documents.PdfSearchText.Fold(query);
+            query = JPDFs.Engine.Documents.PdfSearchText.Fold(query);
             if (query.Length == 0) return result;
-            var options = new KillerPdf.Engine.Documents.PdfRedactionSearchOptions
+            var options = new JPDFs.Engine.Documents.PdfRedactionSearchOptions
             {
                 Query = wholeWord ? @"(?<![\p{L}\p{Nd}_])" + System.Text.RegularExpressions.Regex.Escape(query)
                     + @"(?![\p{L}\p{Nd}_])" : query,
-                Kind = wholeWord ? KillerPdf.Engine.Documents.PdfRedactionSearchKind.RegularExpression
-                    : KillerPdf.Engine.Documents.PdfRedactionSearchKind.ExactText,
+                Kind = wholeWord ? JPDFs.Engine.Documents.PdfRedactionSearchKind.RegularExpression
+                    : JPDFs.Engine.Documents.PdfRedactionSearchKind.ExactText,
                 MatchCase = matchCase
             };
-            foreach (var match in KillerPdf.Engine.Documents.PdfRedactionSearch.Find([page], options).Matches)
+            foreach (var match in JPDFs.Engine.Documents.PdfRedactionSearch.Find([page], options).Matches)
             {
                 var bounds = match.Areas.Count > 0
-                    ? new KillerPdf.Engine.Documents.PdfContentBounds(match.Areas.Min(area => area.Left),
+                    ? new JPDFs.Engine.Documents.PdfContentBounds(match.Areas.Min(area => area.Left),
                         match.Areas.Min(area => area.Bottom), match.Areas.Max(area => area.Right), match.Areas.Max(area => area.Top))
                     : match.Bounds;
                 string[] identity = match.Id.Split(':');
@@ -369,7 +369,7 @@ namespace KillerPDF.Services
             var failures = new PageFailures();
             for (int pi = 0; pi < doc.NumberOfPages; pi++)
             {
-                KillerPdf.Engine.Documents.PdfPageContent page;
+                JPDFs.Engine.Documents.PdfPageContent page;
                 List<(double Left, double Bottom, double Right, double Top)> hits;
                 try
                 {
@@ -399,20 +399,20 @@ namespace KillerPDF.Services
         /// stays with what could be read. The zero-based number of either is returned for the caller to show
         /// the user. Throws when the file cannot be opened or no page can be read.
         /// </summary>
-        internal static (IReadOnlyList<KillerPdf.Engine.Documents.PdfPageContent?> Pages, IReadOnlyList<int> Unreadable)
+        internal static (IReadOnlyList<JPDFs.Engine.Documents.PdfPageContent?> Pages, IReadOnlyList<int> Unreadable)
             LoadPagesForReview(string filePath, OpenedProtection? protection) =>
             LoadPagesForReview(System.IO.File.ReadAllBytes(filePath), protection);
 
-        internal static (IReadOnlyList<KillerPdf.Engine.Documents.PdfPageContent?> Pages, IReadOnlyList<int> Unreadable)
+        internal static (IReadOnlyList<JPDFs.Engine.Documents.PdfPageContent?> Pages, IReadOnlyList<int> Unreadable)
             LoadPagesForReview(byte[] source, OpenedProtection? protection)
         {
             using var doc = PdfDocument.Open(source, protection);
-            var pages = new List<KillerPdf.Engine.Documents.PdfPageContent?>(doc.NumberOfPages);
+            var pages = new List<JPDFs.Engine.Documents.PdfPageContent?>(doc.NumberOfPages);
             var unreadable = new List<int>();
             var failures = new PageFailures();
             for (int pi = 0; pi < doc.NumberOfPages; pi++)
             {
-                KillerPdf.Engine.Documents.PdfPageContent page;
+                JPDFs.Engine.Documents.PdfPageContent page;
                 try { page = doc.GetPage(pi + 1); }
                 catch (Exception ex) when (CanSkipPage(ex))
                 {
@@ -462,13 +462,13 @@ namespace KillerPDF.Services
                     var hits = FindExactMatchesOnPage(page, term);
                     if (hits.Count > 0) Areas(pi).AddRange(hits);
                 }
-                var options = new KillerPdf.Engine.Documents.PdfRedactionSearchOptions
+                var options = new JPDFs.Engine.Documents.PdfRedactionSearchOptions
                 {
-                    Kind = KillerPdf.Engine.Documents.PdfRedactionSearchKind.ExactText,
+                    Kind = JPDFs.Engine.Documents.PdfRedactionSearchKind.ExactText,
                     Query = term.Trim(),
                     Timeout = System.TimeSpan.FromSeconds(2)
                 };
-                var annotations = KillerPdf.Engine.Documents.PdfRedactionSearch.FindInAnnotations(document, options);
+                var annotations = JPDFs.Engine.Documents.PdfRedactionSearch.FindInAnnotations(document, options);
                 unreadableFields.UnionWith(annotations.UnreadableAnnotationPages);
                 foreach (var match in annotations.Matches)
                 {
@@ -489,9 +489,9 @@ namespace KillerPDF.Services
         }
 
         internal static List<(double Left, double Bottom, double Right, double Top)> FindExactMatchesOnPage(
-            KillerPdf.Engine.Documents.PdfPageContent page, string query, bool matchCase = false, bool wholeWord = false)
+            JPDFs.Engine.Documents.PdfPageContent page, string query, bool matchCase = false, bool wholeWord = false)
         {
-            string needle = KillerPdf.Engine.Documents.PdfSearchText.Fold(query).Trim();
+            string needle = JPDFs.Engine.Documents.PdfSearchText.Fold(query).Trim();
             if (needle.Length == 0) return [];
             var result = new List<(double, double, double, double)>();
             foreach (SearchHit hit in FindHitsOnPage(page, 0, needle, matchCase, wholeWord))
@@ -502,7 +502,7 @@ namespace KillerPDF.Services
                     int wordEnd = wordStart + word.Text.Length;
                     if (wordEnd > hit.Start && wordStart < hit.Start + hit.Length)
                     {
-                        var boxes = new List<KillerPdf.Engine.Documents.PdfContentBounds>();
+                        var boxes = new List<JPDFs.Engine.Documents.PdfContentBounds>();
                         int offset = wordStart;
                         foreach (var letter in word.Letters)
                         {
@@ -511,7 +511,7 @@ namespace KillerPDF.Services
                             offset = end;
                         }
                         var bounds = boxes.Count > 0 && offset == wordEnd
-                            ? new KillerPdf.Engine.Documents.PdfContentBounds(boxes.Min(box => box.Left),
+                            ? new JPDFs.Engine.Documents.PdfContentBounds(boxes.Min(box => box.Left),
                                 boxes.Min(box => box.Bottom), boxes.Max(box => box.Right), boxes.Max(box => box.Top))
                             : word.BoundingBox;
                         result.Add((bounds.Left, bounds.Bottom, bounds.Right, bounds.Top));

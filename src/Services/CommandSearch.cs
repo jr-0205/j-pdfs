@@ -1,11 +1,11 @@
 using System.Globalization;
 using System.Text;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
     /// Fuzzy matching for the title bar's tool search. Plain text in and a score out, free of WPF so
-    /// KillerPDF.Tests can link this file the way it links ShortcutTable.cs. A higher score is a
+    /// JPDFs.Tests can link this file the way it links ShortcutTable.cs. A higher score is a
     /// better match; <see cref="NoMatch"/> means the text does not match at all.
     ///
     /// Each word of the query has to match somewhere in the text, as the start of the text, the

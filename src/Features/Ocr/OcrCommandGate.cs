@@ -1,6 +1,6 @@
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Features;
+namespace JPDFs.Features;
 
 /// <summary>The OCR commands that work on the open document.</summary>
 internal enum OcrCommand { PageToClipboard, RegionToClipboard, SearchablePdf, ScanToText, ExtractAllText }

@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -14,10 +14,10 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
-using KillerFamily.Accessibility;
+using JPDFs.Services;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -101,7 +101,7 @@ namespace KillerPDF.Shell
         {
             var host = new Grid();
 
-            // KillerNotes ribbon contract: 98SE adds the dark right edge to the host's light
+            // JpdfsNotes ribbon contract: 98SE adds the dark right edge to the host's light
             // top/left edge. Other themes define this as transparent/zero, so their floating
             // annotation card remains unchanged.
             var darkEdge = new Border { IsHitTestVisible = false };

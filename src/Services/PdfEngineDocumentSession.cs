@@ -1,7 +1,7 @@
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 using System.IO;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Immutable engine view of the active serialized working document.</summary>
 internal sealed class PdfEngineDocumentSession

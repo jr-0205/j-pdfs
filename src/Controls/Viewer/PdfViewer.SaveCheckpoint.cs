@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 public partial class PdfViewer
 {

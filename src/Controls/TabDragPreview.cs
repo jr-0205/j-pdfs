@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace KillerFamily.Windowing
+namespace JpdfsUi.Windowing
 {
     /// <summary>Displays the real tab without maintaining a second tab template.</summary>
     public sealed class TabDragPreview : FrameworkElement

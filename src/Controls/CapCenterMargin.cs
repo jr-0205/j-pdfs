@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace KillerFamily.Layout
+namespace JpdfsUi.Layout
 {
     /// <summary>
     /// Centers a radio ring or checkbox square on its label's capital letters, for whatever font
@@ -14,14 +14,14 @@ namespace KillerFamily.Layout
     /// </summary>
     /// <remarks>
     /// Centering the indicator in the row puts it on the middle of the text's LINE BOX, and where
-    /// the capitals sit inside that box is a property of the font. Killer Sans UI sits low (the
+    /// the capitals sit inside that box is a property of the font. Jpdfs Sans UI sits low (the
     /// ring has to come down a pixel at 12px); Microsoft Sans Serif, 98SE's face, sits in the
     /// middle. A fixed pixel nudge is right for one face at one size and wrong for the other,
     /// which is how this kept drifting from one fix to the next. The offset here comes from a
     /// capital H laid out exactly as the label is, through the same font fallback, so it holds for
     /// every theme, every language fallback and every app size. Reading the family's own metrics
-    /// is not enough: for a fallback list such as "Killer Sans UI, Segoe UI" WPF reports the
-    /// metrics of Segoe UI while the label draws in Killer Sans UI.
+    /// is not enough: for a fallback list such as "Jpdfs Sans UI, Segoe UI" WPF reports the
+    /// metrics of Segoe UI while the label draws in Jpdfs Sans UI.
     /// </remarks>
     public sealed class CapCenterMargin : IMultiValueConverter
     {

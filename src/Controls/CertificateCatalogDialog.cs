@@ -5,9 +5,9 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Data;
-using KillerPDF.Services.Signing;
+using JPDFs.Services.Signing;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 internal sealed class CertificateCatalogDialog : Window
 {
@@ -303,7 +303,7 @@ internal sealed class CertificateCatalogDialog : Window
     {
         if (_busy || Selected is not { IsReadOnly: false } entry) return;
         if (trusted && !entry.IsCertificateAuthority) return;
-        if (trusted && KillerDialog.Show(this,
+        if (trusted && JpdfsDialog.Show(this,
                 string.Format(CultureInfo.CurrentCulture, L("Str_CertCatalog_TrustPrompt"), entry.Subject),
                 Title, MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await UpdateCatalogAsync(() => _catalog.SetTrusted(entry.Fingerprint, trusted));
@@ -312,7 +312,7 @@ internal sealed class CertificateCatalogDialog : Window
     private async Task RemoveAsync()
     {
         if (_busy || Selected is not { IsReadOnly: false } entry) return;
-        if (KillerDialog.Show(this,
+        if (JpdfsDialog.Show(this,
                 string.Format(CultureInfo.CurrentCulture, L("Str_CertCatalog_RemovePrompt"), entry.Subject),
                 Title, MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         await UpdateCatalogAsync(() => _catalog.Remove(entry.Fingerprint));
@@ -375,7 +375,7 @@ internal sealed class CertificateCatalogDialog : Window
     {
         string message = L(prefixKey) + "\n" + Describe(exception);
         ShowMessage(message);
-        KillerDialog.Show(this, message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
+        JpdfsDialog.Show(this, message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     private void RequestClose()

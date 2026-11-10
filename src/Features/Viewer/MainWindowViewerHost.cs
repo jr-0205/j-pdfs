@@ -1,11 +1,11 @@
-using KillerPDF.Features;
-using KillerPDF.Controls;
+using JPDFs.Features;
+using JPDFs.Controls;
 using System.Windows;
 using System.Windows.Input;
 using System;
 using System.Linq;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // MainWindow's half of IViewerHost.
     //
@@ -109,7 +109,7 @@ namespace KillerPDF.Shell
         System.Windows.Media.Effects.DropShadowEffect IViewerHost.AnnotBarShadow() => AnnotBarShadow();
         void IViewerHost.FadeOverlayOut(UIElement element) => FadeOverlayOut(element);
         void IViewerHost.FadeOutAndRemoveBar(System.Windows.Controls.Border? bar) => FadeOutAndRemoveBar(bar);
-        string IViewerHost.WordsToText(System.Collections.Generic.IEnumerable<KillerPdf.Engine.Documents.PdfExtractedWord> words)
+        string IViewerHost.WordsToText(System.Collections.Generic.IEnumerable<JPDFs.Engine.Documents.PdfExtractedWord> words)
             => WordsToText(words);
         System.Windows.Controls.MenuItem IViewerHost.MakeMenuItem(string header, RoutedEventHandler click,
             string? gesture, string? glyph) => MakeMenuItem(header, click, gesture, glyph);

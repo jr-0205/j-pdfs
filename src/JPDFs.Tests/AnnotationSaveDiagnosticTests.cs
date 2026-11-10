@@ -1,0 +1,245 @@
+using System.IO;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows;
+using JPDFs.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Filters;
+using JPDFs.Engine.Objects;
+using Xunit;
+
+namespace JPDFs.Tests;
+
+public sealed class AnnotationSaveDiagnosticTests
+{
+    [Fact]
+    public void BurnShortInkStroke_PaintsVisibleDot()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-ink-dot-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder().AddBlankPage(200, 200).Build());
+            byte[] blank;
+            using (var before = PdfPageRenderSession.OpenEngineFirst(path, 200, 200, null))
+                blank = before.RenderPage(0, includeFormFields: false).Pixels;
+
+            var ink = new InkAnnotation
+            {
+                PageIndex = 0, StrokeWidth = 6,
+                Points = [new Point(100, 100), new Point(100.25, 100)]
+            };
+            PdfEngineBurn.Burn(path, new Dictionary<int, List<PageAnnotation>> { [0] = [ink] },
+                new Dictionary<int, (int w, int h)> { [0] = (200, 200) });
+
+            using var after = PdfPageRenderSession.OpenEngineFirst(path, 200, 200, null);
+            Assert.False(blank.SequenceEqual(after.RenderPage(0, includeFormFields: false).Pixels));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void BurnMatrix_PreservesEveryAnnotationKind(bool tagged, bool forRasterization)
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-save-matrix-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, tagged ? TaggedSource() : new PdfDocumentBuilder().AddBlankPage(200, 200).Build());
+            PdfEngineBurn.Burn(path, EveryAnnotationKind(),
+                new Dictionary<int, (int w, int h)> { [0] = (200, 200) },
+                forRasterization: forRasterization);
+
+            PdfDocument reopened = PdfDocument.Open(File.ReadAllBytes(path));
+            Assert.Single(PdfPageInformation.Read(reopened));
+            string streams = AllDecodedStreams(reopened);
+            Assert.Contains("BT", streams);
+            Assert.Contains("20 30 40 12 re", streams);
+            Assert.Contains("1 J", streams);
+            Assert.Contains(" Do", streams);
+            Assert.Contains(forRasterization ? "/Artifact BMC" : tagged ? "/Figure <</MCID 0>> BDC" : "q", streams);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void RepeatedNormalSaveFromCleanWorkingCopy_PreservesMarkup()
+    {
+        byte[] clean = TaggedSource();
+        for (int save = 0; save < 3; save++)
+        {
+            string path = Path.Combine(Path.GetTempPath(), $"jpdfs-repeat-save-{Guid.NewGuid():N}.pdf");
+            try
+            {
+                File.WriteAllBytes(path, clean);
+                PdfEngineBurn.Burn(path, EveryAnnotationKind(),
+                    new Dictionary<int, (int w, int h)> { [0] = (200, 200) });
+                PdfDocument reopened = PdfDocument.Open(File.ReadAllBytes(path));
+                string streams = AllDecodedStreams(reopened);
+                Assert.Contains("BT", streams);
+                Assert.Contains("1 J", streams);
+                Assert.Contains(" Do", streams);
+                Assert.Contains("/Figure <</MCID 0>> BDC", streams);
+            }
+            finally { if (File.Exists(path)) File.Delete(path); }
+        }
+    }
+
+    [Fact]
+    public void MissingRenderDimensions_MustNotSilentlyDropMarkup()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-missing-dims-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder().AddBlankPage(200, 200).Build());
+            PdfEngineBurn.Burn(path, EveryAnnotationKind(), new Dictionary<int, (int w, int h)>());
+
+            string streams = AllDecodedStreams(PdfDocument.Open(File.ReadAllBytes(path)));
+            Assert.Contains("1 J", streams);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void HebrewTextSave_PlacesGlyphsFromRightToLeft()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-hebrew-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder().AddBlankPage(200, 200).Build());
+            var annotations = new Dictionary<int, List<PageAnnotation>>
+            {
+                [0] = [new TextAnnotation
+                {
+                    PageIndex = 0, Position = new Point(10, 10), Width = 120, Height = 30,
+                    Content = "\u05E9\u05DC\u05D5\u05DD", FontName = "Segoe UI", FontSize = 12
+                }]
+            };
+            PdfEngineBurn.Burn(path, annotations, new Dictionary<int, (int w, int h)> { [0] = (200, 200) });
+
+            string streams = AllDecodedStreams(PdfDocument.Open(File.ReadAllBytes(path)));
+            double[] glyphX = Regex.Matches(streams, @"1 0 0 -1 ([\d.]+) [\d.]+ Tm")
+                .Select(match => double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture))
+                .ToArray();
+            Assert.Equal(4, glyphX.Length);
+            Assert.True(glyphX.Zip(glyphX.Skip(1)).All(pair => pair.First > pair.Second));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    // #435: a Hebrew line holding numbers and Latin used to skip right-to-left placement entirely.
+    [Fact]
+    public void MixedHebrewTextSave_PlacesRunsInTheOrderTheTextBoxShows()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-hebrew-mixed-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder().AddBlankPage(200, 200).Build());
+            var annotations = new Dictionary<int, List<PageAnnotation>>
+            {
+                [0] = [new TextAnnotation
+                {
+                    PageIndex = 0, Position = new Point(10, 10), Width = 180, Height = 30,
+                    Content = "שלום 123 abc", FontName = "Segoe UI", FontSize = 12
+                }]
+            };
+            PdfEngineBurn.Burn(path, annotations, new Dictionary<int, (int w, int h)> { [0] = (200, 200) });
+
+            Assert.Equal("123 םולש abc", ShownText(AllDecodedStreams(PdfDocument.Open(File.ReadAllBytes(path)))));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    // A bracket inside Hebrew is drawn mirrored, as on screen, but copies as the bracket typed.
+    [Fact]
+    public void MirroredBracketSave_KeepsTheTypedBracketForCopying()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-hebrew-bracket-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder().AddBlankPage(200, 200).Build());
+            var annotations = new Dictionary<int, List<PageAnnotation>>
+            {
+                [0] = [new TextAnnotation
+                {
+                    PageIndex = 0, Position = new Point(10, 10), Width = 180, Height = 30,
+                    Content = "שלום (עולם)", FontName = "Segoe UI", FontSize = 12
+                }]
+            };
+            PdfEngineBurn.Burn(path, annotations, new Dictionary<int, (int w, int h)> { [0] = (200, 200) });
+
+            Assert.Equal("םלוע( םולש)", ShownText(AllDecodedStreams(PdfDocument.Open(File.ReadAllBytes(path)))));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    // The ToUnicode map turns each two-byte code back into text; ordering the shown pieces by
+    // their x position reads the line the way it lands on the page.
+    private static string ShownText(string streams)
+    {
+        var unicode = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Match match in Regex.Matches(streams, @"<([0-9A-Fa-f]{4})> <([0-9A-Fa-f]+)>\r?\n"))
+            unicode[match.Groups[1].Value] = Encoding.BigEndianUnicode.GetString(
+                Convert.FromHexString(match.Groups[2].Value));
+        return string.Concat(Regex.Matches(streams, @"1 0 0 -1 ([\d.]+) [\d.]+ Tm\s*<([0-9A-Fa-f]*)> Tj")
+            .Select(match => (X: double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture),
+                Text: string.Concat(match.Groups[2].Value.Chunk(4).Select(code => unicode[new string(code)]))))
+            .OrderBy(piece => piece.X).Select(piece => piece.Text));
+    }
+
+    private static Dictionary<int, List<PageAnnotation>> EveryAnnotationKind() => new()
+    {
+        [0] =
+        [
+            new TextAnnotation
+            {
+                PageIndex = 0, Position = new Point(10, 10), Width = 120, Height = 30,
+                Content = "Saved annotation", FontName = "Segoe UI", FontSize = 12
+            },
+            new HighlightAnnotation { PageIndex = 0, Bounds = new Rect(20, 30, 40, 12) },
+            new InkAnnotation
+            {
+                PageIndex = 0, Points = [new Point(20, 60), new Point(80, 90)], StrokeWidth = 3
+            },
+            new SignatureAnnotation
+            {
+                PageIndex = 0, Position = new Point(20, 100), Scale = 1,
+                Strokes = [[new Point(0, 0), new Point(30, 5), new Point(60, 0)]]
+            },
+            new ImageAnnotation
+            {
+                PageIndex = 0, Position = new Point(120, 120), SourceWidth = 10, SourceHeight = 10,
+                Scale = 1,
+                ImageData = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2pGQAAAAASUVORK5CYII="
+            }
+        ]
+    };
+
+    private static byte[] TaggedSource() => new PdfDocumentBuilder()
+        .SetMetadata(new PdfDocumentMetadata { Title = "Tagged save source", Language = "en-US" })
+        .EnablePdfUa2Conformance()
+        .AddPage(200, 200, new PdfContentStreamBuilder()
+            .BeginMarkedContent(PdfStructureType.Figure, 0)
+            .Rectangle(10, 10, 20, 20).Fill().EndMarkedContent())
+        .AddStructureContainer(PdfStructureType.Document)
+        .AddStructureElement(PdfStructureType.Figure, 0, 0, 1, alternateDescription: "Square")
+        .Build();
+
+    private static string AllDecodedStreams(PdfDocument document)
+    {
+        var text = new StringBuilder();
+        foreach (int objectNumber in document.CrossReferences.Keys)
+            if (document.Resolve(objectNumber) is PdfStream stream)
+                try
+                {
+                    text.AppendLine(Encoding.GetEncoding("ISO-8859-1")
+                        .GetString(PdfStreamDecoder.Decode(stream, document.Resolve)));
+                }
+                catch { }
+        return text.ToString();
+    }
+}

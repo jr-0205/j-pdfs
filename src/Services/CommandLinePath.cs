@@ -5,17 +5,17 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Puts an installed copy on PATH so "jpdfs" runs the command line from any new terminal.
-    /// The application file is KillerPDF.App.exe, so a small KillerPDF.cmd next to it carries the
+    /// The application file is JPDFs.App.exe, so a small JPDFs.cmd next to it carries the
     /// command name. Running through the script also makes the terminal wait for the result and
     /// return its exit code, which a GUI-subsystem program started directly does not do.
     /// </summary>
     internal static partial class CommandLinePath
     {
-        internal const string CommandFileName = "KillerPDF.cmd";
+        internal const string CommandFileName = "JPDFs.cmd";
         private const string UserEnvironmentKey = "Environment";
         private const string MachineEnvironmentKey = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
         private const string PathValueName = "Path";

@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerPDF.Features;
-using KillerPDF.Services;
-using KillerFamily.Accessibility;
+using JPDFs.Features;
+using JPDFs.Services;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow : IOcrHost
     {
@@ -196,14 +196,14 @@ namespace KillerPDF.Shell
                 HideBusyOverlay(busy);
                 OcrLanguages.TryDeleteFile(dest + ".part");
                 if (ct.IsCancellationRequested) SetStatus(string.Format(Loc("Str_St_LangCanceled"), name));
-                else KillerDialog.Show(this, string.Format(Loc("Str_Dlg_DownloadTimeout"), name),
+                else JpdfsDialog.Show(this, string.Format(Loc("Str_Dlg_DownloadTimeout"), name),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
                 HideBusyOverlay(busy);
                 OcrLanguages.TryDeleteFile(dest + ".part");
-                KillerDialog.Show(this, string.Format(Loc("Str_Err_LangDataFailed"), name) + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Err_LangDataFailed"), name) + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -270,7 +270,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 HideBusyOverlay(busy);
-                KillerDialog.Show(this, Loc("Str_Err_HqDownloadFailed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Err_HqDownloadFailed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -294,7 +294,7 @@ namespace KillerPDF.Shell
             if (missing.Count == 0) return true;
 
             string names = string.Join(", ", missing.ConvertAll(OcrLanguages.NameForCode));
-            var choice = KillerDialog.Show(owner ?? this,
+            var choice = JpdfsDialog.Show(owner ?? this,
                 string.Format(Loc("Str_Dlg_LangDownloadAsk"), names),
                 "J-PDF's", MessageBoxButton.OKCancel, MessageBoxImage.Information);
             if (choice != MessageBoxResult.OK) return false;
@@ -328,7 +328,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(owner ?? this, Loc("Str_Err_ModelDownloadFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(owner ?? this, Loc("Str_Err_ModelDownloadFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
@@ -425,7 +425,7 @@ namespace KillerPDF.Shell
 
         private void BeginOcrRegion()
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             SetTool(EditTool.Select);
             _ocrRegionMode = true;
             SetStatus(Loc("Str_St_OcrDragBox"));

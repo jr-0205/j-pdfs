@@ -2,9 +2,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Redaction properties: the fill color and the overlay text, typed or picked from a redaction
 // code, that are drawn into each area when the redaction is applied.

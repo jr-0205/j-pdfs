@@ -2,10 +2,10 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class DataMergeDialog : Window
 {
@@ -188,7 +188,7 @@ internal sealed class DataMergeDialog : Window
     }
 
     private PdfDataMergeProfile BuildProfile() => new(_name, _mappings,
-        _output.Length == 0 ? "{{__KillerPDFOutputFileName}}" : _output, _missing,
+        _output.Length == 0 ? "{{__JPDFsOutputFileName}}" : _output, _missing,
         _images, _conditionField, _conditionValue);
 
     private void ImportProfile()
@@ -198,7 +198,7 @@ internal sealed class DataMergeDialog : Window
         if (picker.ShowDialog(this) != true) return;
         var profile = PdfDataMergeProfile.FromJson(File.ReadAllText(picker.FileName));
         _name = profile.Name; _mappings = [.. profile.Mappings]; _images = [.. profile.ImageMappings];
-        _output = profile.OutputFileNameTemplate == "{{__KillerPDFOutputFileName}}" ? "" : profile.OutputFileNameTemplate;
+        _output = profile.OutputFileNameTemplate == "{{__JPDFsOutputFileName}}" ? "" : profile.OutputFileNameTemplate;
         _conditionField = profile.IncludeWhenField; _conditionValue = profile.IncludeWhenValue;
         _missing = profile.MissingValueBehavior; Refresh();
     }
@@ -215,7 +215,7 @@ internal sealed class DataMergeDialog : Window
     private void Safely(Action action)
     {
         try { action(); }
-        catch (Exception error) { KillerDialog.Show(this, L("Str_DataMerge_Failed") + "\n" + error.Message); }
+        catch (Exception error) { JpdfsDialog.Show(this, L("Str_DataMerge_Failed") + "\n" + error.Message); }
     }
     private static string? Null(string text) => text.Length == 0 ? null : text;
     private static string L(string key) => Application.Current.TryFindResource(key) as string ?? key;

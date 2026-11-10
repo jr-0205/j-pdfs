@@ -1,4 +1,4 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,12 +11,12 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
-    /// KillerPDF's own print dialog with a working preview. WPF's built-in PrintDialog
+    /// JPDFs's own print dialog with a working preview. WPF's built-in PrintDialog
     /// reports "This app doesn't support print preview", so we render the rasterized
     /// pages ourselves, expose printer / orientation / copies / page-range settings,
     /// and drive the spooler via a non-UI PrintDialog when the user clicks Print.
@@ -680,7 +680,7 @@ namespace KillerPDF
             };
             panel.Children.Add(margins);
 
-            // Pages per sheet (N-up): KillerPDF composes the sheet itself.
+            // Pages per sheet (N-up): JPDFs composes the sheet itself.
             panel.Children.Add(Label(S("Str_Print_PagesPerSheet")));
             var nup = new ComboBox { Margin = new Thickness(0, 4, 0, 12), Height = 26 };
             ApplyComboStyle(nup);
@@ -1367,7 +1367,7 @@ namespace KillerPDF
         {
             if (_queue is null)
             {
-                KillerDialog.Show(this, S("Str_Dlg_NoPrinter"), "J-PDF's",
+                JpdfsDialog.Show(this, S("Str_Dlg_NoPrinter"), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -1407,7 +1407,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, S("Str_Err_PrinterProperties") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, S("Str_Err_PrinterProperties") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -1458,7 +1458,7 @@ namespace KillerPDF
             CancellationToken cancellationToken = _printCancellation.Token;
             if (_queue == null)
             {
-                KillerDialog.Show(this, S("Str_Dlg_NoPrinter"), "J-PDF's",
+                JpdfsDialog.Show(this, S("Str_Dlg_NoPrinter"), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -1468,7 +1468,7 @@ namespace KillerPDF
             var indices = SelectedIndices();
             if (indices.Count == 0)
             {
-                KillerDialog.Show(this, S("Str_Dlg_NoValidPages"), "J-PDF's",
+                JpdfsDialog.Show(this, S("Str_Dlg_NoValidPages"), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -1574,7 +1574,7 @@ namespace KillerPDF
                 // Re-derive Print rather than switching it straight back on: the Pages box could have
                 // been retyped behind the scrim, and a range that now matches nothing must stay disabled.
                 UpdatePreview();
-                KillerDialog.Show(this, S("Str_Err_PrintFailed") + "\n" + ex.GetType().Name + ": " + ex.Message,
+                JpdfsDialog.Show(this, S("Str_Err_PrintFailed") + "\n" + ex.GetType().Name + ": " + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

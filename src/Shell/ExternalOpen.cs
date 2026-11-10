@@ -4,9 +4,9 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
     /// Single-instance entry points: App forwards a second launch's file path here rather than
@@ -80,7 +80,7 @@ namespace KillerPDF.Shell
                 ProtocolRegistrar.HandoffRejection.SchemeNotAllowed => Loc("Str_Handoff_SchemeNotAllowed"),
                 _ => Loc("Str_Handoff_Unusable"),
             };
-            KillerDialog.Show(this,
+            JpdfsDialog.Show(this,
                 Loc("Str_Handoff_Failed") + "\n\n" + reason,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
@@ -151,7 +151,7 @@ namespace KillerPDF.Shell
                 BrowserOpenFailure.FileError => Loc("Str_Handoff_FileError"),
                 _ => Loc("Str_Handoff_Unusable"),
             };
-            KillerDialog.Show(this,
+            JpdfsDialog.Show(this,
                 Loc("Str_Handoff_Failed") + "\n\n" + reason,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
         }

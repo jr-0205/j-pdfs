@@ -2,7 +2,7 @@ using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The JPEG encoder Reduce File Size hands the engine for resampled images (#433).</summary>
 internal static class PdfImageJpeg

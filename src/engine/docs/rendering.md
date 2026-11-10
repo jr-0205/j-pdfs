@@ -1,4 +1,4 @@
-# Rendering with KillerPDF.Engine
+# Rendering with JPDFs.Engine
 
 The CPU renderer produces page bitmaps independently of a UI framework. The caller
 owns display, image encoding, scheduling, and the choice of output dimensions.
@@ -22,8 +22,8 @@ This example requests an exact output size. Choose dimensions with the displayed
 page's aspect ratio to avoid stretching it. Page indexes start at zero.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Rendering;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Rendering;
 
 CancellationToken cancellationToken = CancellationToken.None;
 byte[] bytes = File.ReadAllBytes("input.pdf");

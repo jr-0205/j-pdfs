@@ -5,13 +5,13 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // This pane's tab band: which tabs are in the strip, which of them owns an edge, what the card's
     // top corners do, where the focus ring runs, and the drag that reorders them or hands one to the
     // other pane.
     //
-    // Ported from KillerShell (FilePane.xaml + Tabs.cs + DualPane.cs + PaneDrag.cs). The strip is an
+    // Ported from JpdfsShell (FilePane.xaml + Tabs.cs + DualPane.cs + PaneDrag.cs). The strip is an
     // ItemsControl bound to _sessions over a UniformGrid in a bounded host, and every visual decision below is a
     // NOTIFYING FLAG ON THE SESSION that a template trigger reads - not a property written onto a
     // code-built Border. That is the whole point: there is one place each rule is expressed, so a
@@ -48,7 +48,7 @@ namespace KillerPDF.Controls
 
             int docTabs = _sessions.Count(t => t.Doc != null || t.DeferredPath != null);
             // Only show the strip once THIS pane has more than one document - a single open PDF
-            // doesn't need tabs, split or not. (KillerShell forces the band on in both panes whenever
+            // doesn't need tabs, split or not. (JpdfsShell forces the band on in both panes whenever
             // either one has 2+ tabs, so the two card tops always line up; the simpler per-pane
             // rule is used here instead, so a lone tab never shows a bar even while split.)
             bool show = docTabs > 1 && !_fullScreen;
@@ -61,43 +61,16 @@ namespace KillerPDF.Controls
             // opened 3px too high against the chrome (2026-08-01).
             CardRow.Margin = new Thickness(0, show ? -1 : 3, 0, 0);
 
-            // Win98 tabs sit on a raised client frame. Keep the frame's vertical sides and bottom;
-            // each tab draws its own outline without extending a line across the empty band.
-            bool retroTheme = Services.ThemeManager.Current == Services.Theme.SE98;
-            bool retroTabs = show && retroTheme;
-            if (retroTheme)
-            {
-                PaneBevelOuterDark.SetResourceReference(Border.BorderBrushProperty, "DocumentPaneBevelTopLeftBrush");
-                PaneBevelOuterLight.SetResourceReference(Border.BorderBrushProperty, "DocumentPaneBevelBottomRightBrush");
-                PaneBevelInnerDark.SetResourceReference(Border.BorderBrushProperty, "DocumentPaneBevelInnerTopLeftBrush");
-                PaneBevelInnerLight.SetResourceReference(Border.BorderBrushProperty, "DocumentPaneBevelInnerBottomRightBrush");
-            }
-            else
-            {
-                PaneBevelOuterDark.SetResourceReference(Border.BorderBrushProperty, "PaneBevelDarkBrush");
-                PaneBevelOuterLight.SetResourceReference(Border.BorderBrushProperty, "PaneBevelLightBrush");
-                PaneBevelInnerDark.SetResourceReference(Border.BorderBrushProperty, "PaneBevelDark2Brush");
-                PaneBevelInnerLight.SetResourceReference(Border.BorderBrushProperty, "PaneBevelLight2Brush");
-            }
-            if (retroTabs)
-            {
-                PaneBorder.BorderThickness = new Thickness(1, 0, 1, 1);
-                PaneBevelOuterDark.BorderThickness = new Thickness(1, 0, 0, 0);
-                PaneBevelOuterLight.BorderThickness = new Thickness(0, 0, 1, 1);
-                PaneBevelInnerDark.BorderThickness = new Thickness(1, 0, 0, 0);
-                // PaneBorder + the outer dark bevel are the complete Win98 right edge.
-                // A third same-color inner rule made the edge fat and produced a one-pixel
-                // step where the selected last tab joined it.
-                PaneBevelInnerLight.BorderThickness = new Thickness(0, 0, 0, 1);
-            }
-            else
-            {
-                PaneBorder.BorderThickness = new Thickness(1);
-                PaneBevelOuterDark.SetResourceReference(Border.BorderThicknessProperty, "PaneBevelLightThickness");
-                PaneBevelOuterLight.SetResourceReference(Border.BorderThicknessProperty, "PaneBevelDarkThickness");
-                PaneBevelInnerDark.SetResourceReference(Border.BorderThicknessProperty, "PaneBevel2LightThickness");
-                PaneBevelInnerLight.SetResourceReference(Border.BorderThicknessProperty, "PaneBevel2DarkThickness");
-            }
+            // Modern pane bevels: the palette supplies the edge colors and thicknesses.
+            PaneBevelOuterDark.SetResourceReference(Border.BorderBrushProperty, "PaneBevelDarkBrush");
+            PaneBevelOuterLight.SetResourceReference(Border.BorderBrushProperty, "PaneBevelLightBrush");
+            PaneBevelInnerDark.SetResourceReference(Border.BorderBrushProperty, "PaneBevelDark2Brush");
+            PaneBevelInnerLight.SetResourceReference(Border.BorderBrushProperty, "PaneBevelLight2Brush");
+            PaneBorder.BorderThickness = new Thickness(1);
+            PaneBevelOuterDark.SetResourceReference(Border.BorderThicknessProperty, "PaneBevelLightThickness");
+            PaneBevelOuterLight.SetResourceReference(Border.BorderThicknessProperty, "PaneBevelDarkThickness");
+            PaneBevelInnerDark.SetResourceReference(Border.BorderThicknessProperty, "PaneBevel2LightThickness");
+            PaneBevelInnerLight.SetResourceReference(Border.BorderThicknessProperty, "PaneBevel2DarkThickness");
 
             // Which tabs fit at this width, before anything below asks which is on an edge.
             ApplyTabWindow();
@@ -124,101 +97,19 @@ namespace KillerPDF.Controls
                 t.IsLast = false;
                 t.RetroBeforeActive = false;
                 t.RetroAfterActive = false;
-                t.UseRetroTabChrome = retroTabs;
+                t.UseRetroTabChrome = false;
             }
             if (strip.Count > 0)
             {
                 strip[0].IsFirst              = true;
                 strip[^1].IsLast = !chevron && hostFillsBand;
-
-                int activeIndex = strip.IndexOf(_active!);
-                if (retroTabs && activeIndex >= 0)
-                {
-                    if (activeIndex > 0) strip[activeIndex - 1].RetroBeforeActive = true;
-                    if (activeIndex + 1 < strip.Count) strip[activeIndex + 1].RetroAfterActive = true;
-                }
             }
 
             SyncPaneLeadingCorner();
             ApplyTabPlacementChrome(show);
             UpdatePaneFocusRing();
             UpdateTabStripFade();
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, (Action)UpdateRetroTabInnerJoin);
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, (Action)UpdateFooterFade);
-        }
-
-        /// <summary>Route the classic pane's inner light bevel around the selected tab.</summary>
-        private void UpdateRetroTabInnerJoin()
-        {
-            if (RetroTabInnerJoin == null || RetroTabInnerJoinLeft == null || RetroTabInnerJoinRight == null)
-                return;
-
-            RetroTabInnerJoinLeft.Width = 0;
-            RetroTabInnerJoinRight.Width = 0;
-            RetroTabInnerJoinCorner.Width = 0;
-            RetroTabInnerJoinLeftEdge.Width = 0;
-            RetroTabFootShadeLeft.Width = 0;
-            RetroTabFootShadeRight.Width = 0;
-            RetroTabFootShadeCorner.Width = 0;
-            RetroTabFootShadeLeftEdge.Width = 0;
-
-            if (Services.ThemeManager.Current != Services.Theme.SE98 ||
-                TabStripBorder.Visibility != Visibility.Visible || _active == null)
-                return;
-
-            TabStrip.UpdateLayout();
-            FrameworkElement? activeTab = TabContainer(_active);
-            if (activeTab == null || activeTab.ActualWidth <= 0 || RetroTabInnerJoin.ActualWidth <= 0)
-                return;
-
-            if (!TabsAtBottom)
-            {
-                Point activeOrigin = activeTab.TranslatePoint(new Point(0, 0), RetroTabInnerJoin);
-                double joinWidth = RetroTabInnerJoin.ActualWidth;
-                double activeLeft = Math.Max(0, Math.Min(joinWidth, Math.Round(activeOrigin.X)));
-                double activeRight = Math.Max(activeLeft,
-                    Math.Min(joinWidth, Math.Round(activeOrigin.X + activeTab.ActualWidth)));
-
-                RetroTabInnerJoinLeft.Width = activeLeft;
-                Canvas.SetLeft(RetroTabInnerJoinLeft, 0);
-                RetroTabInnerJoinRight.Width = joinWidth - activeRight;
-                Canvas.SetLeft(RetroTabInnerJoinRight, activeRight);
-                return;
-            }
-
-            // Bottom strip: measure the tab face itself (the selected tab overhangs its cell).
-            // Its white left edge is at activeLeft and its #808080 and black right edges at
-            // activeRight - 2 and activeRight - 1 (RetroTabBorder). The foot lines break between
-            // them, and the tab's edges carry on up through both foot rows, so those pixels take
-            // the tab's colors instead of the lines'. The shade starts one pixel in, leaving the
-            // page's white left edge to meet the black foot.
-            if (System.Windows.Media.VisualTreeHelper.GetChildrenCount(activeTab) > 0 &&
-                System.Windows.Media.VisualTreeHelper.GetChild(activeTab, 0) is FrameworkElement face && face.ActualWidth > 0)
-                activeTab = face;
-            Point origin = activeTab.TranslatePoint(new Point(0, 0), RetroTabInnerJoin);
-            double width = RetroTabInnerJoin.ActualWidth;
-            double left = Math.Max(0, Math.Min(width, Math.Round(origin.X)));
-            double right = Math.Max(left, Math.Min(width, Math.Round(origin.X + activeTab.ActualWidth)));
-
-            RetroTabInnerJoinLeft.Width = left;
-            Canvas.SetLeft(RetroTabInnerJoinLeft, 0);
-            RetroTabInnerJoinLeftEdge.Width = 1;
-            Canvas.SetLeft(RetroTabInnerJoinLeftEdge, left);
-            RetroTabInnerJoinCorner.Width = 1;
-            Canvas.SetLeft(RetroTabInnerJoinCorner, right - 2);
-            RetroTabInnerJoinRight.Width = Math.Max(0, width - (right - 1));
-            Canvas.SetLeft(RetroTabInnerJoinRight, right - 1);
-
-            double shadeOffset = Math.Round(RetroTabFootShade.TranslatePoint(new Point(0, 0), RetroTabInnerJoin).X);
-            double shadeWidth = RetroTabFootShade.ActualWidth;
-            RetroTabFootShadeLeft.Width = Math.Max(0, left - 1 - shadeOffset);
-            Canvas.SetLeft(RetroTabFootShadeLeft, 1);
-            RetroTabFootShadeLeftEdge.Width = 1;
-            Canvas.SetLeft(RetroTabFootShadeLeftEdge, left - shadeOffset);
-            RetroTabFootShadeCorner.Width = 1;
-            Canvas.SetLeft(RetroTabFootShadeCorner, right - 1 - shadeOffset);
-            RetroTabFootShadeRight.Width = Math.Max(0, shadeWidth - (right - 2 - shadeOffset));
-            Canvas.SetLeft(RetroTabFootShadeRight, right - 2 - shadeOffset);
         }
 
         // ════════════════════════════════════════════════════════════════════════════════════════
@@ -393,7 +284,7 @@ namespace KillerPDF.Controls
         /// tab owns the leading corner, the last the trailing one. That tab's outer edge is flat and
         /// flush with the card's, so a curve underneath cuts a notch out from under a square tab.
         /// Otherwise the corner takes the active tab's own radius rather than the card's full one, so
-        /// each end of the band softens the way the tab does (CardCorners.AtTabBand, as KillerShell's
+        /// each end of the band softens the way the tab does (CardCorners.AtTabBand, as JpdfsShell's
         /// TabSideCorners); no strip at all and the card takes its full radius back.
         ///
         /// Read off the MODEL, never re-measured from the visual tree. Skipped in full screen, where
@@ -449,23 +340,16 @@ namespace KillerPDF.Controls
         private void UpdatePaneFocusRing()
         {
             bool split = Host?.IsSplitView == true;
-            bool retro = Services.ThemeManager.Current == Services.Theme.SE98;
-            // Modern themes only need a focus ring when panes are split. 98SE uses the
-            // selected pane's surface color as its focus indicator, including single-pane mode.
-            bool paneActive = PaneHasFocus && (split || retro);
+            bool paneActive = PaneHasFocus && split;
 
             foreach (var t in _sessions)
             {
-                // 98SE uses PaneFocused only for the shared light pane/tab surface. Its focus
-                // thickness resources are zero, so this never revives the modern accent outline.
                 t.PaneFocused = paneActive && t.IsActive;
                 t.PaneDimmed  = split && !paneActive && t.IsActive;
             }
 
-            PaneBorder?.SetResourceReference(Border.BackgroundProperty,
-                    retro ? (paneActive ? "FocusedPaneBrush" : "TabInactiveBrush") : "ContentPaneBrush");
-            PaneShadow?.SetResourceReference(Border.BackgroundProperty,
-                    retro ? (paneActive ? "FocusedPaneBrush" : "TabInactiveBrush") : "ContentPaneBrush");
+            PaneBorder?.SetResourceReference(Border.BackgroundProperty, "ContentPaneBrush");
+            PaneShadow?.SetResourceReference(Border.BackgroundProperty, "ContentPaneBrush");
 
         }
 

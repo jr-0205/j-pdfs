@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 
-namespace KillerPDF.PreviewHandler;
+namespace JPDFs.PreviewHandler;
 
 // Shell preview handler contracts (shobjidl.h, ocidl.h, oleidl.h). They are public because the
 // runtime only exposes COM-visible interfaces through the handler's COM wrapper.

@@ -51,18 +51,18 @@ function Read-Trace([string]$Path) {
 }
 
 $results = @()
-$oldTrace = [Environment]::GetEnvironmentVariable('KILLERPDF_STARTUP_TRACE', 'Process')
+$oldTrace = [Environment]::GetEnvironmentVariable('JPDFS_STARTUP_TRACE', 'Process')
 try {
     for ($i = 1; $i -le $Iterations; $i++) {
-        $trace = Join-Path ([IO.Path]::GetTempPath()) ("killerpdf-startup-{0}.trace" -f [guid]::NewGuid().ToString('N'))
-        [Environment]::SetEnvironmentVariable('KILLERPDF_STARTUP_TRACE', $trace, 'Process')
+        $trace = Join-Path ([IO.Path]::GetTempPath()) ("jpdfs-startup-{0}.trace" -f [guid]::NewGuid().ToString('N'))
+        [Environment]::SetEnvironmentVariable('JPDFS_STARTUP_TRACE', $trace, 'Process')
         $process = Start-Process -FilePath $ExePath -PassThru
         $launchedUtc = $process.StartTime.ToUniversalTime()
         $deadline = [datetime]::UtcNow.AddSeconds($TimeoutSeconds)
 
         try {
             while ([datetime]::UtcNow -lt $deadline) {
-                if ($process.HasExited) { throw "KillerPDF exited before reaching the ready marker (exit $($process.ExitCode))." }
+                if ($process.HasExited) { throw "JPDFs exited before reaching the ready marker (exit $($process.ExitCode))." }
                 if ((Test-Path -LiteralPath $trace) -and
                     (Select-String -LiteralPath $trace -SimpleMatch 'MainWindow ready' -Quiet)) { break }
                 Start-Sleep -Milliseconds 25
@@ -70,7 +70,7 @@ try {
             }
             if (-not (Test-Path -LiteralPath $trace) -or
                 -not (Select-String -LiteralPath $trace -SimpleMatch 'MainWindow ready' -Quiet)) {
-                throw "Timed out after $TimeoutSeconds seconds waiting for KillerPDF startup."
+                throw "Timed out after $TimeoutSeconds seconds waiting for JPDFs startup."
             }
 
             $timing = Read-Trace $trace
@@ -91,7 +91,7 @@ try {
         finally {
             if ($Launcher -and -not $process.HasExited) {
                 $children = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-                    Where-Object { $_.ParentProcessId -eq $process.Id -and $_.Name -eq 'KillerPDF.App.exe' })
+                    Where-Object { $_.ParentProcessId -eq $process.Id -and $_.Name -eq 'JPDFs.App.exe' })
                 foreach ($child in $children) {
                     Stop-Process -Id $child.ProcessId -Force -ErrorAction SilentlyContinue
                 }
@@ -106,7 +106,7 @@ try {
     }
 }
 finally {
-    [Environment]::SetEnvironmentVariable('KILLERPDF_STARTUP_TRACE', $oldTrace, 'Process')
+    [Environment]::SetEnvironmentVariable('JPDFS_STARTUP_TRACE', $oldTrace, 'Process')
 }
 
 $results | Export-Csv -LiteralPath $OutputCsv -NoTypeInformation -Encoding UTF8

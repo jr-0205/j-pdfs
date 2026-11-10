@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // The page menu's Fillable Field Preset submenu (#340): each saved preset inserts a field at
     // the point that was right-clicked.

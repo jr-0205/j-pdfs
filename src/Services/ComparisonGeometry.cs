@@ -1,6 +1,6 @@
 using System;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Whether two pages have the same physical size as displayed. Visual comparison renders each

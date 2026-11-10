@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>A protected file that cannot be rewritten opens read-only where it lies. The tab holds the
 /// protection it opened with, and every reopen of that file goes through here.</summary>

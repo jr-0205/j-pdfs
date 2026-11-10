@@ -2,7 +2,7 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed class SavedSignatureButton : Button
 {

@@ -315,21 +315,9 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Dunkel</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Hell</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Schwarz</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Blut</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Gier</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Zyanotisch</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat Hell</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ektoplasma</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Verfall</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Trauer</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat Hell</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat Dunkel</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Filmkorn</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Grabmal</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Delirium</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Unwohlsein</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">An Seitenbreite anpassen</sys:String>
@@ -1580,7 +1568,6 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_KS_DisabledStatus">Tastenkürzel deaktiviert. Zum Aktivieren Strg+Umschalt+K drücken.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Beim Start nach Updates suchen</sys:String>
     <sys:String x:Key="Str_PasswordProtected">„{0}“ ist passwortgeschützt.</sys:String>
-    <sys:String x:Key="Str_About_Aka">Auch bekannt als</sys:String>
     <sys:String x:Key="Str_Btn_Run">Starten</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Makros</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Gespeicherte Makros</sys:String>

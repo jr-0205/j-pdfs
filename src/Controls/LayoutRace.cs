@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 internal static class LayoutRace
 {

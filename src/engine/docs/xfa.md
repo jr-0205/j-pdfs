@@ -11,7 +11,7 @@ Use an authenticated `PdfDocument` for protected inputs and consult the
 ## Inspect packets and values
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfFormDataSet? ReadXfaValues(byte[] pdf)
 {
@@ -48,7 +48,7 @@ round trip.
 This self-contained example changes the second repeated value in memory:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfXfaInfo ChangeRepeatedExample()
 {

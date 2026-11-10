@@ -1,7 +1,7 @@
 # Payload signing and GUI startup checks
 
-Release packaging signs exactly KillerPDF.App.exe, KillerPDF.App.dll, and
-KillerPdf.Engine.dll in both installer and portable payloads. Publish, including any
+Release packaging signs exactly JPDFs.App.exe, JPDFs.App.dll, and
+JPDFs.Engine.dll in both installer and portable payloads. Publish, including any
 ReadyToRun transformation, finishes first. Each signature is verified before repacking.
 Signed repacking rejects missing, unsigned, catalog-only, or invalid owned binaries
 before regenerating payload.manifest from final bytes. Third-party signatures are preserved.
@@ -23,8 +23,8 @@ desktop capable of rendering WPF. No signing credentials are needed for these ch
 ```powershell
 powershell -NoProfile -File build/Test-PayloadSecurity.ps1
 powershell -NoProfile -File build/Test-GuiStartupRunner.ps1
-dotnet build KillerPDF.csproj -c Release -p:KillerPayloadBuild=true
-powershell -NoProfile -File build/Test-GuiStartup.ps1 -ExePath bin/Release/net10.0-windows/KillerPDF.App.exe
+dotnet build JPDFs.csproj -c Release -p:JpdfsPayloadBuild=true
+powershell -NoProfile -File build/Test-GuiStartup.ps1 -ExePath bin/Release/net10.0-windows/JPDFs.App.exe
 ```
 
 The runner returns failure for nonzero exit, timeout, missing milestones, or a failure
@@ -33,11 +33,11 @@ outside the payload and source tree. Its deadline terminates only its created pr
 tree; the app also has a 30-second watchdog.
 
 Fixtures validate target selection, failure cases, regenerated hashes, and script ordering
-without signing. They do not prove Authenticode trust for a future release. Steve runs
+without signing. They do not prove Authenticode trust for a future release. The maintainer runs
 the actual signing/release workflow and checks the final packages. GUI startup does not
 prove compatibility with a reporter's Application Control policy or establish #444's cause.
 
-Print cancellation has separate [document-state smoke cases](../tests/KillerPDF.DocumentStateSmoke/README.md).
+Print cancellation has separate [document-state smoke cases](../tests/JPDFs.DocumentStateSmoke/README.md).
 Use a leased UI VM with an existing Microsoft Print to PDF queue and a test-owned loose
 payload. The preparation cases request close through the actual preview and reject
 later progress. The native cancellation case requires the operator to cancel the virtual
@@ -55,8 +55,8 @@ A completed full dry run writes `bin/Release/net10.0-windows/publish/release-val
 and retains the engine and desktop TRX files beside it. A dry run started with an older
 script has no reusable record. An unsigned dry run cannot authorize reuse.
 
-Desktop CLI tests use the newly built installer payload's `KillerPDF.App.exe`, selected
-through `KILLERPDF_CLI_TEST_EXE`, instead of a leftover development EXE. The release runner
+Desktop CLI tests use the newly built installer payload's `JPDFs.App.exe`, selected
+through `JPDFS_CLI_TEST_EXE`, instead of a leftover development EXE. The release runner
 and CLI tests reject a mismatched file version, and the runner restores the caller's
 environment afterward. The main-PC suite excludes the four known window-opening test
 groups; those remain owned-VM checks. Direct CLI test runs may select a fresh payload with

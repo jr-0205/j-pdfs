@@ -1,10 +1,10 @@
 using System.IO;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -30,7 +30,7 @@ public partial class MainWindow
             if (!IsSourceCurrent() || token.IsCancellationRequested) return;
             if (proposals.Proposals.Count == 0)
             {
-                KillerDialog.Show(this, Loc("Str_FormTools_None"));
+                JpdfsDialog.Show(this, Loc("Str_FormTools_None"));
                 return;
             }
             var review = new FormRecognitionReviewDialog(this, document, proposals);
@@ -82,7 +82,7 @@ public partial class MainWindow
         var sourceViewer = ActiveViewer;
         var sourceSession = sourceViewer.ActiveSessionExt;
         var sourceDocument = _doc;
-        if (KillerDialog.Show(this, Loc("Str_FormTools_FlattenConfirm"), Loc("Str_FormTools_Flatten"),
+        if (JpdfsDialog.Show(this, Loc("Str_FormTools_FlattenConfirm"), Loc("Str_FormTools_Flatten"),
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         if (!ReferenceEquals(ActiveViewer, sourceViewer)
             || !ReferenceEquals(sourceViewer.ActiveSessionExt, sourceSession)

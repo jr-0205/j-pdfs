@@ -1,10 +1,10 @@
 using System.Windows;
-using KillerPDF.Services;
+using JPDFs.Services;
 
 // The language menu's window half: the handler the XAML binds to, and putting the strings that were
 // set from code back after a live language change. MainWindow.xaml names LangButton (a RailButton)
 // and its LangMenu ContextMenu; ContentPane is the same flyout boundary the theme picker uses.
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // Convert Scan to Text keeps the page as an image behind the words it replaces, and everything
     // it did not replace is read from that image, so its size decides how sharp those words stay.

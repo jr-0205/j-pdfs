@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Windows.Controls;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>The sidebar thumbnail list and the total above it, moved together.
     ///

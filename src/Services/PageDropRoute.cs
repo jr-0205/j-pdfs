@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Where a page drop between windows is decided. Page drags carry their payload in process,
 /// so a drop can come from a pane of another window.</summary>

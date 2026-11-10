@@ -1,10 +1,10 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Customize Shortcuts (#190). Each movable command is listed under its overlay section with the
 // key it answers to now. Clicking that key waits for the next key press and moves the command

@@ -1,8 +1,8 @@
 using System.IO;
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The document the accessibility review reads: a snapshot of the tab with its typed form
 /// values, opened under the tab's protection.</summary>

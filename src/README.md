@@ -1,10 +1,10 @@
 <p align="center">
-  <a href="https://killerpdf.net"><img src="docs/wordmark.png" height="180" alt="KillerPDF wordmark: a free, open-source PDF editor for Windows"></a>
+  <a href="https://jpdfs.net"><img src="docs/wordmark.png" height="180" alt="JPDFs wordmark: a free, open-source PDF editor for Windows"></a>
 </p>
 
-# KillerPDF 1.9
+# JPDFs 1.9
 
-KillerPDF is a free, open-source PDF editor for Windows. Read, annotate, edit, organize, sign, redact and convert documents in one app, locally and without an account. Version 1.9 runs on KillerPDF's own PDF engine for rendering, text extraction, editing and document processing.
+JPDFs is a free, open-source PDF editor for Windows. Read, annotate, edit, organize, sign, redact and convert documents in one app, locally and without an account. Version 1.9 runs on JPDFs's own PDF engine for rendering, text extraction, editing and document processing.
 
 <p align="center">
   <a href="docs/readme-two-page.png"><img src="docs/readme-two-page.png" width="49%" alt="A six-page guide open in Two-Page view with the Dark theme, the page strip on the left and the full toolbar across the top"></a>
@@ -28,22 +28,22 @@ KillerPDF is a free, open-source PDF editor for Windows. Read, annotate, edit, o
 
 Source-text and paragraph editing work on supported layouts and fonts; scanned pages need OCR first. Exported Office files can change layout, so review them before sharing. Signature reports tell failed checks apart from evidence that is unavailable or has not been checked.
 
-## Get KillerPDF
+## Get JPDFs
 
-Downloads and the [user guide](https://killerpdf.net/help) are at [killerpdf.net](https://killerpdf.net). Install it, run the portable package, or get it from the Microsoft Store, Chocolatey or WinGet. The [release assets](https://github.com/SteveTheKiller/KillerPDF/releases) include every package and the source archives. OCR language models download separately from inside the app.
+Downloads and the [user guide](https://jpdfs.net/help) are at [jpdfs.net](https://jpdfs.net). Install it, run the portable package, or get it from the Microsoft Store, Chocolatey or WinGet. The [release assets](https://github.com/JPDFs/JPDFs/releases) include every package and the source archives. OCR language models download separately from inside the app.
 
 ## Build and test
 
 Use Windows and the .NET SDK selected by [global.json](global.json).
 
 ```powershell
-dotnet restore KillerPDF.csproj
-dotnet build KillerPDF.csproj -c Release
-dotnet test engine/KillerPdf.Engine.Tests/KillerPdf.Engine.Tests.csproj
-dotnet test KillerPDF.Tests/KillerPDF.Tests.csproj
+dotnet restore JPDFs.csproj
+dotnet build JPDFs.csproj -c Release
+dotnet test engine/JPDFs.Engine.Tests/JPDFs.Engine.Tests.csproj
+dotnet test JPDFs.Tests/JPDFs.Tests.csproj
 ```
 
-A few app tests open WPF windows. Run them on an unlocked desktop and follow the prerequisites in the [UI smoke guide](tests/KillerPDF.UiSmoke/README.md). Build and test one checkout at a time.
+A few app tests open WPF windows. Run them on an unlocked desktop and follow the prerequisites in the [UI smoke guide](tests/JPDFs.UiSmoke/README.md). Build and test one checkout at a time.
 
 - [Application changelog](CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
@@ -53,4 +53,4 @@ A few app tests open WPF windows. Run them on an unlocked desktop and follow the
 
 ## License
 
-KillerPDF is licensed under GPLv3. See [LICENSE](LICENSE) and the [1.9.0 corresponding-source archive](https://github.com/SteveTheKiller/KillerPDF/releases/download/v1.9.1/KillerPDF-1.9.1-src.zip). Third-party licenses and notices ship in the application payload.
+JPDFs is licensed under GPLv3. See [LICENSE](LICENSE) and the [1.9.0 corresponding-source archive](https://github.com/JPDFs/JPDFs/releases/download/v1.9.1/JPDFs-1.9.1-src.zip). Third-party licenses and notices ship in the application payload.

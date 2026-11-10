@@ -87,8 +87,8 @@ JPDFs.App.deps.json
 JPDFs.App.dll
 JPDFs.App.exe
 JPDFs.App.runtimeconfig.json
-KillerPdf.Engine.dll
-KillerPdf.Engine.xml
+JPDFs.Engine.dll
+JPDFs.Engine.xml
 ko/PresentationCore.resources.dll
 ko/PresentationFramework.resources.dll
 ko/PresentationUI.resources.dll

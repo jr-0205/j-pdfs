@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 
-namespace KillerFamily.Theming
+namespace JpdfsUi.Theming
 {
     /// <summary>
     /// The family bevel for wordmarks and headings: the text keeps its own color, its upper-left

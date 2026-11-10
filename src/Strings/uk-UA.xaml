@@ -379,21 +379,9 @@ J-PDF's не створюватиме двох установлених копі
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Темна</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Світла</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Чорна</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Кров</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Жадоба</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Ціаноз</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat світла</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ектоплазма</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Тлін</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Жалоба</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat світла</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat темна</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Зернистість плівки</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Гробниця</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Марення</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Нездужання</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">За шириною</sys:String>
@@ -1591,7 +1579,6 @@ J-PDF's не створюватиме двох установлених копі
     <sys:String x:Key="Str_KS_DisabledStatus">Комбінації клавіш вимкнено. Натисніть Ctrl+Shift+K, щоб увімкнути їх.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Перевіряти оновлення під час запуску</sys:String>
     <sys:String x:Key="Str_PasswordProtected">«{0}» захищено паролем.</sys:String>
-    <sys:String x:Key="Str_About_Aka">AKA</sys:String>
     <sys:String x:Key="Str_Btn_Run">Виконати</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Макроси</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Збережені макроси</sys:String>

@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class TableOfContentsDialog : Window
 {
@@ -63,7 +63,7 @@ internal sealed class TableOfContentsDialog : Window
                 out int depth)
             || depth is < 1 or > 6)
         {
-            KillerDialog.Show(this, L("Str_DocumentTools_TocInvalid"),
+            JpdfsDialog.Show(this, L("Str_DocumentTools_TocInvalid"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

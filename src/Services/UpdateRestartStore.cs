@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed record UpdateRestartSnapshot(string[] Files, string? ActiveFile);
 

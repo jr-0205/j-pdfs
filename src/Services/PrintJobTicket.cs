@@ -1,7 +1,7 @@
 using System.Printing;
 using System.Xml.Linq;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Combines the print window's own settings with a ticket from the printer driver's
 /// dialog.</summary>

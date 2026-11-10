@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>What a scanned page holds: color, shades of gray, or only black and white.</summary>
 internal enum ScanTone { Color, Grayscale, BlackAndWhite }

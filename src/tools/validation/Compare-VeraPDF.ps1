@@ -4,12 +4,12 @@
     validation outcome changed between the two runs.
 
 .DESCRIPTION
-    Used to verify that resaving PDFs through KillerPDF does not degrade
+    Used to verify that resaving PDFs through JPDFs does not degrade
     standards conformance. Workflow:
 
       1. Baseline the corpus:
          verapdf --recurse --format json C:\pdf-corpus > baseline.json
-      2. Resave every corpus file through KillerPDF into a mirror folder,
+      2. Resave every corpus file through JPDFs into a mirror folder,
          preserving relative paths (see --batch-resave).
       3. Validate the resaved tree:
          verapdf --recurse --format json C:\pdf-corpus-resaved > after.json
@@ -31,7 +31,7 @@
 
 .NOTES
     Compatible with Windows PowerShell 5.1 and PowerShell 7.
-    Part of the KillerPDF validation harness (validation/).
+    Part of the JPDFs validation harness (validation/).
 #>
 [CmdletBinding()]
 param(
@@ -256,7 +256,7 @@ if ($CsvOut) {
 }
 
 if ($regressionCount -gt 0) {
-    Write-Host 'RESULT: FAIL - KillerPDF resave introduced regressions.' -ForegroundColor Red
+    Write-Host 'RESULT: FAIL - JPDFs resave introduced regressions.' -ForegroundColor Red
     exit 1
 } else {
     Write-Host 'RESULT: PASS - no conformance regressions introduced.' -ForegroundColor Green

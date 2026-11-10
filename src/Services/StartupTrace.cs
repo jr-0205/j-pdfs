@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Opt-in startup timing used by the release benchmark. Normal launches do no file I/O.
@@ -36,7 +36,7 @@ namespace KillerPDF.Services
                     {
                         _headerWritten = true;
                         var process = Process.GetCurrentProcess();
-                        sb.Append("# KillerPDF startup trace | pid=")
+                        sb.Append("# JPDFs startup trace | pid=")
                           .Append(process.Id)
                           .Append(" | processStartUtc=")
                           .Append(process.StartTime.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture))

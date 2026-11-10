@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath($OutputDirectory)
 [IO.Directory]::CreateDirectory($root) | Out-Null
 $assembly = [Reflection.Assembly]::LoadFrom([IO.Path]::GetFullPath($Launcher))
-$type = $assembly.GetType('KillerLauncher.Program', $true)
+$type = $assembly.GetType('JpdfsLauncher.Program', $true)
 $validate = $type.GetMethod('ValidateInstallDestination', [Reflection.BindingFlags]'Static,NonPublic')
 if (-not $validate) { throw 'The production destination validation entry is missing.' }
 [string]$folder = [IO.Path]::Combine($root, ('work-folder-' + [Guid]::NewGuid().ToString('N')))
@@ -41,10 +41,10 @@ function Assert-Destination([string]$Path, [bool]$Allowed) {
 function New-Owned([string]$Name) {
     [string]$path = [IO.Path]::Combine($root, ($Name + '-' + [Guid]::NewGuid().ToString('N')))
     [IO.Directory]::CreateDirectory($path) | Out-Null
-    [string]$exe = [IO.Path]::Combine($path, 'KillerPDF.App.exe')
+    [string]$exe = [IO.Path]::Combine($path, 'JPDFs.App.exe')
     [IO.File]::WriteAllBytes($exe, [byte[]](1,2,3,4))
     [string]$hash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash
-    [IO.File]::WriteAllText([IO.Path]::Combine($path, 'payload.manifest'), ($hash + "`t4`tKillerPDF.App.exe`n"))
+    [IO.File]::WriteAllText([IO.Path]::Combine($path, 'payload.manifest'), ($hash + "`t4`tJPDFs.App.exe`n"))
     return $path
 }
 Assert-Destination ([IO.Path]::Combine($root, 'missing')) $true
@@ -53,15 +53,15 @@ Assert-Destination ([IO.Path]::Combine($root, 'missing')) $true
 Assert-Destination $empty $true
 [string]$owned = New-Owned 'owned'
 Assert-Destination $owned $true
-[IO.File]::WriteAllText([IO.Path]::Combine($owned, 'KillerPDF.cmd'), "@`"%~dp0KillerPDF.App.exe`" %*`r`n@exit /b %ERRORLEVEL%`r`n")
+[IO.File]::WriteAllText([IO.Path]::Combine($owned, 'JPDFs.cmd'), "@`"%~dp0JPDFs.App.exe`" %*`r`n@exit /b %ERRORLEVEL%`r`n")
 Assert-Destination $owned $true
 [IO.File]::WriteAllText([IO.Path]::Combine($owned, 'customer-notes.txt'), 'Preserve this file.')
 Assert-Destination $owned $false
 [string]$tampered = New-Owned 'tampered-payload'
-[IO.File]::WriteAllBytes([IO.Path]::Combine($tampered, 'KillerPDF.App.exe'), [byte[]](4,3,2,1))
+[IO.File]::WriteAllBytes([IO.Path]::Combine($tampered, 'JPDFs.App.exe'), [byte[]](4,3,2,1))
 Assert-Destination $tampered $false
 [string]$wrapper = New-Owned 'unowned-wrapper'
-[IO.File]::WriteAllText([IO.Path]::Combine($wrapper, 'KillerPDF.cmd'), 'Customer command script')
+[IO.File]::WriteAllText([IO.Path]::Combine($wrapper, 'JPDFs.cmd'), 'Customer command script')
 Assert-Destination $wrapper $false
 [string]$badManifest = New-Owned 'invalid-manifest'
 [IO.File]::WriteAllText([IO.Path]::Combine($badManifest, 'payload.manifest'), 'not a manifest')

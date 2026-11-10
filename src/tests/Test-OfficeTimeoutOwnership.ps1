@@ -1,11 +1,11 @@
-# Requires PowerShell 7 and a Release build of KillerPDF.Tests.
+# Requires PowerShell 7 and a Release build of JPDFs.Tests.
 param(
     [Parameter(Mandatory)][string]$TestAssembly,
     [Parameter(Mandatory)][string]$EvidenceRoot
 )
 $ErrorActionPreference = 'Stop'
 $assembly = [Reflection.Assembly]::LoadFrom((Resolve-Path $TestAssembly).Path)
-$method = $assembly.GetType('KillerPDF.Services.OfficeConversion').GetMethods(
+$method = $assembly.GetType('JPDFs.Services.OfficeConversion').GetMethods(
     [Reflection.BindingFlags]'Static,NonPublic') |
     Where-Object { $_.Name -eq 'ToPdf' -and $_.GetParameters().Length -eq 3 }
 $root = Join-Path $EvidenceRoot ('office-timeout-' + [guid]::NewGuid().ToString('N'))

@@ -3,24 +3,24 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
-using KillerPdf.Engine.Filters;
-using KillerPdf.Engine.Fonts;
-using KillerPdf.Engine.Objects;
-using KillerPdf.Engine.Parsing;
-using KillerPdf.Engine.Signing;
-using KillerPdf.Engine.Syntax;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
+using JPDFs.Engine.Filters;
+using JPDFs.Engine.Fonts;
+using JPDFs.Engine.Objects;
+using JPDFs.Engine.Parsing;
+using JPDFs.Engine.Signing;
+using JPDFs.Engine.Syntax;
+using JPDFs.Engine.Writing;
 using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingGraphics = System.Drawing.Graphics;
 using DrawingImage = System.Drawing.Image;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
-/// <summary>Bridges completed application state into The KillerPDF.Engine during migration.</summary>
+/// <summary>Bridges completed application state into The JPDFs.Engine during migration.</summary>
 internal static partial class PdfEngineIntegration
 {
     internal static string[] PlanMacroOutputs(PdfMacro macro, IReadOnlyList<string> sources,
@@ -1108,7 +1108,7 @@ internal static partial class PdfEngineIntegration
 
     /// <summary>Writes a copy of an unencrypted PDF protected with Standard Security passwords.</summary>
     internal static IReadOnlyList<PdfReferenceRepair> ProtectWithPasswords(string sourcePath, string destinationPath,
-        KillerPdf.Engine.Security.PdfPasswordEncryptionOptions options, bool allowSignatureInvalidation)
+        JPDFs.Engine.Security.PdfPasswordEncryptionOptions options, bool allowSignatureInvalidation)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
@@ -1122,7 +1122,7 @@ internal static partial class PdfEngineIntegration
 
     /// <summary>Writes a copy of an unencrypted PDF that only the listed certificate holders can open.</summary>
     internal static IReadOnlyList<PdfReferenceRepair> ProtectForRecipients(string sourcePath, string destinationPath,
-        KillerPdf.Engine.Security.PdfCertificateEncryptionOptions options, bool allowSignatureInvalidation)
+        JPDFs.Engine.Security.PdfCertificateEncryptionOptions options, bool allowSignatureInvalidation)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
@@ -1743,7 +1743,7 @@ internal static partial class PdfEngineIntegration
 
     // Marks the exception that names the file that failed. Its message holds a path, which says nothing
     // about why the import failed, and its inner exception is the failure itself.
-    private const string ImportSourceMarker = "KillerPDF.ImportSource";
+    private const string ImportSourceMarker = "JPDFs.ImportSource";
 
     /// <summary>A PDF with no pages, which there is nothing to merge from.</summary>
     internal sealed class ImportNoPagesException : InvalidOperationException
@@ -2947,7 +2947,7 @@ internal static partial class PdfEngineIntegration
             throw new ArgumentException("At least one page must be extracted.", nameof(pageIndices));
 
         PdfDocument source = PdfDocument.Open(File.ReadAllBytes(sourcePath));
-        PdfDocument empty = PdfDocument.Open(new KillerPdf.Engine.Authoring.PdfDocumentBuilder().Build());
+        PdfDocument empty = PdfDocument.Open(new JPDFs.Engine.Authoring.PdfDocumentBuilder().Build());
         var editor = new PdfIncrementalPageEditor(empty)
             .InsertImportedPages(0, source, pageIndices);
         for (int outputIndex = 0; outputIndex < pageIndices.Count; outputIndex++)

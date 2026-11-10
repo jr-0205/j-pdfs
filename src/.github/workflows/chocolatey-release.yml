@@ -37,16 +37,16 @@ jobs:
         run: |
           $releaseTag = $env:RELEASE_TAG
           $version = $releaseTag.TrimStart('v')
-          $exeUrl  = "https://github.com/SteveTheKiller/KillerPDF/releases/download/$releaseTag/KillerPDF.exe"
+          $exeUrl  = "https://github.com/JPDFs/JPDFs/releases/download/$releaseTag/JPDFs.exe"
 
           # Download release EXE and compute hash
           Write-Host "Downloading $exeUrl..."
-          Invoke-WebRequest -Uri $exeUrl -OutFile "$env:RUNNER_TEMP\KillerPDF.exe"
-          $hash = (Get-FileHash "$env:RUNNER_TEMP\KillerPDF.exe" -Algorithm SHA256).Hash
+          Invoke-WebRequest -Uri $exeUrl -OutFile "$env:RUNNER_TEMP\JPDFs.exe"
+          $hash = (Get-FileHash "$env:RUNNER_TEMP\JPDFs.exe" -Algorithm SHA256).Hash
           Write-Host "SHA256: $hash"
 
           # Stamp version and hash into package files
-          $nuspec  = "choco\killerpdf.nuspec"
+          $nuspec  = "choco\jpdfs.nuspec"
           $install = "choco\tools\chocolateyInstall.ps1"
 
           (Get-Content $nuspec)  -replace 'REPLACE_VERSION', $version | Set-Content $nuspec
@@ -81,13 +81,13 @@ jobs:
           if ($problems) { $problems | ForEach-Object { Write-Host "::error::$_" }; throw "The nuspec has problems Chocolatey will reject." }
 
           # Pack and push
-          choco pack choco\killerpdf.nuspec --out "$env:RUNNER_TEMP"
+          choco pack choco\jpdfs.nuspec --out "$env:RUNNER_TEMP"
           if ($LASTEXITCODE -ne 0) { throw "choco pack failed." }
-          $package = "$env:RUNNER_TEMP\killerpdf.$version.nupkg"
+          $package = "$env:RUNNER_TEMP\jpdfs.$version.nupkg"
           choco push $package --source https://push.chocolatey.org --api-key $env:CHOCO_API_KEY
           if ($LASTEXITCODE -ne 0) {
               # Chocolatey answers most rejections with a bare 403, so report what the package page shows.
-              $page = "https://community.chocolatey.org/packages/killerpdf"
+              $page = "https://community.chocolatey.org/packages/jpdfs"
               try {
                   $html = (Invoke-WebRequest $page -UseBasicParsing -TimeoutSec 60).Content
                   foreach ($row in [regex]::Matches($html, '<td class="version"\s*>[\s\S]*?<span>([^<]+)</span>[\s\S]*?</tr>')) {
@@ -113,8 +113,8 @@ jobs:
         env:
           CHOCO_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
         run: |
-          $page = "https://community.chocolatey.org/packages/killerpdf/$env:CHOCO_VERSION"
-          $feed = "https://community.chocolatey.org/api/v2/Packages(Id='killerpdf',Version='$env:CHOCO_VERSION')"
+          $page = "https://community.chocolatey.org/packages/jpdfs/$env:CHOCO_VERSION"
+          $feed = "https://community.chocolatey.org/api/v2/Packages(Id='jpdfs',Version='$env:CHOCO_VERSION')"
           $repushed = $false
           $pendingSinceRepush = $false
           $lastKnownState = ''

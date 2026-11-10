@@ -2,10 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
-    /// APP-OWNED: KillerPDF's side of the kit system menu (Shell/SystemMenu.cs). The menu takes the
+    /// APP-OWNED: JPDFs's side of the kit system menu (Shell/SystemMenu.cs). The menu takes the
     /// same style and text options as the app's other code-built menus, and carries the page
     /// navigation buttons toggle above Close.
     /// </summary>

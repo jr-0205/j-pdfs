@@ -4,11 +4,11 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // ============================================================
     // Raw-bitmap helpers - pure functions over BGRA pixel buffers,
-    // no window state. Formerly a MainWindow partial (KillerUI
+    // no window state. Formerly a MainWindow partial (JpdfsUiKit
     // refactor); shared by the render paths, thumbnails, page
     // export, OCR and the CLI.
     // ============================================================
@@ -242,7 +242,7 @@ namespace KillerPDF.Services
         /// <summary>
         /// Encodes raw BGRA pixel data to JPEG (quality 90) via WPF's encoder. Born as the CLI's
         /// CliEncodeJpeg (no JPEG encoder existed before --to-image); homed here beside RenderToPng
-        /// in the KillerUI refactor, shared by the CLI and the GUI image export.
+        /// in the JpdfsUiKit refactor, shared by the CLI and the GUI image export.
         /// </summary>
         internal static byte[] EncodeJpeg(byte[] bgra, int width, int height,
             double dpi = 96, int quality = 90, bool grayscale = false)

@@ -1,5 +1,5 @@
-using KillerPdf.Engine.Fonts;
-using KillerPDF.Services;
+using JPDFs.Engine.Fonts;
+using JPDFs.Services;
 
 int failures = 0;
 foreach (var (name, family, bold, italic) in new[]
@@ -137,7 +137,7 @@ static void Require(bool condition)
 }
 static PdfFontRequest Request(string name) => new(name, "Adobe", "Identity", false);
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal static class InstalledFontCatalog
     {

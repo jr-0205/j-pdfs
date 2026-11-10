@@ -1,9 +1,9 @@
 using System.Windows;
 
-namespace KillerPDF.Features.About
+namespace JPDFs.Features.About
 {
     /// <summary>
-    /// APP-OWNED: KillerPDF's side of the shared About core (Features/About/AboutController.cs).
+    /// APP-OWNED: JPDFs's side of the shared About core (Features/About/AboutController.cs).
     /// An update waits until every document is saved, and the open documents are recorded just
     /// before the installer or launcher swap starts, so the updated copy reopens them.
     /// </summary>
@@ -16,7 +16,7 @@ namespace KillerPDF.Features.About
         partial void HoldUpdate(ref bool hold)
         {
             if (Restart is not { IsDirty: true }) return;
-            KillerDialog.Show(_host.Window, _host.Loc("Str_Dlg_SaveBeforeUpdate"),
+            JpdfsDialog.Show(_host.Window, _host.Loc("Str_Dlg_SaveBeforeUpdate"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             hold = true;
         }
@@ -54,13 +54,13 @@ namespace KillerPDF.Features.About
 
         partial void UpdateNotVerified(System.Exception failure)
         {
-            KillerPDF.CrashReporter.Capture(failure, "Update download refused");
-            KillerDialog.Show(_host.Window, _host.Loc("Str_About_UpdateNotVerified"),
+            JPDFs.CrashReporter.Capture(failure, "Update download refused");
+            JpdfsDialog.Show(_host.Window, _host.Loc("Str_About_UpdateNotVerified"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         private void PrepareFailed()
-            => KillerDialog.Show(_host.Window, _host.Loc("Str_UpdateRestartPrepareFailed"),
+            => JpdfsDialog.Show(_host.Window, _host.Loc("Str_UpdateRestartPrepareFailed"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 }

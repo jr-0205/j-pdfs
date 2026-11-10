@@ -45,7 +45,7 @@ PDF standard fonts. Source: https://github.com/liberationfonts/liberation-fonts
 Digitized data copyright (c) 2010 Google Corporation.
 Copyright (c) 2012 Red Hat, Inc.
 Licensed under the SIL Open Font License, Version 1.1. The complete license is
-included in KillerPdf.Engine/Resources/Fonts/LIBERATION-LICENSE.txt.
+included in JPDFs.Engine/Resources/Fonts/LIBERATION-LICENSE.txt.
 
 Static font data from ReportLab 4.4.9 and Adobe Glyph List 2.0.
 Sources: https://github.com/MrBitBucket/reportlab-mirror and https://github.com/adobe-type-tools/agl-aglfn
@@ -77,7 +77,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-Apache PDFBox JBIG2 ImageIO decoder, modified for the KillerPDF engine:
+Apache PDFBox JBIG2 ImageIO decoder, modified for the JPDFs engine:
 https://github.com/apache/pdfbox-jbig2
 
 Copyright 2017 The Apache Software Foundation
@@ -85,7 +85,7 @@ Based on source code originally developed in the JBig2 project.
 Copyright (C) 1995-2017 levigo holding GmbH
 
 Licensed under the Apache License, Version 2.0. The complete license and
-upstream NOTICE are included in KillerPdf.Engine/Filters/Jbig2.
+upstream NOTICE are included in JPDFs.Engine/Filters/Jbig2.
 
 #####################################################################################
 #
@@ -186,7 +186,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-CoreJ2K JPEG 2000 codec, vendored into the KillerPDF engine:
+CoreJ2K JPEG 2000 codec, vendored into the JPDFs engine:
 https://github.com/cinderblocks/CoreJ2K
 
 The complete license, the upstream JJ2000 copyright notice, and the record of the
@@ -223,7 +223,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-NTwain 3.7.6 is used by the KillerPDF desktop app for Scan to PDF.
+NTwain 3.7.6 is used by the JPDFs desktop app for Scan to PDF.
 Source: https://github.com/soukoku/ntwain
 Copyright (c) 2012 Yin-Chun Wang
 
@@ -8647,20 +8647,20 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Fonts embedded in the KillerPDF application and installer
+Fonts embedded in the JPDFs application and installer
 --------------------------------------
 
-Killer Sans and Killer Sans UI are Modified Versions of Play
+Jpdfs Sans and Jpdfs Sans UI are Modified Versions of Play
 (https://github.com/google/fonts/tree/main/ofl/play). They were renamed because Play is a
 Reserved Font Name. Changes: hinting removed and the em enlarged so the capitals render at
-0.49 em; Killer Sans UI also scales the outlines so the capitals render at 0.66 em.
+0.49 em; Jpdfs Sans UI also scales the outlines so the capitals render at 0.66 em.
 Copyright (c) 2011, Jonas Hecksher, Playtypes, e-types AS (lasse@e-types.com), with Reserved
 Font Name 'Play', 'Playtype', 'Playtype Sans'.
 
 Lacquer.
 Copyright 2019 The Lacquer Project Authors (https://github.com/Lacquer-Font/Lacquer)
 
-Killer Sans, Killer Sans UI and Lacquer are licensed under the SIL Open Font License,
+Jpdfs Sans, Jpdfs Sans UI and Lacquer are licensed under the SIL Open Font License,
 Version 1.1, copied below and also available with a FAQ at http://scripts.sil.org/OFL
 
 -----------------------------------------------------------
@@ -8757,8 +8757,8 @@ https://junkohanhero.com
 The designer offers Punktype free for personal use. Commercial use requires a
 commercial license from the designer.
 
-Steve Riley (Steve the Killer) purchased the commercial license from junkohanhero
-on October 10, 2026. It covers the Killer Tools apps and installers, their
+Steve Riley purchased the commercial license from junkohanhero
+on October 10, 2026. It covers the Jpdfs Tools apps and installers, their
 websites, README and social preview images, and printed or PDF material.
 
 The font is bundled here only so the app can draw its logo. It is not licensed

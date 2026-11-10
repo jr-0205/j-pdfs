@@ -1,17 +1,17 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 public partial class App
 {
     internal static bool IsStartupSmoke { get; } = Environment.GetCommandLineArgs()
         .Skip(1).Any(a => string.Equals(a, "--startup-smoke", StringComparison.OrdinalIgnoreCase));
     internal static string SmokeDataRoot { get; } = Path.Combine(
-        Path.GetTempPath(), "KillerPDF-startup-smoke-" + Guid.NewGuid().ToString("N"));
+        Path.GetTempPath(), "JPDFs-startup-smoke-" + Guid.NewGuid().ToString("N"));
     private static readonly Dictionary<string, string> SmokeSettings = new(StringComparer.Ordinal);
 
     // Separate from normal startup: no mutex, pipe server, registration, cleanup of user

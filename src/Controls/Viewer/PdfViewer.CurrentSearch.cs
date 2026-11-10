@@ -1,7 +1,7 @@
 using System.IO;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 public partial class PdfViewer
 {
@@ -44,8 +44,8 @@ public partial class PdfViewer
             {
                 foreach (var field in session.ReadFormWidgets(pageIndex, forDisplay: true))
                 {
-                    bool isText = field.FieldKind == KillerPdf.Engine.Documents.PdfFormFieldKind.Text;
-                    if (!isText && field.FieldKind != KillerPdf.Engine.Documents.PdfFormFieldKind.Choice) continue;
+                    bool isText = field.FieldKind == JPDFs.Engine.Documents.PdfFormFieldKind.Text;
+                    if (!isText && field.FieldKind != JPDFs.Engine.Documents.PdfFormFieldKind.Choice) continue;
                     string value;
                     if (isText) value = _formTextValues.TryGetValue(field.FieldName, out string? pending) ? pending : field.Value;
                     else

@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// The theme menu's Film Grain switch, on by default. Turning it off sets GrainOpacity to 0

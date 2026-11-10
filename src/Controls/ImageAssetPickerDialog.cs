@@ -4,9 +4,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 internal sealed class ImageAssetPickerDialog : Window
 {
@@ -221,7 +221,7 @@ internal sealed class ImageAssetPickerDialog : Window
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, L("Str_Err_ImportImageFailed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, L("Str_Err_ImportImageFailed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -247,7 +247,7 @@ internal sealed class ImageAssetPickerDialog : Window
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, ex.Message, "J-PDF's",
+            JpdfsDialog.Show(this, ex.Message, "J-PDF's",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -256,7 +256,7 @@ internal sealed class ImageAssetPickerDialog : Window
     {
         ImageAsset? asset = SelectedAsset;
         if (asset is null) return;
-        if (KillerDialog.Show(this,
+        if (JpdfsDialog.Show(this,
                 string.Format(L("Str_ImageAsset_DeleteConfirm"), asset.Name), "J-PDF's",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
@@ -267,7 +267,7 @@ internal sealed class ImageAssetPickerDialog : Window
         }
         catch (Exception ex)
         {
-            KillerDialog.Show(this, ex.Message, "J-PDF's",
+            JpdfsDialog.Show(this, ex.Message, "J-PDF's",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }

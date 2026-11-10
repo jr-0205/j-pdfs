@@ -8,14 +8,14 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
 
-namespace KillerPDF.Services.Signing;
+namespace JPDFs.Services.Signing;
 
 internal enum CertificateCatalogSource
 {
-    KillerPdf,
+    JPDFs,
     WindowsCurrentUserRoot,
     WindowsLocalMachineRoot,
     WindowsCurrentUserIntermediate,
@@ -33,7 +33,7 @@ internal sealed record CertificateCatalogEntry(
     CertificateCatalogSource Source,
     byte[] RawData)
 {
-    public bool IsReadOnly => Source != CertificateCatalogSource.KillerPdf;
+    public bool IsReadOnly => Source != CertificateCatalogSource.JPDFs;
     public string DisplayName => Subject;
 }
 
@@ -64,7 +64,7 @@ internal sealed class CertificateCatalog
         _catalogPath = Path.Combine(_directory, "certificates.json");
     }
 
-    private const string ProblemKey = "KillerPDF.CertificateCatalogProblem";
+    private const string ProblemKey = "JPDFs.CertificateCatalogProblem";
 
     // InvalidDataException is sealed, so the problem rides in its Data for the dialog to localize.
     private static InvalidDataException Problem(CertificateCatalogProblem problem, string message,
@@ -109,7 +109,7 @@ internal sealed class CertificateCatalog
         }
     }
 
-    /// <summary>Lists a Windows store certificate, skipping one KillerPDF cannot read. The store is
+    /// <summary>Lists a Windows store certificate, skipping one JPDFs cannot read. The store is
     /// managed by Windows, and one odd entry must not hide the rest of the list.</summary>
     internal static void AddWindowsCertificate(List<CertificateCatalogEntry> entries, byte[] rawData,
         bool trusted, CertificateCatalogSource source)
@@ -148,7 +148,7 @@ internal sealed class CertificateCatalog
         using FileStream writeLock = AcquireWriteLock();
         List<CertificateCatalogEntry> entries = ReadPrivate();
         int index = entries.FindIndex(entry => entry.Fingerprint == fingerprint);
-        if (index < 0) throw new InvalidOperationException("The certificate is not in the KillerPDF catalog.");
+        if (index < 0) throw new InvalidOperationException("The certificate is not in the JPDFs catalog.");
         if (trusted && !entries[index].IsCertificateAuthority)
             throw new InvalidOperationException("Only a certificate authority can be trusted as a root.");
         if (entries[index].IsTrustedRoot == trusted) return;
@@ -162,7 +162,7 @@ internal sealed class CertificateCatalog
         using FileStream writeLock = AcquireWriteLock();
         List<CertificateCatalogEntry> entries = ReadPrivate();
         if (entries.RemoveAll(entry => entry.Fingerprint == fingerprint) == 0)
-            throw new InvalidOperationException("The certificate is not in the KillerPDF catalog.");
+            throw new InvalidOperationException("The certificate is not in the JPDFs catalog.");
         Save(entries);
     }
 
@@ -239,7 +239,7 @@ internal sealed class CertificateCatalog
                 RequireProperties(item, "der", "trusted");
                 byte[] der = item.GetProperty("der").GetBytesFromBase64();
                 bool trusted = item.GetProperty("trusted").GetBoolean();
-                CertificateCatalogEntry entry = FromDer(der, trusted, CertificateCatalogSource.KillerPdf);
+                CertificateCatalogEntry entry = FromDer(der, trusted, CertificateCatalogSource.JPDFs);
                 if (!fingerprints.Add(entry.Fingerprint) || (trusted && !entry.IsCertificateAuthority))
                     throw new InvalidDataException("The certificate catalog contains duplicate or invalid trust entries.");
                 entries.Add(entry);
@@ -310,7 +310,7 @@ internal sealed class CertificateCatalog
     private static List<CertificateCatalogEntry> ReadImport(byte[] data)
     {
         if (data[0] == 0x30)
-            return [FromDer(data, false, CertificateCatalogSource.KillerPdf)];
+            return [FromDer(data, false, CertificateCatalogSource.JPDFs)];
         string text;
         try { text = new UTF8Encoding(false, true).GetString(data); }
         catch (DecoderFallbackException error)
@@ -341,7 +341,7 @@ internal sealed class CertificateCatalog
                 throw Problem(CertificateCatalogProblem.TooLarge,
                     "The certificate file exceeds the import limits.");
             byte[] der = Convert.FromBase64String(pending[fields.Base64Data].ToString());
-            entries.Add(FromDer(der, false, CertificateCatalogSource.KillerPdf));
+            entries.Add(FromDer(der, false, CertificateCatalogSource.JPDFs));
             pending = pending[fields.Location.End..];
         }
         if (entries.Count == 0)

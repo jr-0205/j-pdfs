@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Application identity and the build stamps baked into the assembly. One place for the values
@@ -22,17 +22,16 @@ namespace KillerPDF.Services
         /// <summary>Release asset name, and the on-disk name of the exe it replaces.</summary>
         internal const string ExeName = "JPDFs.exe";
 
+        /// <summary>The assembly name, which is also the file stem the update check matches.</summary>
+        internal const string AssemblyName = "JPDFs";
+
         /// <summary>Name shown in prompts.</summary>
         internal const string DisplayName = "J-PDF's";
 
-        /// <summary>Certificate subject fragment that unlocks the alias line on the About card. The
-        /// subject is a legal name, so the card ties it back to the publicly known alias. A build
-        /// signed by anyone else must not claim that alias, and an unsigned build has no subject.
-        /// Leave these two alone.</summary>
+        /// <summary>Certificate subject fragment the About card and the update check match. The
+        /// subject is a legal name, so a build signed by anyone else must not pass for this one.
+        /// Leave this alone.</summary>
         internal const string SignerName = "Stephen Riley";
-
-        /// <summary>The alias shown when the signature verifies and the subject matches.</summary>
-        internal const string AkaName = "Steve the Killer";
 
         /// <summary>Display version, from the informational version attribute.</summary>
         internal static string Version =>

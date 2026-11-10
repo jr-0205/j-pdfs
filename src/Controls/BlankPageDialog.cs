@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class BlankPageDialog : Window
 {
@@ -107,7 +107,7 @@ internal sealed class BlankPageDialog : Window
         double? height = ReadPoints(_height);
         if (width is null || height is null)
         {
-            KillerDialog.Show(this, L("Str_Blank_InvalidSize"), "J-PDF's",
+            JpdfsDialog.Show(this, L("Str_Blank_InvalidSize"), "J-PDF's",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

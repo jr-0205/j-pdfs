@@ -7,13 +7,13 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Rendering;
-using KillerPDF.Controls;
-using KillerPDF.Services;
-using KillerPDF.Shell;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Rendering;
+using JPDFs.Controls;
+using JPDFs.Services;
+using JPDFs.Shell;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class ParagraphEditDialog : Window
 {

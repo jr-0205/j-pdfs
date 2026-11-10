@@ -1,6 +1,6 @@
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Readable saved annotation descriptions appended after the page body.</summary>
 internal static class ReadingAnnotationText

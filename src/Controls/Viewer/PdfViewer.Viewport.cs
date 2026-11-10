@@ -12,10 +12,10 @@ using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
-using ContentDoc = KillerPDF.Services.PdfContentDocument;
+using JPDFs.Services;
+using ContentDoc = JPDFs.Services.PdfContentDocument;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Page viewport: builds the page tiles and annotation overlays for all four view modes (single,
     // continuous, two-page, grid) and handles preview scrolling.

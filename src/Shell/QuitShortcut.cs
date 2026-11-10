@@ -3,7 +3,7 @@ using System;
 using System.Windows;
 using System.Windows.Input;
 
-namespace KillerFamily.Shell
+namespace JpdfsUi.Shell
 {
     /// <summary>Routes Ctrl+Q through the app's own close, save and active-operation safeguards.</summary>
     public static class QuitShortcut

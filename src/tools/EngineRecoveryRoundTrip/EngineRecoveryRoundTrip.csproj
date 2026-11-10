@@ -6,6 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../engine/KillerPdf.Engine/KillerPdf.Engine.csproj" />
+    <ProjectReference Include="../../engine/JPDFs.Engine/JPDFs.Engine.csproj" />
   </ItemGroup>
 </Project>

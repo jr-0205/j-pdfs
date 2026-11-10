@@ -12,7 +12,7 @@ using System.Windows.Media.Imaging;
 // anything that is its own Window rather than an overlay on the main one).
 //
 // WHY THIS FILE EXISTS. The wordmark and the close X get hand-rolled once per dialog, and the
-// copies drift. In KillerNotes three of them had, independently:
+// copies drift. In JpdfsNotes three of them had, independently:
 //   - a wordmark + subtitle, with a 46x36 close that filled SOLID RED on hover (the OS caption
 //     treatment),
 //   - a wordmark and no subtitle, its title moved into the body as a heading instead,
@@ -25,19 +25,19 @@ using System.Windows.Media.Imaging;
 //
 // HOST SETUP. Set the three statics once at startup, before any dialog is constructed:
 //
-//     DialogChrome.AppName       = "KillerNotes";
-//     DialogChrome.WordmarkSplit = 6;   // "Killer" | "Notes"
+//     DialogChrome.AppName       = "JpdfsNotes";
+//     DialogChrome.WordmarkSplit = 6;   // "Jpdfs" | "Notes"
 //     DialogChrome.IconUri       = new Uri("pack://application:,,,/Resources/kn-icon.ico");
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     internal static class DialogChrome
     {
-        /// <summary>Product name shown in the caption, e.g. "KillerNotes".</summary>
+        /// <summary>Product name shown in the caption, e.g. "JpdfsNotes".</summary>
         public static string AppName { get; set; } = "";
 
         /// <summary>
         /// Where <see cref="AppName"/> splits into its neutral and accent runs - the family's
-        /// two-run wordmark. 6 puts the break after "Killer" for every app but Killendar, whose
+        /// two-run wordmark. 6 puts the break after "Jpdfs" for every app but Killendar, whose
         /// name is one word and which sets 3 to split "The Killendar" style. 0 disables the split
         /// and draws the whole name in the neutral color.
         /// </summary>

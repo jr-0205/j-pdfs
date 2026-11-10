@@ -1,4 +1,4 @@
-namespace KillerPDF.Features.About
+namespace JPDFs.Features.About
 {
     /// <summary>
     /// What AboutController needs from the window hosting it, beyond the shared shell services.
@@ -15,10 +15,6 @@ namespace KillerPDF.Features.About
 
         /// <summary>Code-signing subject, or the unsigned message.</summary>
         string Publisher { set; }
-
-        /// <summary>The quoted alias line, and whether the signature earned the right to show it.</summary>
-        string Alias { set; }
-        bool AliasVisible { set; }
 
         /// <summary>Certificate thumbprint.</summary>
         string Thumbprint { set; }
@@ -49,7 +45,7 @@ namespace KillerPDF.Features.About
     }
 
     /// <summary>A card with the "Close to system tray" checkbox, under Start with Windows. Off until
-    /// the user turns it on (KillerShot, a tray app, defaults to on).</summary>
+    /// the user turns it on (JpdfsShot, a tray app, defaults to on).</summary>
     internal interface IAboutTray
     {
         bool CloseToTray { set; }

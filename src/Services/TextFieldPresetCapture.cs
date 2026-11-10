@@ -1,7 +1,7 @@
 using System.Globalization;
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// Reads the parts of a text field that a preset keeps (#340) from the field's own PDF values:

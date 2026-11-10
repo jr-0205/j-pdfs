@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 // One raster worker per pane. Pending requests carry estimates, not pixel buffers.
 internal sealed class ViewportRenderQueue(int capacity = 32, long byteBudget = 512L << 20)

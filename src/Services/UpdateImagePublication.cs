@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Text;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal static class UpdateImagePublication
     {
@@ -74,7 +74,7 @@ namespace KillerPDF.Services
             return script.ToString();
         }
 
-        /// <summary>The installer-mode helper (KillerBench's installed-copy update). It stages the
+        /// <summary>The installer-mode helper (JpdfsBench's installed-copy update). It stages the
         /// verified installer in a fresh folder (administrators only when elevated), holds it open
         /// against writes, renames and deletion, rechecks its hash and publisher signature through
         /// that hold, runs it with <paramref name="arguments"/>, then relaunches
@@ -109,7 +109,7 @@ namespace KillerPDF.Services
         // Every parent folder of the target stays pinned for the whole publication, so none can be
         // renamed or redirected under it. The published image is then reopened once without
         // following links, and its hash and publisher signature are checked through that one held
-        // handle (KillerBench's portable publication).
+        // handle (JpdfsBench's portable publication).
         private const string Function = """
 $ErrorActionPreference = 'Stop'
 function Invoke-UpdateImagePublication {
@@ -200,9 +200,9 @@ $ops = @{
         try { $stream.Position = 0; [BitConverter]::ToString($hash.ComputeHash($stream)).Replace('-', '') }
         finally { $hash.Dispose() }
     }
-    PinParents = { param($target) [KillerUpdateGuard]::PinParents($target) }
-    OpenImage = { param($path) [KillerUpdateGuard]::OpenImage($path) }
-    Publisher = { param($path, $plan) [KillerUpdateGuard]::Publisher($path, $plan.Thumb, $plan.Signer) }
+    PinParents = { param($target) [JpdfsUpdateGuard]::PinParents($target) }
+    OpenImage = { param($path) [JpdfsUpdateGuard]::OpenImage($path) }
+    Publisher = { param($path, $plan) [JpdfsUpdateGuard]::Publisher($path, $plan.Thumb, $plan.Signer) }
     Stage = { param($path, $bytes)
         $stream = New-Object IO.FileStream($path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write,
             [IO.FileShare]::None, 65536, [IO.FileOptions]::WriteThrough)
@@ -273,7 +273,7 @@ $ops = @{
         }
     }
     Relaunch = { param($plan)
-        Start-KillerUpdatedApp $plan.Target $plan.Reopen $plan.Elevated
+        Start-JpdfsUpdatedApp $plan.Target $plan.Reopen $plan.Elevated
     }
 }
 """;
@@ -338,7 +338,7 @@ $ops.StageFolder = { param($plan)
         [void][IO.Directory]::CreateDirectory($path, $security)
     }
     else { [void][IO.Directory]::CreateDirectory($path) }
-    $guard = [KillerUpdateGuard]::PinParents((Join-Path $path 'x'))
+    $guard = [JpdfsUpdateGuard]::PinParents((Join-Path $path 'x'))
     $guard.Dispose()
     $path
 }
@@ -361,21 +361,21 @@ $ops.Releases = { param($url)
         // Compiled by Windows PowerShell 5.1, so it stays within C# 5. TrustedUpdate.Publication emits
         // it ahead of its own prologue too; the type check at the top makes a second copy a no-op.
         internal const string Guard = """
-if (-not ('KillerUpdateGuard' -as [type])) {
+if (-not ('JpdfsUpdateGuard' -as [type])) {
 # A helper running as administrator (the trusted machine path, or a per-user copy run as
 # administrator) compiles in a fresh folder only Administrators and SYSTEM can open. Add-Type
 # writes its source and DLL to TMP before loading them, and the inherited TMP is the user's own
 # folder, where any process of that user could swap them in between (2026-10-28 review, DEP-001).
-$killerTemp = $null; $killerSaved = @($env:TMP, $env:TEMP)
+$jpdfsTemp = $null; $jpdfsSaved = @($env:TMP, $env:TEMP)
 if (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    $killerTemp = Join-Path ([Environment]::GetFolderPath('Windows')) ('Temp\KillerTools-' + [Guid]::NewGuid().ToString('N'))
+    $jpdfsTemp = Join-Path ([Environment]::GetFolderPath('Windows')) ('Temp\JpdfsTools-' + [Guid]::NewGuid().ToString('N'))
     $acl = New-Object Security.AccessControl.DirectorySecurity
     $acl.SetAccessRuleProtection($true, $false)
     foreach ($sid in 'S-1-5-32-544', 'S-1-5-18') {
         $acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule((New-Object Security.Principal.SecurityIdentifier $sid), 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
     }
-    $null = [IO.Directory]::CreateDirectory($killerTemp, $acl)
-    $env:TMP = $killerTemp; $env:TEMP = $killerTemp
+    $null = [IO.Directory]::CreateDirectory($jpdfsTemp, $acl)
+    $env:TMP = $jpdfsTemp; $env:TEMP = $jpdfsTemp
 }
 try {
 Add-Type -TypeDefinition @'
@@ -389,7 +389,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
-public static class KillerUpdateGuard {
+public static class JpdfsUpdateGuard {
     private sealed class Parents : IDisposable {
         internal readonly List<SafeFileHandle> Handles = new List<SafeFileHandle>();
         public void Dispose() { for (int i = Handles.Count - 1; i >= 0; i--) Handles[i].Dispose(); Handles.Clear(); }
@@ -547,28 +547,28 @@ public static class KillerUpdateGuard {
 }
 '@
 } finally {
-    $env:TMP = $killerSaved[0]; $env:TEMP = $killerSaved[1]
-    if ($null -ne $killerTemp) { Remove-Item -LiteralPath $killerTemp -Recurse -Force -ErrorAction SilentlyContinue }
+    $env:TMP = $jpdfsSaved[0]; $env:TEMP = $jpdfsSaved[1]
+    if ($null -ne $jpdfsTemp) { Remove-Item -LiteralPath $jpdfsTemp -Recurse -Force -ErrorAction SilentlyContinue }
 }
 }
 # Reopens the updated app for the person at this desktop. Someone who elevated with another
 # administrator's account has no shell token this helper can use, and that account must never
 # start the app itself, so a one-time task for the Users group starts it in this session, as
 # whoever is signed in there and at normal rights. Task Scheduler needs no password for that.
-function Start-KillerUpdatedApp {
+function Start-JpdfsUpdatedApp {
     param($target, $reopen, $elevated)
-    try { [KillerUpdateGuard]::Launch($target, $reopen, $elevated); return }
+    try { [JpdfsUpdateGuard]::Launch($target, $reopen, $elevated); return }
     catch { if (-not $elevated) { throw } }
     $session = [Diagnostics.Process]::GetCurrentProcess().SessionId
-    if ($session -eq 0) { $session = [KillerUpdateGuard]::ConsoleSession() }
-    $name = 'KillerUpdate-' + [Guid]::NewGuid().ToString('N')
+    if ($session -eq 0) { $session = [JpdfsUpdateGuard]::ConsoleSession() }
+    $name = 'JpdfsUpdate-' + [Guid]::NewGuid().ToString('N')
     $service = New-Object -ComObject Schedule.Service
     $service.Connect()
     $folder = $service.GetFolder('')
     # An earlier helper killed before its cleanup leaves its hidden task behind; tasks still queued
     # or running belong to a start in progress and stay.
     foreach ($old in @($folder.GetTasks(1))) {
-        if ($old.Name -like 'KillerUpdate-*' -and $old.State -ne 2 -and $old.State -ne 4) {
+        if ($old.Name -like 'JpdfsUpdate-*' -and $old.State -ne 2 -and $old.State -ne 4) {
             try { $folder.DeleteTask($old.Name, 0) } catch { }
         }
     }
@@ -582,7 +582,7 @@ function Start-KillerUpdatedApp {
     $action = $task.Actions.Create(0)
     $action.Path = $target
     $action.WorkingDirectory = [IO.Path]::GetDirectoryName($target)
-    if ($reopen) { $action.Arguments = [KillerUpdateGuard]::Quote($reopen) }
+    if ($reopen) { $action.Arguments = [JpdfsUpdateGuard]::Quote($reopen) }
     $registered = $folder.RegisterTaskDefinition($name, $task, 2, $null, $null, 4)
     try {
         $null = $registered.RunEx($null, 4, $session, $null)

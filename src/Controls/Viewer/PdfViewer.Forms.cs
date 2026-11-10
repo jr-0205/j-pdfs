@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Moved from Shell/Forms.cs; the namespace and class line are the only changes. Window members
     // spelled bare here resolve through PdfViewer.Bridge.cs.
@@ -272,10 +272,10 @@ namespace KillerPDF.Controls
                 element.ActualWidth, element.ActualHeight);
             try
             {
-                IReadOnlyList<KillerPdf.Engine.Documents.PdfPageInformation> pages =
+                IReadOnlyList<JPDFs.Engine.Documents.PdfPageInformation> pages =
                     PdfEngineIntegration.ReadPageInformation(_currentFile, _protection);
                 if ((uint)pageIndex >= (uint)pages.Count) return;
-                KillerPdf.Engine.Documents.PdfPageInformation page = pages[pageIndex];
+                JPDFs.Engine.Documents.PdfPageInformation page = pages[pageIndex];
                 int rotation = _pageRotations.TryGetValue(pageIndex, out int storedRotation)
                     ? ((storedRotation % 360) + 360) % 360
                     : page.Rotation;
@@ -735,7 +735,7 @@ namespace KillerPDF.Controls
         private void StartReadingFormTextLimits()
         {
             if (_doc is null || FormTextLimits.Known(_doc) is not null) return;
-            KillerPdf.Engine.Documents.PdfDocument engine;
+            JPDFs.Engine.Documents.PdfDocument engine;
             try { engine = EnsureEngineDocumentSession().Document; }
             catch (Exception error) when (error is not OutOfMemoryException) { return; }
             FormTextLimits.Read(_doc, () =>
@@ -757,8 +757,8 @@ namespace KillerPDF.Controls
             if (_doc is null || pageIndex >= _doc.PageCount) return result;
             try
             {
-                KillerPdf.Engine.Documents.PdfDocument engineDocument = EnsureEngineDocumentSession().Document;
-                foreach (KillerPdf.Engine.Documents.PdfFormWidgetInfo widget in
+                JPDFs.Engine.Documents.PdfDocument engineDocument = EnsureEngineDocumentSession().Document;
+                foreach (JPDFs.Engine.Documents.PdfFormWidgetInfo widget in
                     PdfEngineIntegration.ReadPageFormWidgets(engineDocument, pageIndex, forDisplay: true))
                 {
                     double fx1 = widget.Left - widget.PageBoxLeft;
@@ -801,10 +801,10 @@ namespace KillerPDF.Controls
                         || cw < 2 || ch < 2) continue;
                     string fieldType = widget.FieldKind switch
                     {
-                        KillerPdf.Engine.Documents.PdfFormFieldKind.Text => "/Tx",
-                        KillerPdf.Engine.Documents.PdfFormFieldKind.Button => "/Btn",
-                        KillerPdf.Engine.Documents.PdfFormFieldKind.Choice => "/Ch",
-                        KillerPdf.Engine.Documents.PdfFormFieldKind.Signature => "/Sig",
+                        JPDFs.Engine.Documents.PdfFormFieldKind.Text => "/Tx",
+                        JPDFs.Engine.Documents.PdfFormFieldKind.Button => "/Btn",
+                        JPDFs.Engine.Documents.PdfFormFieldKind.Choice => "/Ch",
+                        JPDFs.Engine.Documents.PdfFormFieldKind.Signature => "/Sig",
                         _ => string.Empty
                     };
                     if (fieldType.Length == 0 || widget.FieldName.Length == 0) continue;
@@ -1067,17 +1067,17 @@ namespace KillerPDF.Controls
         }
 
         // The signature fields that already hold a signature, read once per engine document.
-        private KillerPdf.Engine.Documents.PdfDocument? _signedFieldsDocument;
+        private JPDFs.Engine.Documents.PdfDocument? _signedFieldsDocument;
         private HashSet<string> _signedFieldNames = new(StringComparer.Ordinal);
 
         private HashSet<string> SignedFieldNames()
         {
-            KillerPdf.Engine.Documents.PdfDocument document = EnsureEngineDocumentSession().Document;
+            JPDFs.Engine.Documents.PdfDocument document = EnsureEngineDocumentSession().Document;
             if (ReferenceEquals(document, _signedFieldsDocument)) return _signedFieldNames;
             _signedFieldsDocument = document;
             try
             {
-                _signedFieldNames = new HashSet<string>(KillerPdf.Engine.Signing.PdfSignatureReader.Read(document)
+                _signedFieldNames = new HashSet<string>(JPDFs.Engine.Signing.PdfSignatureReader.Read(document)
                     .Where(signature => signature.IsSigned)
                     .Select(signature => signature.FieldName), StringComparer.Ordinal);
             }

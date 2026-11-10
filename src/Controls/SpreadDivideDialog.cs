@@ -4,9 +4,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Divide Spreads (#382). The page is shown as it looks in the viewer with a split line across it.
 // Dragging or clicking moves the line onto the gutter; each page divided becomes two pages in

@@ -11,7 +11,7 @@ $ErrorActionPreference = 'Stop'
 if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
     throw 'Run this test with pwsh -Sta.'
 }
-$project = Join-Path $RepositoryRoot 'KillerPDF.csproj'
+$project = Join-Path $RepositoryRoot 'JPDFs.csproj'
 $properties = & dotnet msbuild $project -nologo "-p:Configuration=$Configuration" -getProperty:TargetPath,TargetFramework | ConvertFrom-Json
 if ($LASTEXITCODE -ne 0) { throw 'Could not evaluate the app project.' }
 $assemblyPath = $properties.Properties.TargetPath
@@ -49,10 +49,10 @@ if ($null -ne $resourceField) { $resourceField.SetValue($null, $assembly) }
 else { [Windows.Application]::ResourceAssembly = $assembly }
 $application = [Windows.Application]::new()
 $application.ShutdownMode = [Windows.ShutdownMode]::OnExplicitShutdown
-$manager = $assembly.GetType('KillerPDF.Services.ThemeManager', $true)
-$themeType = $assembly.GetType('KillerPDF.Services.Theme', $true)
-$accentType = $assembly.GetType('KillerPDF.Services.DarkAccent', $true)
-$dialogType = $assembly.GetType('KillerPDF.ColorPickerDialog', $true)
+$manager = $assembly.GetType('JPDFs.Services.ThemeManager', $true)
+$themeType = $assembly.GetType('JPDFs.Services.Theme', $true)
+$accentType = $assembly.GetType('JPDFs.Services.Accent', $true)
+$dialogType = $assembly.GetType('JPDFs.ColorPickerDialog', $true)
 $load = $manager.GetMethod('LoadDict', [Reflection.BindingFlags]'Static,NonPublic')
 $current = $manager.GetField('_current', [Reflection.BindingFlags]'Static,NonPublic')
 $makeButton = $dialogType.GetMethod('MakeButton', [Reflection.BindingFlags]'Static,NonPublic')
@@ -71,11 +71,9 @@ function Test-Picker([string]$Theme, [object]$Accent) {
     $dialog = [Activator]::CreateInstance($dialogType, [object[]]@($null, $initial))
     try {
         if ($dialog.SelectedColor -ne $initial -or $dialog.Accepted) { throw 'Initial picker state changed.' }
-        if ($Theme -ne 'SE98') {
-            $button = $makeButton.Invoke($null, @('OK', $true))
-            if (![object]::ReferenceEquals($button.Background, $application.Resources['SelectionBg'])) {
-                throw 'The primary button did not preserve the theme brush.'
-            }
+        $button = $makeButton.Invoke($null, @('OK', $true))
+        if (![object]::ReferenceEquals($button.Background, $application.Resources['SelectionBg'])) {
+            throw 'The primary button did not preserve the theme brush.'
         }
         $hexBox.GetValue($dialog).Text = '#123456'
         $null = $commitHex.Invoke($dialog, $null)
@@ -90,14 +88,8 @@ function Test-Picker([string]$Theme, [object]$Accent) {
 
 try {
     foreach ($theme in [Enum]::GetNames($themeType)) {
-        Test-Picker $theme $null
+        Test-Picker $theme ([Enum]::Parse($accentType, 'Green'))
         $states++
-    }
-    foreach ($theme in @('Dark', 'Light', 'Black', 'SE98')) {
-        foreach ($accent in [Enum]::GetValues($accentType)) {
-            Test-Picker $theme $accent
-            $states++
-        }
     }
     # Exercise each supported brush shape independently of today's theme palette.
     foreach ($brush in @(
@@ -105,7 +97,7 @@ try {
         [Windows.Media.LinearGradientBrush]::new([Windows.Media.Colors]::Blue, [Windows.Media.Colors]::White, 90),
         [Windows.Media.RadialGradientBrush]::new([Windows.Media.Colors]::Blue, [Windows.Media.Colors]::White)
     )) {
-        $current.SetValue($null, [Enum]::Parse($themeType, 'Dark'))
+        $current.SetValue($null, [Enum]::Parse($themeType, 'AcrobatLight'))
         $application.Resources['SelectionBg'] = $brush
         $dialog = [Activator]::CreateInstance($dialogType, [object[]]@($null, [Windows.Media.Colors]::Red))
         try {
@@ -115,7 +107,7 @@ try {
         finally { $dialog.Close() }
         Write-Output "PASS picker $($brush.GetType().Name)"
     }
-    Write-Output "PASS $states theme/accent states and 3 brush shapes; assembly=$assemblyPath; sha256=$((Get-FileHash -LiteralPath $assemblyPath -Algorithm SHA256).Hash)"
+    Write-Output "PASS $states theme states and 3 brush shapes; assembly=$assemblyPath; sha256=$((Get-FileHash -LiteralPath $assemblyPath -Algorithm SHA256).Hash)"
 }
 finally {
     $application.Shutdown()

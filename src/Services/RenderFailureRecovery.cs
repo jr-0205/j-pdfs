@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>One document saved aside when the window could no longer draw.</summary>
     internal sealed record RecoveredDocument(string? OriginalPath, string RecoveredPath, string? SuggestedName,
@@ -55,7 +55,7 @@ namespace KillerPDF.Services
     /// <summary>
     /// WPF's render thread can fail for good (UCEERR_RENDERTHREADFAILURE, often after sleep, a
     /// display change or a graphics driver reset). The window then stays black and cannot recover,
-    /// so KillerPDF saves unsaved documents aside and restarts instead of offering Continue (#456).
+    /// so JPDFs saves unsaved documents aside and restarts instead of offering Continue (#456).
     /// </summary>
     internal static class RenderFailureRecovery
     {
@@ -125,11 +125,11 @@ namespace KillerPDF.Services
 
         /// <summary>
         /// Where a recovery folder may go, most preferred first: the user's data root, the local data
-        /// root when the user's is portable, then a KillerPDF folder in the system temp. None is the
+        /// root when the user's is portable, then a JPDFs folder in the system temp. None is the
         /// session temp root, whose files a restarted session treats as imports, not recoveries.
         /// </summary>
         internal static IReadOnlyList<string> FolderRoots(string userRoot, string localRoot, string systemTemp) =>
-            [.. new[] { userRoot, localRoot, Path.Combine(systemTemp, "J-PDF's") }
+            [.. new[] { userRoot, localRoot, Path.Combine(systemTemp, "JPDFs") }
                 .Select(root => Path.TrimEndingDirectorySeparator(Path.GetFullPath(root)))
                 .Distinct(StringComparer.OrdinalIgnoreCase)];
 

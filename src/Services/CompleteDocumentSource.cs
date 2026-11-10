@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The working copy of an opened PDF could not be written, usually because the temp folder is
 /// full or unavailable. Opening reports that instead of offering to repair an undamaged file.</summary>

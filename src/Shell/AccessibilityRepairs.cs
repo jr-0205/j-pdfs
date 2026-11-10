@@ -1,10 +1,10 @@
 using System.IO;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Objects;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Objects;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -26,7 +26,7 @@ public partial class MainWindow
     private int SelectRepairTarget(string titleKey, IEnumerable<string> labels)
     {
         string[] items = labels.ToArray();
-        if (items.Length == 0) { KillerDialog.Show(this, Loc("Str_Repair_NoChanges")); return -1; }
+        if (items.Length == 0) { JpdfsDialog.Show(this, Loc("Str_Repair_NoChanges")); return -1; }
         var dialog = new DocumentListDialog(this, Loc(titleKey), items);
         return dialog.ShowDialog() == true ? dialog.SelectedIndex : -1;
     }
@@ -89,7 +89,7 @@ public partial class MainWindow
             ? document.Resolve(catalogReference) as PdfDictionary : catalogValue as PdfDictionary;
         if (catalog is null || !catalog.TryGetValue(new PdfName("StructTreeRoot"u8), out var root)) return nodes;
         var readingOrder = PdfAccessibilityReadingOrder.Read(document).Items;
-        var pageText = new Dictionary<int, IReadOnlyList<KillerPdf.Engine.Documents.PdfExtractedLetter>>();
+        var pageText = new Dictionary<int, IReadOnlyList<JPDFs.Engine.Documents.PdfExtractedLetter>>();
         Visit(root, null, 0);
         return nodes;
 

@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static class AnnotationNudge
 {

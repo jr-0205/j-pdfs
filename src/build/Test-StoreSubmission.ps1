@@ -4,14 +4,14 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = Split-Path -Parent $PSScriptRoot
 $global:storeSubmissionFixtureState = @{
-    requestedUrl = 'https://example.invalid/store/1.9.1/KillerPDF-Store.exe'
+    requestedUrl = 'https://example.invalid/store/1.9.1/JPDFs-Store.exe'
     patchedUrl = $null
     committed = $false
     submitted = $false
 }
 $previous = @{}
 foreach ($name in @('TENANT_ID', 'CLIENT_ID', 'CLIENT_SECRET', 'SELLER_ID')) {
-    $key = "KILLER_STORE_$name"
+    $key = "JPDFS_STORE_$name"
     $previous[$key] = [Environment]::GetEnvironmentVariable($key, 'Process')
     [Environment]::SetEnvironmentVariable($key, 'offline-fixture', 'Process')
 }
@@ -23,7 +23,7 @@ function Invoke-WebRequest {
     $data = @{}
     switch ("$Method $path") {
         'GET /status' { $data = @{ isReady = $true } }
-        'GET /packages' { $data = @{ packages = @(@{ packageId = '123'; packageUrl = 'https://example.invalid/store/1.8.91/KillerPDF-Store.exe' }) } }
+        'GET /packages' { $data = @{ packages = @(@{ packageId = '123'; packageUrl = 'https://example.invalid/store/1.8.91/JPDFs-Store.exe' }) } }
         'PATCH /packages/123' { $global:storeSubmissionFixtureState.patchedUrl = ($Body | ConvertFrom-Json).packageUrl }
         'POST /packages/commit' { $global:storeSubmissionFixtureState.committed = $true }
         'POST /submit' {

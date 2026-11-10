@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// Geometry for text that reads sideways or upside down on the canvas. A turn is the clockwise angle

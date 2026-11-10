@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class DocumentReportDialog : Window
 {
@@ -43,7 +43,7 @@ internal sealed class DocumentReportDialog : Window
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         };

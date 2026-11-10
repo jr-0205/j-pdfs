@@ -1,7 +1,7 @@
 using System.Windows;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 public partial class PdfViewer
 {

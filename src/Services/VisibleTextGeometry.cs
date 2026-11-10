@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Which characters of a page's text runs show inside a screen viewport, for the screen
 /// reader's visible ranges. Free of the viewer so the mapping can be checked without a window.</summary>

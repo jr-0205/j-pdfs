@@ -18,14 +18,14 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     env:
-      APP_NAME: KillerPDF
-      PROJECT_PATH: KillerPDF.csproj
-      ENGINE_PROJECT_PATH: engine/KillerPdf.Engine/KillerPdf.Engine.csproj
-      EXPECTED_ASSETS: KillerPDF.exe,SHA256SUMS.txt
-      CHOCOLATEY_ID: killerpdf
-      WINGET_ID: SteveTheKiller.KillerPDF
-      WINGET_MANIFEST_ROOT: manifests/s/SteveTheKiller/KillerPDF
-      NUGET_ID: killerpdf.engine
+      APP_NAME: JPDFs
+      PROJECT_PATH: JPDFs.csproj
+      ENGINE_PROJECT_PATH: engine/JPDFs.Engine/JPDFs.Engine.csproj
+      EXPECTED_ASSETS: JPDFs.exe,SHA256SUMS.txt
+      CHOCOLATEY_ID: jpdfs
+      WINGET_ID: JPDFs
+      WINGET_MANIFEST_ROOT: manifests/s/JPDFs/JPDFs
+      NUGET_ID: jpdfs.engine
       REQUESTED_VERSION: ${{ inputs.version }}
       GH_TOKEN: ${{ github.token }}
     steps:

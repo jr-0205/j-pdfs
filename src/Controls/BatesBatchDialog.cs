@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class BatesBatchDialog : Window
 {
@@ -76,7 +76,7 @@ internal sealed class BatesBatchDialog : Window
             Options = options;
             DialogResult = true;
         }
-        catch (Exception error) { KillerDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + error.Message); }
+        catch (Exception error) { JpdfsDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + error.Message); }
     }
     private static string L(string key) => Application.Current.TryFindResource(key) as string ?? key;
 }

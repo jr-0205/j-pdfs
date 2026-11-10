@@ -1,7 +1,7 @@
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Fonts;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Fonts;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 // Document to PDF (#74): flowing text for Word documents. The reader builds sections of
 // paragraphs and tables; this lays them out into lines, breaks them across pages, and draws the

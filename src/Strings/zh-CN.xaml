@@ -315,21 +315,9 @@ J-PDF's 不会创建两个已安装的副本。</sys:String>
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">深色</sys:String>
-    <sys:String x:Key="Str_Theme_Light">浅色</sys:String>
-    <sys:String x:Key="Str_Theme_Black">黑色</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">血色</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">贪婪</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">发绀</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat 浅色</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">灵质</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">腐朽</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">哀悼</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat 浅色</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat 深色</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">胶片颗粒</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">陵墓</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">谵妄</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">倦怠</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">适合宽度</sys:String>
@@ -1575,7 +1563,6 @@ J-PDF's 不会创建两个已安装的副本。</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">键盘快捷键已禁用。按 Ctrl+Shift+K 可启用。</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">启动时检查更新</sys:String>
     <sys:String x:Key="Str_PasswordProtected">“{0}”受密码保护。</sys:String>
-    <sys:String x:Key="Str_About_Aka">别名</sys:String>
     <sys:String x:Key="Str_Btn_Run">运行</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">宏</sys:String>
     <sys:String x:Key="Str_Macro_Saved">已保存的宏</sys:String>

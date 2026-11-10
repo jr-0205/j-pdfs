@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Controls;
 
-namespace KillerFamily.Accessibility
+namespace JpdfsUi.Accessibility
 {
     /// <summary>Windows contrast colors override the app palette without saving a theme change.</summary>
     public static class HighContrastResources
@@ -48,7 +48,7 @@ namespace KillerFamily.Accessibility
             {
                 prepared = new Style(original.TargetType, original);
                 var hoverProperties = new List<DependencyProperty> { UIElement.IsMouseOverProperty, Button.IsPressedProperty };
-                var snap = typeof(HighContrastResources).Assembly.GetType("KillerFamily.Windowing.SnapLayouts");
+                var snap = typeof(HighContrastResources).Assembly.GetType("JpdfsUi.Windowing.SnapLayouts");
                 foreach (string name in new[] { "IsHoveredProperty", "IsPressedProperty" })
                     if (snap?.GetField(name)?.GetValue(null) is DependencyProperty property) hoverProperties.Add(property);
                 foreach (var hover in hoverProperties)

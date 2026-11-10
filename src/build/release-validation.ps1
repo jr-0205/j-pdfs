@@ -5,15 +5,15 @@ function Invoke-ReleaseDesktopTests([string]$TestProject,[string]$CliExecutable,
     $actual=[Diagnostics.FileVersionInfo]::GetVersionInfo($CliExecutable).FileVersion
     if($actual -ne $ExpectedVersion){throw "CLI test executable is version $actual, expected $ExpectedVersion`: $CliExecutable"}
     Write-Host "    CLI test executable: $CliExecutable ($actual)"
-    $previous=[Environment]::GetEnvironmentVariable('KILLERPDF_CLI_TEST_EXE')
+    $previous=[Environment]::GetEnvironmentVariable('JPDFS_CLI_TEST_EXE')
     # These window-opening cases belong on the owned UI VMs, not the main PC.
     $filter='FullyQualifiedName!~ComparisonBarLayoutTests&FullyQualifiedName!~WindowFxTests&FullyQualifiedName!~BottomTabFaceFlipsWhileItsLabelAndCloseTargetStayUpright&FullyQualifiedName!~TabTraversalEntersAndLeavesTheReadingDocument'
     try {
-        [Environment]::SetEnvironmentVariable('KILLERPDF_CLI_TEST_EXE',$CliExecutable)
+        [Environment]::SetEnvironmentVariable('JPDFS_CLI_TEST_EXE',$CliExecutable)
         & dotnet test $TestProject -c Release --nologo -v quiet --filter $filter --logger 'trx;LogFileName=desktop.trx' --results-directory $ResultsDirectory
         if($LASTEXITCODE -ne 0){throw 'Desktop unit tests failed - fix them before releasing'}
-        Assert-ReleaseTestResult (Join-Path $ResultsDirectory 'desktop.trx') 'KillerPDF.Tests.dll'
-    } finally {[Environment]::SetEnvironmentVariable('KILLERPDF_CLI_TEST_EXE',$previous)}
+        Assert-ReleaseTestResult (Join-Path $ResultsDirectory 'desktop.trx') 'JPDFs.Tests.dll'
+    } finally {[Environment]::SetEnvironmentVariable('JPDFS_CLI_TEST_EXE',$previous)}
 }
 
 function Write-ReleaseValidationRecord([string]$Path, $Record) {
@@ -60,8 +60,8 @@ function Assert-ReleaseTestResult([string]$Path,[string]$AssemblyName) {
 }
 
 function Get-ReleaseValidationFiles([string]$PublishDirectory,[string]$Version) {
-    foreach($name in @('KillerPDF.exe','KillerPDF-Portable.exe','KillerPDF-Store.exe',
-        ('KillerPDF-'+$Version+'-src.zip'),'SHA256SUMS.txt','release-validation/engine.trx','release-validation/desktop.trx')){
+    foreach($name in @('JPDFs.exe','JPDFs-Portable.exe','JPDFs-Store.exe',
+        ('JPDFs-'+$Version+'-src.zip'),'SHA256SUMS.txt','release-validation/engine.trx','release-validation/desktop.trx')){
         $path=Join-Path $PublishDirectory $name
         if(![IO.File]::Exists($path)){throw "Dry-run input is missing: $path. Run a full signed -DryRun first."}
         [pscustomobject]@{Name=$name;Sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash}
@@ -69,8 +69,8 @@ function Get-ReleaseValidationFiles([string]$PublishDirectory,[string]$Version) 
 }
 
 function Save-ReleaseDryRun([string]$PublishDirectory,[string]$Version,[string]$SourceCommit,[bool]$Signed) {
-    Assert-ReleaseTestResult (Join-Path $PublishDirectory 'release-validation/engine.trx') 'KillerPdf.Engine.Tests.dll'
-    Assert-ReleaseTestResult (Join-Path $PublishDirectory 'release-validation/desktop.trx') 'KillerPDF.Tests.dll'
+    Assert-ReleaseTestResult (Join-Path $PublishDirectory 'release-validation/engine.trx') 'JPDFs.Engine.Tests.dll'
+    Assert-ReleaseTestResult (Join-Path $PublishDirectory 'release-validation/desktop.trx') 'JPDFs.Tests.dll'
     $files=@(Get-ReleaseValidationFiles $PublishDirectory $Version)
     Write-ReleaseValidationRecord (Join-Path $PublishDirectory 'release-validation.json') @{
         Schema=1;Complete=$true;Signed=$Signed;Version=$Version;SourceCommit=$SourceCommit;
@@ -91,7 +91,7 @@ function Read-ReleaseDryRun([string]$PublishDirectory,[string]$Version,[string]$
         $record=@($proof.Files|Where-Object{$_.Name -ceq $file.Name})
         if($record.Count -ne 1 -or $record[0].Sha256 -cne $file.Sha256){throw "Dry-run file changed: $($file.Name). Run a full signed -DryRun first."}
     }
-    Assert-ReleaseTestResult (Join-Path $PublishDirectory 'release-validation/engine.trx') 'KillerPdf.Engine.Tests.dll'
-    Assert-ReleaseTestResult (Join-Path $PublishDirectory 'release-validation/desktop.trx') 'KillerPDF.Tests.dll'
+    Assert-ReleaseTestResult (Join-Path $PublishDirectory 'release-validation/engine.trx') 'JPDFs.Engine.Tests.dll'
+    Assert-ReleaseTestResult (Join-Path $PublishDirectory 'release-validation/desktop.trx') 'JPDFs.Tests.dll'
     return $proof
 }

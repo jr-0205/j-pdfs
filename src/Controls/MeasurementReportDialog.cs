@@ -3,9 +3,9 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // The Measurements report: every measurement in the document, page by page, with its value and
 // the scale it was taken at, as a table. Copy puts the list on the clipboard with tabs between
@@ -70,7 +70,7 @@ internal sealed class MeasurementReportDialog : Window
             }
             catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException)
             {
-                KillerDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         };
@@ -171,12 +171,12 @@ internal sealed class MeasurementReportDialog : Window
         try
         {
             if (Services.GatedReportSave.Save(_mayExport, ChoosePath, content) is not string saved) return;
-            KillerDialog.Show(this, string.Format(L("Str_MeasureReport_Saved"), Path.GetFileName(saved)),
+            JpdfsDialog.Show(this, string.Format(L("Str_MeasureReport_Saved"), Path.GetFileName(saved)),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            KillerDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }

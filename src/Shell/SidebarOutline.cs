@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,10 +13,10 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
-using KillerFamily.Accessibility;
+using JPDFs.Services;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -186,7 +186,7 @@ namespace KillerPDF.Shell
             OutlineTree.Items.Clear();
             try
             {
-                IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> outlines = ReadEngineBookmarks();
+                IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> outlines = ReadEngineBookmarks();
                 if (outlines.Count == 0)
                 {
                     // #133: stay enabled on an editable document so the user can open the panel and
@@ -213,7 +213,7 @@ namespace KillerPDF.Shell
             }
         }
 
-        private IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> ReadEngineBookmarks()
+        private IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> ReadEngineBookmarks()
         {
             if (_doc is null) return [];
             byte[] bytes;
@@ -229,9 +229,9 @@ namespace KillerPDF.Shell
         }
 
         private void AddOutlineItems(ItemCollection target,
-            IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> outlines, int depth = 0)
+            IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> outlines, int depth = 0)
         {
-            foreach (KillerPdf.Engine.Documents.PdfBookmarkInfo outline in outlines)
+            foreach (JPDFs.Engine.Documents.PdfBookmarkInfo outline in outlines)
             {
                 int pageIdx = outline.DestinationPageIndex ?? -1;
                 string title = outline.Title;
@@ -353,20 +353,20 @@ namespace KillerPDF.Shell
         // ============================================================
 
         /// <summary>Ties a row to engine-owned bookmark data and stable PDF object identity.</summary>
-        private sealed class OutlineNodeRef(KillerPdf.Engine.Documents.PdfBookmarkInfo bookmark)
+        private sealed class OutlineNodeRef(JPDFs.Engine.Documents.PdfBookmarkInfo bookmark)
         {
-            public readonly KillerPdf.Engine.Documents.PdfBookmarkInfo Bookmark = bookmark;
+            public readonly JPDFs.Engine.Documents.PdfBookmarkInfo Bookmark = bookmark;
             public (int ObjectNumber, int Generation) Identity =>
                 (Bookmark.ObjectNumber, Bookmark.Generation);
             public int PageIndex => Bookmark.DestinationPageIndex ?? -1;
         }
 
         private void ApplyEngineBookmarkEdit(
-            Func<IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo>,
-                IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo>> edit)
+            Func<IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo>,
+                IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo>> edit)
         {
             ArgumentNullException.ThrowIfNull(edit);
-            IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo>? replacement = null;
+            IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo>? replacement = null;
             try
             {
                 SaveTempAndReload(keepAnnotations: true, preserveZoom: true,
@@ -378,7 +378,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message),
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -386,11 +386,11 @@ namespace KillerPDF.Shell
             MarkDirty(true);
         }
 
-        private static IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> TransformBookmarks(
-            IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> items,
+        private static IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> TransformBookmarks(
+            IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> items,
             (int ObjectNumber, int Generation) identity,
-            Func<KillerPdf.Engine.Documents.PdfBookmarkInfo,
-                KillerPdf.Engine.Documents.PdfBookmarkInfo> transform)
+            Func<JPDFs.Engine.Documents.PdfBookmarkInfo,
+                JPDFs.Engine.Documents.PdfBookmarkInfo> transform)
         {
             return [.. items.Select(item => item.ObjectNumber == identity.ObjectNumber
                     && item.Generation == identity.Generation
@@ -398,8 +398,8 @@ namespace KillerPDF.Shell
                 : item with { Children = TransformBookmarks(item.Children, identity, transform) })];
         }
 
-        private static IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> RemoveBookmarks(
-            IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> items,
+        private static IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> RemoveBookmarks(
+            IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> items,
             IReadOnlySet<(int ObjectNumber, int Generation)> identities)
         {
             return
@@ -413,8 +413,8 @@ namespace KillerPDF.Shell
             ];
         }
 
-        private static List<KillerPdf.Engine.Documents.PdfBookmarkInfo> MoveBookmarkModel(
-            IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> items,
+        private static List<JPDFs.Engine.Documents.PdfBookmarkInfo> MoveBookmarkModel(
+            IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> items,
             (int ObjectNumber, int Generation) identity, int delta)
         {
             var result = items.ToList();
@@ -434,7 +434,7 @@ namespace KillerPDF.Shell
         }
 
         private static (int Index, int Count) FindBookmarkSiblingPosition(
-            IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> items,
+            IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> items,
             (int ObjectNumber, int Generation) identity)
         {
             for (int index = 0; index < items.Count; index++)
@@ -628,15 +628,15 @@ namespace KillerPDF.Shell
             if (page >= _doc!.PageCount) page = _doc.PageCount - 1;
             if (page < 0) return;
             string title = string.Format(Loc("Str_Bm_DefaultTitle"), page + 1);
-            var added = new KillerPdf.Engine.Documents.PdfBookmarkInfo
+            var added = new JPDFs.Engine.Documents.PdfBookmarkInfo
             {
                 ObjectNumber = 0,
                 Generation = 0,
                 Title = title,
                 IsOpen = true,
-                Style = KillerPdf.Engine.Authoring.PdfBookmarkStyle.Regular,
+                Style = JPDFs.Engine.Authoring.PdfBookmarkStyle.Regular,
                 DestinationPageIndex = page,
-                Destination = KillerPdf.Engine.Authoring.PdfDestination.At(),
+                Destination = JPDFs.Engine.Authoring.PdfDestination.At(),
                 Children = []
             };
             ApplyEngineBookmarkEdit(items => parent is null
@@ -737,7 +737,7 @@ namespace KillerPDF.Shell
             var chosen = new HashSet<(int ObjectNumber, int Generation)>(targets.Select(t => t.Identity));
             bool Covered(OutlineNodeRef node)
             {
-                bool FindAncestor(IReadOnlyList<KillerPdf.Engine.Documents.PdfBookmarkInfo> items,
+                bool FindAncestor(IReadOnlyList<JPDFs.Engine.Documents.PdfBookmarkInfo> items,
                     HashSet<(int, int)> ancestors)
                 {
                     foreach (var item in items)
@@ -753,7 +753,7 @@ namespace KillerPDF.Shell
             }
             targets = [.. targets.Where(t => !Covered(t))];
 
-            int Count(KillerPdf.Engine.Documents.PdfBookmarkInfo item) =>
+            int Count(JPDFs.Engine.Documents.PdfBookmarkInfo item) =>
                 1 + item.Children.Sum(Count);
             int total = targets.Sum(t => Count(t.Bookmark));
             if (total > 1)
@@ -761,7 +761,7 @@ namespace KillerPDF.Shell
                 string msg = targets.Count == 1
                     ? string.Format(Loc("Str_Bm_DeleteKids"), total - 1)
                     : string.Format(Loc("Str_Bm_DeleteMulti"), total);
-                var r = KillerDialog.Show(this, msg, Loc("Str_Dlg_AppTitle"),
+                var r = JpdfsDialog.Show(this, msg, Loc("Str_Dlg_AppTitle"),
                                           MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (r != MessageBoxResult.Yes) return;
             }
@@ -788,7 +788,7 @@ namespace KillerPDF.Shell
                 {
                     DestinationPageIndex = page,
                     NamedDestination = null,
-                    Destination = KillerPdf.Engine.Authoring.PdfDestination.At()
+                    Destination = JPDFs.Engine.Authoring.PdfDestination.At()
                 }));
         }
 
@@ -797,7 +797,7 @@ namespace KillerPDF.Shell
         {
             if (!CanEditBookmarks || _doc is null) return;
             if (ReadEngineBookmarks().Count == 0) return;
-            var r = KillerDialog.Show(this, Loc("Str_Bm_DeleteAllConfirm"), Loc("Str_Dlg_AppTitle"),
+            var r = JpdfsDialog.Show(this, Loc("Str_Bm_DeleteAllConfirm"), Loc("Str_Dlg_AppTitle"),
                                       MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
             ApplyEngineBookmarkEdit(_ => []);

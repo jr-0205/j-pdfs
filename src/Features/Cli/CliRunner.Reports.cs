@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Document tools reports from the command line. Each reads the file without changing it and
     // prints the same report the Document tools show, or JSON with --json.
@@ -22,7 +22,7 @@ namespace KillerPDF.Features
             bool comments = command == "--comments";
             if (pos.Count != 1)
             {
-                con.WriteLine($"Usage: KillerPDF.exe {command} <in.pdf> [--json]" + (comments ? " [--password <password>]" : ""));
+                con.WriteLine($"Usage: JPDFs.exe {command} <in.pdf> [--json]" + (comments ? " [--password <password>]" : ""));
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]);
@@ -83,7 +83,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --compare-structure <original.pdf> <changed.pdf> [--json]");
+                con.WriteLine("Usage: JPDFs.exe --compare-structure <original.pdf> <changed.pdf> [--json]");
                 return 2;
             }
             string original = Path.GetFullPath(pos[0]), changed = Path.GetFullPath(pos[1]);
@@ -113,7 +113,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 1)
             {
-                con.WriteLine("Usage: KillerPDF.exe --measurements <in.pdf> [--json | --csv] [--password <password>]");
+                con.WriteLine("Usage: JPDFs.exe --measurements <in.pdf> [--json | --csv] [--password <password>]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]);
@@ -188,7 +188,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count is < 1 or > 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --separations <in.pdf> [<outputFolder>] [--pages <range>] [--dpi <n>] [--json] [--password <password>] [--overwrite]");
+                con.WriteLine("Usage: JPDFs.exe --separations <in.pdf> [<outputFolder>] [--pages <range>] [--dpi <n>] [--json] [--password <password>] [--overwrite]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]);

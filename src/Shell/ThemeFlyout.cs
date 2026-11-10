@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
     /// Window wiring for the canonical radio-row theme ContextMenu. MainWindow.xaml supplies

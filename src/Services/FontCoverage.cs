@@ -1,4 +1,4 @@
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // ============================================================
     // Glyph coverage + the fallback chain (#168).

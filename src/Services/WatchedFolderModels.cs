@@ -1,6 +1,6 @@
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 public sealed record WatchedFolderOptions(string InputFolder, string OutputFolder,
     string FilePattern, string MacroJson, bool PauseOnError = false);

@@ -4,9 +4,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -58,7 +58,7 @@ namespace KillerPDF.Shell
             // First-use warning that a transform rasterizes the page; persists the opt-out.
             if (App.GetSetting("RotateWarnAck") != "1")
             {
-                var (res, dontWarn) = KillerDialog.ShowWithCheckbox(this,
+                var (res, dontWarn) = JpdfsDialog.ShowWithCheckbox(this,
                     Loc("Str_Tf_Warn"),
                     Loc("Str_Tf_DontWarn"), toolName, MessageBoxButton.OKCancel);
                 if (res != MessageBoxResult.OK) return;
@@ -204,7 +204,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Tf_Failed"), ex.Message), "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Tf_Failed"), ex.Message), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

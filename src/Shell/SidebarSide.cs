@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>The edge of the content area a sidebar docks to.</summary>
     internal enum SidebarSide { Left, Right, Top, Bottom }

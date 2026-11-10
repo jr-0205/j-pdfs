@@ -1,6 +1,6 @@
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>One change made in the Comments window (#288), applied when the user saves.</summary>
 internal abstract record CommentEdit;

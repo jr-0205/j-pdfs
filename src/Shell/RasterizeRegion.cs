@@ -1,8 +1,8 @@
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Rasterize Region (#369): turn one box on a page into an image and leave the rest of the
     // page as it is, for content that prints or displays wrongly. One undo step.
@@ -51,7 +51,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Raster_Failed"), ex.Message), "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Raster_Failed"), ex.Message), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

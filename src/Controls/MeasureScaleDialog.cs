@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPDF.Services;
-using KillerPdf.Engine.Documents;
+using JPDFs.Services;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Set Scale: the drawing scale the Measure tool uses on a page, typed as a ratio ("1 in = 10 ft")
 // or calibrated from a line drawn along a length the user knows. The result is saved in the PDF as

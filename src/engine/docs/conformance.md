@@ -8,7 +8,7 @@ opening, rendering, or preflight does not certify full PDF-standard conformance.
 ## Run a profile
 
 ```csharp
-using KillerPdf.Engine.Diagnostics;
+using JPDFs.Engine.Diagnostics;
 
 static PdfPreflightReport CheckDocument(byte[] source, string? password = null)
 {
@@ -82,8 +82,8 @@ and apply it only after the host has accepted the proposed change. The host must
 supply the correct language; a missing-language finding does not infer it.
 
 ```csharp
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
 
 static PdfPreflightCorrectionPlan PreviewLanguage(PdfDocument document,
     string confirmedLanguage)

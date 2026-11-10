@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal static class ExecutableDeployment
     {

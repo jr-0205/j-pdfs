@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// The DWM frame attributes any WindowStyle="None" window in the app needs: rounded corners and
@@ -38,14 +38,14 @@ namespace KillerPDF.Controls
             HwndSourceHook hook = (IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) =>
             {
                 if (msg == 0x031A || msg == 0x0015)
-                    KillerFamily.Accessibility.HighContrastResources.RefreshSystemColors();
+                    JpdfsUi.Accessibility.HighContrastResources.RefreshSystemColors();
                 return IntPtr.Zero;
             };
             source?.AddHook(hook);
-            KillerFamily.Accessibility.HighContrastResources.SystemColorsRefreshed += apply;
+            JpdfsUi.Accessibility.HighContrastResources.SystemColorsRefreshed += apply;
             w.Closed += (_, _) =>
             {
-                KillerFamily.Accessibility.HighContrastResources.SystemColorsRefreshed -= apply;
+                JpdfsUi.Accessibility.HighContrastResources.SystemColorsRefreshed -= apply;
                 source?.RemoveHook(hook);
                 w.ClearValue(ThemeBorderRefreshProperty);
             };

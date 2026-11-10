@@ -5,9 +5,9 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPDF.Features;
+using JPDFs.Features;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 // Shows each word Convert Scan to Text is about to set as text beside the same word as scanned,
 // least certain first, so a word can be kept as scanned before the file is written.

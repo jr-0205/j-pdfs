@@ -1,8 +1,8 @@
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Comments (#288) from the Document tools menu: read, edit, answer and delete the PDF's own
     // review comments, and add notes to the current page.
@@ -14,7 +14,7 @@ namespace KillerPDF.Shell
         {
             if (_doc is null || string.IsNullOrWhiteSpace(_currentFile))
             {
-                KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+                JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
                 return;
             }
 
@@ -23,7 +23,7 @@ namespace KillerPDF.Shell
             try { threads = PdfEngineIntegration.ReadCommentThreads(_currentFile, _protection); }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Comments_ReadFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Comments_ReadFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -47,7 +47,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Comments_Failed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Comments_Failed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

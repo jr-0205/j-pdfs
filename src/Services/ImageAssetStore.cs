@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed record ImageAsset(string Id, string Name, string FileName);
 

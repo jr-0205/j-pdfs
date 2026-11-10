@@ -2,19 +2,19 @@
 
 **Status:** Accepted
 **Date:** 2026-08-31
-**Decider:** Steve the Killer
+**Decider:** J-PDF's
 
 ## Context
 
 PDF software encounters far more variation than a focused unit-test suite can represent. Real files combine damaged structures, unusual fonts, forms, signatures, annotations, layers, color profiles, large pages, old features, and valid but uncommon feature combinations. A change can pass its direct test while breaking a document family that was never represented in that test.
 
-KillerPDF needs evidence that a release can open and save a broad set of PDFs safely, as well as a way to tell whether a result changed because of the application, the input set, or the test environment. A file that is private, unlicensed for redistribution, or deliberately malformed still has value for local testing, but cannot be treated as a public release asset.
+JPDFs needs evidence that a release can open and save a broad set of PDFs safely, as well as a way to tell whether a result changed because of the application, the input set, or the test environment. A file that is private, unlicensed for redistribution, or deliberately malformed still has value for local testing, but cannot be treated as a public release asset.
 
-The KillerPDF Corpus exists to turn that work into a repeatable release gate. It provides common inputs for KillerPDF and other PDF tools, keeps the provenance of each file visible, and records baselines that later versions can compare without relying on memory or ad hoc spot checks.
+The JPDFs Corpus exists to turn that work into a repeatable release gate. It provides common inputs for JPDFs and other PDF tools, keeps the provenance of each file visible, and records baselines that later versions can compare without relying on memory or ad hoc spot checks.
 
 ## Decision
 
-Maintain The KillerPDF Corpus as a separately versioned, provenance-checked test collection and use it as a release gate for KillerPDF and KillerPdf.Engine changes that affect opening, saving, editing, importing, or document preservation.
+Maintain The JPDFs Corpus as a separately versioned, provenance-checked test collection and use it as a release gate for JPDFs and JPDFs.Engine changes that affect opening, saving, editing, importing, or document preservation.
 
 The corpus has three deliberate lanes:
 

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// Remembers a window's size, position and maximized state as one settings string

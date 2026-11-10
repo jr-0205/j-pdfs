@@ -1,11 +1,11 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -15,7 +15,7 @@ public partial class MainWindow
         try
         {
             if (_doc.IsReadOnly || IsOwnerRestricted || PdfSignatureReader.Read(EnsureEngineDocumentSession().Document).Any(item => item.IsSigned))
-            { KillerDialog.Show(this, Loc("Str_Guided_Unavailable")); return; }
+            { JpdfsDialog.Show(this, Loc("Str_Guided_Unavailable")); return; }
             if (!EnsureMayWrite(PdfOutput.Printable)) return;
             CommitActiveTextBox();
             long revision = _documentEditRevision;
@@ -38,7 +38,7 @@ public partial class MainWindow
                 string destination = PdfEngineIntegration.PlanBatchOutputs([originalPath], request.Output).Single();
                 _ = PdfEngineIntegration.PlanBatchOutputs([sourcePath], destination);
                 bool overwrite = File.Exists(destination);
-                if (overwrite && KillerDialog.Show(owner, string.Format(Loc("Str_Guided_Replace"), destination), Loc("Str_Guided_Title"),
+                if (overwrite && JpdfsDialog.Show(owner, string.Format(Loc("Str_Guided_Replace"), destination), Loc("Str_Guided_Title"),
                     MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) throw new OperationCanceledException();
                 Current(token);
                 if (request.Kind == GuidedTaskKind.Scan && request.Ocr
@@ -75,7 +75,7 @@ public partial class MainWindow
                         Current(token);
                         regions.RemoveAll(region => skipped.Contains(region.PageIndex));
                         if (regions.Count == 0) throw new InvalidOperationException(Loc("Str_Guided_NoSelection"));
-                        if (KillerDialog.Show(owner, string.Format(Loc("Str_Guided_RedactConfirm"), regions.Count,
+                        if (JpdfsDialog.Show(owner, string.Format(Loc("Str_Guided_RedactConfirm"), regions.Count,
                             regions.Select(region => region.PageIndex).Distinct().Count()), Loc("Str_Guided_Privacy"),
                             MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) throw new OperationCanceledException();
                         Current(token);

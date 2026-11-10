@@ -1,6 +1,6 @@
-using KillerPdf.Engine.Security;
+using JPDFs.Engine.Security;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>How far a PDF's declared permissions let it be printed.</summary>
 internal enum PrintAllowance

@@ -1,10 +1,10 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -24,7 +24,7 @@ public partial class MainWindow
             int rotation = ((_pageRotations.TryGetValue(pageIndex, out int turn) ? turn : page.Rotation) % 360 + 360) % 360;
             if (rotation != 0)
             {
-                KillerDialog.Show(this, ParagraphEditDialog.RefusalText(PdfParagraphRefusalCode.RotatedPage)); return;
+                JpdfsDialog.Show(this, ParagraphEditDialog.RefusalText(PdfParagraphRefusalCode.RotatedPage)); return;
             }
             // Capture the working model before opening the modal editor. Editable overlays remain
             // in their existing side state and survive the normal reload path.
@@ -37,7 +37,7 @@ public partial class MainWindow
             PdfParagraphCandidateInspection inspection = PdfParagraphEditor.InspectCandidates(document, pageIndex);
             if (inspection.Candidates.Count == 0)
             {
-                KillerDialog.Show(this, ParagraphEditDialog.RefusalMessage(inspection)); return;
+                JpdfsDialog.Show(this, ParagraphEditDialog.RefusalMessage(inspection)); return;
             }
             Point? point = null;
             if (canvasPoint is Point position && _renderDims.TryGetValue(pageIndex, out var dimensions))
@@ -61,7 +61,7 @@ public partial class MainWindow
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
-            KillerDialog.Show(this, Loc("Str_Paragraph_Unsupported") + "\n" + error.Message,
+            JpdfsDialog.Show(this, Loc("Str_Paragraph_Unsupported") + "\n" + error.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally

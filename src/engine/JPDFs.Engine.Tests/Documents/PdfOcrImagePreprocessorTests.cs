@@ -1,0 +1,325 @@
+using System.Numerics;
+using JPDFs.Engine.Documents;
+using Xunit;
+
+namespace JPDFs.Engine.Tests.Documents;
+
+public sealed class PdfOcrImagePreprocessorTests
+{
+    [Fact]
+    public void PrepareBgra_CompositesAlphaAndConvertsToGrayscale()
+    {
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, detectPageSegments: false);
+        byte[] bgra = [0, 0, 255, 255, 0, 0, 0, 0];
+
+        PdfOcrPreparedImage image = PdfOcrImagePreprocessor.PrepareBgra(bgra, 2, 1, options);
+
+        Assert.Equal([77, 255], image.Pixels.ToArray());
+        Assert.False(image.IsBinary);
+        Assert.Empty(image.Diagnostics);
+    }
+
+    [Fact]
+    public void PrepareBgra_VectorizedOpaqueConversionMatchesExactLuma()
+    {
+        int width = Vector<byte>.Count + 3;
+        var bgra = new byte[width * 4];
+        var expected = new byte[width];
+        for (int pixel = 0; pixel < width; pixel++)
+        {
+            int offset = pixel * 4;
+            byte blue = bgra[offset] = (byte)(pixel * 17 + 3);
+            byte green = bgra[offset + 1] = (byte)(pixel * 29 + 5);
+            byte red = bgra[offset + 2] = (byte)(pixel * 43 + 7);
+            bgra[offset + 3] = 255;
+            expected[pixel] = (byte)((29 * blue + 150 * green + 77 * red + 128) >> 8);
+        }
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        PdfOcrPreparedImage image = PdfOcrImagePreprocessor.PrepareBgra(
+            bgra, width, 1, options);
+
+        Assert.Equal(expected, image.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void PrepareBgra_AdaptiveThresholdAndDenoiseRemoveIsolatedNoise()
+    {
+        byte[] bgra = [.. Enumerable.Repeat((byte)255, 7 * 7 * 4)];
+        for (int pixel = 0; pixel < 49; pixel++) bgra[pixel * 4 + 3] = 255;
+        int center = (3 * 7 + 3) * 4;
+        bgra[center] = bgra[center + 1] = bgra[center + 2] = 0;
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: true, removeNoise: true,
+            detectPageSegments: false);
+
+        PdfOcrPreparedImage image = PdfOcrImagePreprocessor.PrepareBgra(bgra, 7, 7, options);
+
+        Assert.True(image.IsBinary);
+        Assert.Equal(255, image.Pixels.Span[3 * 7 + 3]);
+    }
+
+    [Fact]
+    public void PrepareBgra_BinaryDenoisePreservesConnectedDiagonalStrokes()
+    {
+        byte[] bgra = [.. Enumerable.Repeat((byte)255, 7 * 7 * 4)];
+        for (int pixel = 0; pixel < 49; pixel++) bgra[pixel * 4 + 3] = 255;
+        for (int offset = 1; offset <= 5; offset++)
+        {
+            int pixel = (offset * 7 + offset) * 4;
+            bgra[pixel] = bgra[pixel + 1] = bgra[pixel + 2] = 0;
+        }
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: true, removeNoise: true,
+            detectPageSegments: false);
+
+        PdfOcrPreparedImage image = PdfOcrImagePreprocessor.PrepareBgra(
+            bgra, 7, 7, options);
+
+        Assert.All(Enumerable.Range(1, 5), offset =>
+            Assert.Equal(0, image.Pixels.Span[offset * 7 + offset]));
+    }
+
+    [Fact]
+    public void PrepareBgra_BinaryDenoisePreservesSmallWhiteCounters()
+    {
+        byte[] bgra = [.. Enumerable.Repeat((byte)255, 7 * 7 * 4)];
+        for (int pixel = 0; pixel < 49; pixel++) bgra[pixel * 4 + 3] = 255;
+        for (int y = 2; y <= 4; y++)
+            for (int x = 2; x <= 4; x++)
+                if (x != 3 || y != 3)
+                {
+                    int offset = (y * 7 + x) * 4;
+                    bgra[offset] = bgra[offset + 1] = bgra[offset + 2] = 0;
+                }
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: true, removeNoise: true,
+            detectPageSegments: false);
+
+        PdfOcrPreparedImage image = PdfOcrImagePreprocessor.PrepareBgra(
+            bgra, 7, 7, options);
+
+        Assert.Equal(255, image.Pixels.Span[3 * 7 + 3]);
+    }
+
+    [Fact]
+    public void PrepareBgra_AdaptiveThresholdMatchesBoundedSauvolaNeighborhoods()
+    {
+        const int width = 19, height = 13;
+        var gray = new byte[width * height];
+        var bgra = new byte[gray.Length * 4];
+        for (int index = 0; index < gray.Length; index++)
+        {
+            byte value = gray[index] = (byte)((index * 37 + index / width * 19) % 256);
+            int offset = index * 4;
+            bgra[offset] = bgra[offset + 1] = bgra[offset + 2] = value;
+            bgra[offset + 3] = 255;
+        }
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: true, removeNoise: false,
+            detectPageSegments: false);
+
+        PdfOcrPreparedImage image = PdfOcrImagePreprocessor.PrepareBgra(
+            bgra, width, height, options);
+
+        const int radius = 4;
+        var expected = new byte[gray.Length];
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+            {
+                int left = Math.Max(0, x - radius), right = Math.Min(width, x + radius + 1);
+                int top = Math.Max(0, y - radius), bottom = Math.Min(height, y + radius + 1);
+                long sum = 0;
+                for (int yy = top; yy < bottom; yy++)
+                    for (int xx = left; xx < right; xx++) sum += gray[yy * width + xx];
+                long squaredSum = 0;
+                for (int yy = top; yy < bottom; yy++)
+                    for (int xx = left; xx < right; xx++)
+                        squaredSum += gray[yy * width + xx] * gray[yy * width + xx];
+                int count = (right - left) * (bottom - top);
+                double mean = sum / (double)count;
+                double variance = Math.Max(0,
+                    squaredSum / (double)count - mean * mean);
+                double threshold = mean * (0.75 + 0.25 * Math.Sqrt(variance) / 128);
+                expected[y * width + x] = gray[y * width + x] < threshold
+                    ? (byte)0 : (byte)255;
+            }
+        Assert.Equal(expected, image.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void PrepareBgra_AdaptiveThresholdSuppressesTexturedBackground()
+    {
+        const int width = 64, height = 32;
+        var bgra = new byte[width * height * 4];
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+            {
+                byte value = (byte)(100 + (x * 7 + y * 11) % 31);
+                if (IsTextStroke(x, y)) value = 35;
+                int offset = (y * width + x) * 4;
+                bgra[offset] = bgra[offset + 1] = bgra[offset + 2] = value;
+                bgra[offset + 3] = 255;
+            }
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: true, removeNoise: false,
+            detectPageSegments: false);
+
+        PdfOcrPreparedImage image = PdfOcrImagePreprocessor.PrepareBgra(
+            bgra, width, height, options);
+
+        int backgroundInk = 0;
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                if (!IsTextStroke(x, y)
+                    && image.Pixels.Span[y * width + x] == 0)
+                    backgroundInk++;
+        Assert.InRange(backgroundInk, 0, 8);
+        Assert.Equal(0, image.Pixels.Span[16 * width + 32]);
+
+        static bool IsTextStroke(int x, int y) =>
+            x is >= 31 and <= 32 && y is >= 9 and <= 22
+            || y is >= 15 and <= 16 && x is >= 23 and <= 40;
+    }
+
+    [Fact]
+    public void PrepareBgra_DeskewsSlantedTextRows()
+    {
+        const int width = 41, height = 21;
+        byte[] bgra = [.. Enumerable.Repeat(byte.MaxValue, width * height * 4)];
+        for (int x = 0; x < width; x++)
+            foreach (int baseline in new[] { 5, 12 })
+            {
+                int y = baseline + x / 10;
+                int offset = (y * width + x) * 4;
+                bgra[offset] = bgra[offset + 1] = bgra[offset + 2] = 0;
+            }
+        var options = new PdfOcrOptions(["eng"], deskew: true,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+
+        PdfOcrPreparedImage image = PdfOcrImagePreprocessor.PrepareBgra(
+            bgra, width, height, options);
+
+        int longestRow = 0;
+        for (int y = 0; y < height; y++)
+        {
+            int dark = 0;
+            foreach (byte value in image.Pixels.Span.Slice(y * width, width))
+                if (value < 128) dark++;
+            longestRow = Math.Max(longestRow, dark);
+        }
+        Assert.True(longestRow > 10, $"Longest corrected row was {longestRow} pixels.");
+        Assert.InRange(image.DeskewDegrees, 4.5, 6.5);
+        Assert.Empty(image.Diagnostics);
+    }
+
+    [Fact]
+    public void PrepareBgra_ValidatesLengthAndCancellation()
+    {
+        var options = new PdfOcrOptions(["eng"]);
+        Assert.Throws<ArgumentException>(() =>
+            PdfOcrImagePreprocessor.PrepareBgra(new byte[3], 1, 1, options));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            PdfOcrImagePreprocessor.PrepareBgra(new byte[4], 32_769, 1, options));
+        using var canceled = new CancellationTokenSource();
+        canceled.Cancel();
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfOcrImagePreprocessor.PrepareBgra(new byte[4], 1, 1, options, canceled.Token));
+    }
+
+    [Fact]
+    public void CropBgra_ClampsBoundsAndCopiesWholePixels()
+    {
+        byte[] bgra = [.. Enumerable.Range(0, 4 * 3 * 4).Select(value => (byte)value)];
+
+        PdfOcrBgraImage crop = PdfOcrImagePreprocessor.CropBgra(
+            bgra, 4, 3, left: 2, top: 1, width: 8, height: 8);
+
+        Assert.Equal(2, crop.Width);
+        Assert.Equal(2, crop.Height);
+        Assert.Equal(bgra.AsSpan((1 * 4 + 2) * 4, 8).ToArray(),
+            crop.Pixels.Span[..8].ToArray());
+        Assert.Equal(bgra.AsSpan((2 * 4 + 2) * 4, 8).ToArray(),
+            crop.Pixels.Span[8..].ToArray());
+    }
+
+    [Fact]
+    public void CropBgra_ValidatesSourceAndHonorsCancellation()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            PdfOcrImagePreprocessor.CropBgra(new byte[3], 1, 1, 0, 0, 1, 1));
+        using var canceled = new CancellationTokenSource();
+        canceled.Cancel();
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfOcrImagePreprocessor.CropBgra(
+                new byte[16], 2, 2, 0, 0, 1, 1, canceled.Token));
+    }
+
+    [Theory]
+    [InlineData(90, 3, 2, new byte[] { 5, 3, 1, 6, 4, 2 })]
+    [InlineData(180, 2, 3, new byte[] { 6, 5, 4, 3, 2, 1 })]
+    [InlineData(270, 3, 2, new byte[] { 2, 4, 6, 1, 3, 5 })]
+    public void RotateBgra_RotatesWholePixelsClockwise(
+        int degrees, int expectedWidth, int expectedHeight, byte[] expected)
+    {
+        var bgra = new byte[2 * 3 * 4];
+        for (int pixel = 0; pixel < 6; pixel++)
+        {
+            bgra[pixel * 4] = (byte)(pixel + 1);
+            bgra[pixel * 4 + 3] = 255;
+        }
+
+        PdfOcrBgraImage rotated = PdfOcrImagePreprocessor.RotateBgra(
+            bgra, 2, 3, degrees);
+
+        Assert.Equal(expectedWidth, rotated.Width);
+        Assert.Equal(expectedHeight, rotated.Height);
+        Assert.Equal(expected,
+            Enumerable.Range(0, 6).Select(pixel => rotated.Pixels.Span[pixel * 4]));
+        Assert.All(Enumerable.Range(0, 6),
+            pixel => Assert.Equal(255, rotated.Pixels.Span[pixel * 4 + 3]));
+    }
+
+    [Theory]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void PrepareBgraRotatedMatchesRotateThenPrepare(int degrees)
+    {
+        byte[] bgra =
+        [
+            10, 20, 30, 255, 40, 50, 60, 128,
+            70, 80, 90, 64, 100, 110, 120, 0,
+            130, 140, 150, 255, 160, 170, 180, 200
+        ];
+        var options = new PdfOcrOptions(["eng"], deskew: false,
+            correctOrientation: false, removeBackground: false, removeNoise: false,
+            detectPageSegments: false);
+        PdfOcrBgraImage rotated = PdfOcrImagePreprocessor.RotateBgra(
+            bgra, 2, 3, degrees);
+        PdfOcrPreparedImage expected = PdfOcrImagePreprocessor.PrepareBgra(
+            rotated.Pixels, rotated.Width, rotated.Height, options);
+
+        PdfOcrPreparedImage actual = PdfOcrImagePreprocessor.PrepareBgraRotated(
+            bgra, 2, 3, degrees, options);
+
+        Assert.Equal((expected.Width, expected.Height), (actual.Width, actual.Height));
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void RotateBgra_RejectsNonRightAnglesAndHonorsCancellation()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            PdfOcrImagePreprocessor.RotateBgra(new byte[4], 1, 1, 45));
+        using var canceled = new CancellationTokenSource();
+        canceled.Cancel();
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfOcrImagePreprocessor.RotateBgra(
+                new byte[4], 1, 1, 90, canceled.Token));
+    }
+}

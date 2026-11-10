@@ -10,8 +10,8 @@ These examples use an unencrypted, unsigned document. Import the two namespaces
 below and use normal .NET implicit usings:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
 
 static byte[] CreateNavigationSample()
 {

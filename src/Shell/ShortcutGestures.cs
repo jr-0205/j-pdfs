@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // ============================================================
     // Keyboard shortcuts as the action surfaces show them: menu gesture text and tooltips.

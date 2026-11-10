@@ -1,16 +1,16 @@
 using System;
 using System.IO;
 using System.Linq;
-using KillerPdf.Engine.Syntax;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Objects;
-using KillerPdf.Engine.Parsing;
-using KillerPdf.Engine.Signing;
-using KillerPdf.Engine.Writing;
-using KillerPdf.Engine.Security;
-using KillerPdf.Engine.Filters;
+using JPDFs.Engine.Syntax;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Objects;
+using JPDFs.Engine.Parsing;
+using JPDFs.Engine.Signing;
+using JPDFs.Engine.Writing;
+using JPDFs.Engine.Security;
+using JPDFs.Engine.Filters;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>What a damaged file carries that a rewrite would silently destroy.</summary>
 internal enum DamagedSaveRefusal { Encrypted, Signed, Certified, UsageRights }
@@ -32,7 +32,7 @@ internal sealed class DamagedSaveRefusedException : InvalidOperationException
         (string key, string english) = reason switch
         {
             DamagedSaveRefusal.Encrypted => ("Str_Save_DamagedEncrypted",
-                "This PDF is damaged and password protected, so KillerPDF cannot repair or save it. The original file has not been changed."),
+                "This PDF is damaged and password protected, so JPDFs cannot repair or save it. The original file has not been changed."),
             DamagedSaveRefusal.Signed => ("Str_Save_DamagedSigned",
                 "This PDF is damaged and carries a digital signature. Saving would break the signature, so the file was not changed."),
             DamagedSaveRefusal.Certified => ("Str_Save_DamagedCertified",
@@ -528,7 +528,7 @@ internal static partial class PdfEngineIntegration
     /// <summary>Writes a finished plain document under encryption held from the file it came from,
     /// and proves the result opens under that encryption before anything is published from it.</summary>
     internal static void WriteUnderEncryption(string plainPath, string destinationPath,
-        KillerPdf.Engine.Security.PdfEncryptionSnapshot encryption)
+        JPDFs.Engine.Security.PdfEncryptionSnapshot encryption)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(plainPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
@@ -543,7 +543,7 @@ internal static partial class PdfEngineIntegration
 
     /// <summary>Writes a decrypted viewing copy from bytes that open under held encryption.</summary>
     internal static void WriteViewingCopy(string sourcePath, string destinationPath,
-        KillerPdf.Engine.Security.PdfEncryptionSnapshot encryption)
+        JPDFs.Engine.Security.PdfEncryptionSnapshot encryption)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);

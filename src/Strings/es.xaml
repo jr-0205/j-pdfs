@@ -315,21 +315,9 @@ Abre Configuración de Windows - Aplicaciones predeterminadas.</sys:String>
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Oscuro</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Claro</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Negro</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Sangre</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Codicia</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Cianótico</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat claro</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ectoplasma</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Descomposición</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Luto</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat claro</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat oscuro</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Grano de película</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Sepulcro</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Delirio</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Malestar</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">Ajustar ancho</sys:String>
@@ -1571,7 +1559,6 @@ Abre Configuración de Windows - Aplicaciones predeterminadas.</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">Atajos de teclado desactivados. Pulsa Ctrl+Mayús+K para activarlos.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Buscar actualizaciones al iniciar</sys:String>
     <sys:String x:Key="Str_PasswordProtected">«{0}» está protegido con contraseña.</sys:String>
-    <sys:String x:Key="Str_About_Aka">También conocido como</sys:String>
     <sys:String x:Key="Str_Btn_Run">Ejecutar</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Macros</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Macros guardadas</sys:String>

@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Keeps the single-exe build self-sufficient for OCR. The native Tesseract DLLs (x64) and the bundled
@@ -13,8 +13,8 @@ namespace KillerPDF.Services
     /// </summary>
     internal static partial class OcrNativeBootstrap
     {
-        private const string NativePrefix = "KillerPDF.OcrNative.";
-        private const string TessDataPrefix = "KillerPDF.OcrTessData.";
+        private const string NativePrefix = "JPDFs.OcrNative.";
+        private const string TessDataPrefix = "JPDFs.OcrTessData.";
         private const string LeptonicaFileName = "leptonica-1.82.0.dll";
         private const string TesseractFileName = "tesseract50.dll";
         private const uint LoadLibrarySearchDllLoadDir = 0x00000100;

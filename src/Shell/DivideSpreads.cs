@@ -1,8 +1,8 @@
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Divide Spreads (#382): split scanned two-page spreads at a line the user places. Each
     // divided page is followed by its second half, and the whole change is one undo step.
@@ -32,7 +32,7 @@ namespace KillerPDF.Shell
             // Markup the user placed on a divided page is drawn into it first, so each half keeps
             // whatever sits on it. Ask before that makes it permanent.
             var marked = pages.Where(page => _annotations.TryGetValue(page, out var list) && list.Count > 0).ToHashSet();
-            if (marked.Count > 0 && KillerDialog.Show(this, Loc("Str_Divide_MarkupWarn"), "J-PDF's",
+            if (marked.Count > 0 && JpdfsDialog.Show(this, Loc("Str_Divide_MarkupWarn"), "J-PDF's",
                     MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
 
@@ -74,7 +74,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Divide_Failed"), ex.Message), "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Divide_Failed"), ex.Message), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

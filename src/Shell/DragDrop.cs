@@ -12,17 +12,17 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Controls;
-using KillerPDF.Services;
+using JPDFs.Controls;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
     /// In-process page transfer captured before a drag can move focus to another pane.
     /// The source working file and overlay annotations are snapshots of what the user dragged.
     /// </summary>
     internal sealed record PageDragPayload(
-        KillerPDF.Controls.PdfViewer SourceViewer,
+        JPDFs.Controls.PdfViewer SourceViewer,
         string SourcePath,
         int[] PageIndices,
         Dictionary<int, int> PageRotations,
@@ -280,7 +280,7 @@ namespace KillerPDF.Shell
             {
                 case PageDragAnswer.Refused:
                     if (!EnsureProtectionReadable()) return;
-                    KillerDialog.Show(this, Loc(_protection.Access.Role == PdfAccessRole.Recipient
+                    JpdfsDialog.Show(this, Loc(_protection.Access.Role == PdfAccessRole.Recipient
                             ? "Str_Protection_Refused_Certificate" : "Str_Protection_Refused"),
                         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
@@ -370,7 +370,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Err_PageCopyFailed"), ex.Message),
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Err_PageCopyFailed"), ex.Message),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -540,7 +540,7 @@ namespace KillerPDF.Shell
             {
                 try
                 {
-                    IReadOnlyList<KillerPdf.Engine.Documents.PdfPageInformation> pages;
+                    IReadOnlyList<JPDFs.Engine.Documents.PdfPageInformation> pages;
                     string importPath;
                     if (PdfImport.IsPdfPath(f))
                     {
@@ -604,7 +604,7 @@ namespace KillerPDF.Shell
                 else if (declined > 0) SetStatus(Loc("Str_Drop_MergeCanceled"));
                 else if (noPages is not null) SetStatus(noPages);
                 else if (failure is not null)
-                    KillerDialog.Show(this, Loc("Str_Err_MergeFailed") + "\n" + failure,
+                    JpdfsDialog.Show(this, Loc("Str_Err_MergeFailed") + "\n" + failure,
                         Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                 else SetStatus(Loc("Str_Drop_NothingOpenable"));
                 return;
@@ -630,7 +630,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_MergeFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_MergeFailed") + "\n" + ex.Message,
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -651,7 +651,7 @@ namespace KillerPDF.Shell
         /// </summary>
         private async System.Threading.Tasks.Task<(string? Path, bool Declined)> RepairPdfForImportAsync(string path)
         {
-            var ask = KillerDialog.Show(this,
+            var ask = JpdfsDialog.Show(this,
                 string.Format(Loc("Str_Dlg_RepairAsk"), System.IO.Path.GetFileName(path)),
                 "J-PDF's", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (ask != MessageBoxResult.Yes) return (null, true);
@@ -673,7 +673,7 @@ namespace KillerPDF.Shell
                     () => PdfImport.RepairViaRasterizeToFile(path));
 
                 if (repaired is null)
-                    KillerDialog.Show(this,
+                    JpdfsDialog.Show(this,
                         string.Format(Loc("Str_Err_FileRepairFailed"),
                             System.IO.Path.GetFileName(path)),
                         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -741,7 +741,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message),
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }

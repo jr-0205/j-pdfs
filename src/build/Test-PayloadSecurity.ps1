@@ -4,7 +4,7 @@ param([string]$UnsignedPackagePath = "")
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'payload-security.ps1')
-$root = Join-Path ([IO.Path]::GetTempPath()) ('KillerPDF-security-fixture-' + [guid]::NewGuid().ToString('N'))
+$root = Join-Path ([IO.Path]::GetTempPath()) ('JPDFs-security-fixture-' + [guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($root) | Out-Null
 function Assert([bool]$Condition, [string]$Message) { if (-not $Condition) { throw $Message } }
 function Reject([scriptblock]$Action, [string]$Expected) {
@@ -15,21 +15,21 @@ function Reject([scriptblock]$Action, [string]$Expected) {
     throw "Expected rejection: $Expected"
 }
 try {
-    $names = @('KillerPDF.App.exe', 'KillerPDF.App.dll', 'KillerPdf.Engine.dll')
+    $names = @('JPDFs.App.exe', 'JPDFs.App.dll', 'JPDFs.Engine.dll')
     foreach ($name in $names + @('ThirdParty.dll')) { [IO.File]::WriteAllText((Join-Path $root $name), $name) }
     $targets = @(Get-FirstPartyPayloadFiles $root)
     Assert ($targets.Count -eq 3) 'Must select exactly three files.'
     Assert ((@($targets | ForEach-Object { [IO.Path]::GetFileName($_) }) -join ',') -eq ($names -join ',')) 'Wrong signing targets.'
     # The installed payload also carries the preview handler (#410), which is signed with the rest.
-    $handlerNames = @('KillerPDF.PreviewHandler.dll', 'KillerPDF.PreviewHandler.comhost.dll')
+    $handlerNames = @('JPDFs.PreviewHandler.dll', 'JPDFs.PreviewHandler.comhost.dll')
     foreach ($name in $handlerNames) { [IO.File]::WriteAllText((Join-Path $root $name), $name) }
     $installedTargets = @(Get-FirstPartyPayloadFiles $root | ForEach-Object { [IO.Path]::GetFileName($_) })
     Assert (($installedTargets -join ',') -eq (($names + $handlerNames) -join ',')) 'Installed payload must also sign the preview handler.'
     foreach ($name in $handlerNames) { [IO.File]::Delete((Join-Path $root $name)) }
     Reject { Assert-FirstPartyPayloadSignatures $root } 'Authenticode validation failed'
-    [IO.File]::Delete((Join-Path $root 'KillerPdf.Engine.dll'))
+    [IO.File]::Delete((Join-Path $root 'JPDFs.Engine.dll'))
     Reject { Get-FirstPartyPayloadFiles $root } 'missing'
-    [IO.File]::WriteAllText((Join-Path $root 'KillerPdf.Engine.dll'), 'engine-before-signing')
+    [IO.File]::WriteAllText((Join-Path $root 'JPDFs.Engine.dll'), 'engine-before-signing')
 
     # Exercise signature gate success and every failure position without a certificate.
     $script:invalidName = ''
@@ -59,7 +59,7 @@ try {
     Write-PayloadManifest $manifest $root $files
     $before = [IO.File]::ReadAllText($manifest)
     # Stand in for the byte change produced by signing final published DLLs.
-    [IO.File]::AppendAllText((Join-Path $root 'KillerPdf.Engine.dll'), '-final-bytes')
+    [IO.File]::AppendAllText((Join-Path $root 'JPDFs.Engine.dll'), '-final-bytes')
     Write-PayloadManifest $manifest $root $files
     Assert ($before -ne [IO.File]::ReadAllText($manifest)) 'Manifest did not refresh changed DLL bytes.'
     foreach ($line in [IO.File]::ReadAllLines($manifest)) {

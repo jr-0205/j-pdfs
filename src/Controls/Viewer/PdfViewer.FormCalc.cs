@@ -2,9 +2,9 @@ using System.IO;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Live AcroForm recalculation. Calculated fields update from the engine's safe built-in
     // script subset when a value is committed, the way a paid viewer recalculates a total as

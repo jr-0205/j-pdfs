@@ -1,4 +1,4 @@
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // ============================================================
     // Minimal 'cmap' reader: answers "does this face have a glyph for this

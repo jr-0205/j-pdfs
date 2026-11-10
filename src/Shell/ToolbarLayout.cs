@@ -5,9 +5,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // ============================================================
     // Toolbar layout: which buttons sit on the toolbar, in what order, on which side, and which

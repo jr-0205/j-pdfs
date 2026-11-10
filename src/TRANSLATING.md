@@ -1,4 +1,4 @@
-# Adding or Improving a KillerPDF Translation
+# Adding or Improving a JPDFs Translation
 
 ## File format
 
@@ -62,10 +62,10 @@ Each language is a single XAML `ResourceDictionary` file in the `Strings/` folde
 
 ## Testing your translation
 
-You can load your translation file into a normal KillerPDF install - no building required. Close any running KillerPDF window first (a second launch hands its arguments to the running instance), then start the app with:
+You can load your translation file into a normal JPDFs install - no building required. Close any running JPDFs window first (a second launch hands its arguments to the running instance), then start the app with:
 
 ```
-KillerPDF.exe --lang-file C:\path\to\your\strings.xaml
+JPDFs.exe --lang-file C:\path\to\your\strings.xaml
 ```
 
 The app runs with your file as the active language. Keys you have not translated yet show in English, exactly as a partial translation behaves in a release build.

@@ -1,9 +1,9 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    KillerPDF release script: build payload, sign inner app, pack launcher, sign launcher, verify, and publish.
+    JPDFs release script: build payload, sign inner app, pack launcher, sign launcher, verify, and publish.
 .DESCRIPTION
-    1. Builds the ordinary multi-file KillerPDF.App payload without Costura/Fody weaving.
+    1. Builds the ordinary multi-file JPDFs.App payload without Costura/Fody weaving.
     2. Signs the first-party App EXE and App/Engine DLLs, regenerates their hash manifest, compresses that payload once,
        and embeds it in the public portable and installer executables.
     3. Signs both public executables. Prefers CertThumbprint (exact match) over CertName (CN match)
@@ -62,12 +62,12 @@ if ($SkipSign -and -not $DryRun) {
 if ($ReuseDryRun -and $SkipSign) { throw '-ReuseDryRun requires signed artifacts; do not combine it with -SkipSign.' }
 if ($ReuseDryRun) { $PublishOnly = $true }
 
-$proj         = Join-Path $PSScriptRoot "KillerPDF.csproj"
+$proj         = Join-Path $PSScriptRoot "JPDFs.csproj"
 $publishDir   = Join-Path $PSScriptRoot "bin\Release\net10.0-windows\publish"
-$portableExe   = Join-Path $publishDir "KillerPDF-Portable.exe"
-$installerExe  = Join-Path $publishDir "KillerPDF.exe"
-# The Microsoft Store installer carries its own .NET runtime; the Store downloads it through killerpdf.net/store.
-$storeExe      = Join-Path $publishDir "KillerPDF-Store.exe"
+$portableExe   = Join-Path $publishDir "JPDFs-Portable.exe"
+$installerExe  = Join-Path $publishDir "JPDFs.exe"
+# The Microsoft Store installer carries its own .NET runtime; the Store downloads it through jpdfs.net/store.
+$storeExe      = Join-Path $publishDir "JPDFs-Store.exe"
 $packageBuild  = Join-Path $PSScriptRoot "build\build-packages.ps1"
 $portablePayloadDir  = Join-Path $PSScriptRoot "bin\Release\net10.0-windows\portable-package\payload"
 $installerPayloadDir = Join-Path $PSScriptRoot "bin\Release\net10.0-windows\installer-package\payload"
@@ -82,7 +82,7 @@ $tsaList = @(
 )
 
 # Resolve the repo's default branch instead of hardcoding it, so the same script works across
-# the Killer family. origin/HEAD is the best hint but it can go stale - it keeps naming a
+# the Jpdfs family. origin/HEAD is the best hint but it can go stale - it keeps naming a
 # branch that was renamed away, which is exactly the state this repo was in - so a candidate
 # is only accepted if it still exists on the remote. Order: origin/HEAD, then main, then master.
 # Call it from inside the Push-Location block so git runs against this repo.
@@ -106,9 +106,9 @@ function Assert-ReleaseReadme([string]$Text) {
     if ($Text -match 'Development\s+build') {
         throw 'README still contains Development build text.'
     }
-    $sourceLink = 'https://github\.com/SteveTheKiller/KillerPDF/releases/download/v(?<sourceVersion>[0-9]+\.[0-9]+\.[0-9]+)/KillerPDF-\k<sourceVersion>-src\.zip'
+    $sourceLink = 'https://github\.com/JPDFs/JPDFs/releases/download/v(?<sourceVersion>[0-9]+\.[0-9]+\.[0-9]+)/JPDFs-\k<sourceVersion>-src\.zip'
     if ($Text -notmatch $sourceLink) {
-        throw 'README is missing a versioned KillerPDF corresponding-source archive link.'
+        throw 'README is missing a versioned JPDFs corresponding-source archive link.'
     }
 }
 
@@ -152,29 +152,29 @@ function Test-ReleaseArtifacts(
     }
     & (Join-Path $PSScriptRoot 'build\Test-GuiStartup.ps1') -ExePath $PortablePath
 
-    $installRoot = Join-Path $env:TEMP ('KillerPDF-release-install-' + [Guid]::NewGuid().ToString('N'))
-    $previousTestRoot = [Environment]::GetEnvironmentVariable('KILLERPDF_TEST_INSTALL_ROOT')
-    $previousSkipRegistration = [Environment]::GetEnvironmentVariable('KILLERPDF_SKIP_REGISTRATION')
+    $installRoot = Join-Path $env:TEMP ('JPDFs-release-install-' + [Guid]::NewGuid().ToString('N'))
+    $previousTestRoot = [Environment]::GetEnvironmentVariable('JPDFS_TEST_INSTALL_ROOT')
+    $previousSkipRegistration = [Environment]::GetEnvironmentVariable('JPDFS_SKIP_REGISTRATION')
     try {
-        [Environment]::SetEnvironmentVariable('KILLERPDF_TEST_INSTALL_ROOT', $installRoot)
-        [Environment]::SetEnvironmentVariable('KILLERPDF_SKIP_REGISTRATION', '1')
+        [Environment]::SetEnvironmentVariable('JPDFS_TEST_INSTALL_ROOT', $installRoot)
+        [Environment]::SetEnvironmentVariable('JPDFS_SKIP_REGISTRATION', '1')
         $installProcess = Start-Process -FilePath $InstallerPath -ArgumentList '/install-user' -Wait -PassThru
         if ($installProcess.ExitCode -ne 0) {
             throw "Signed installer smoke test failed with exit code $($installProcess.ExitCode)."
         }
 
-        $installedExe = Join-Path $installRoot 'KillerPDF.App.exe'
-        $installedAssembly = Join-Path $installRoot 'KillerPDF.App.dll'
+        $installedExe = Join-Path $installRoot 'JPDFs.App.exe'
+        $installedAssembly = Join-Path $installRoot 'JPDFs.App.dll'
         Assert-ReleaseArtifactVersion $installedAssembly $ExpectedVersion
         if (-not [IO.File]::Exists($installedExe)) {
-            throw "Signed installer smoke test did not install KillerPDF.App.exe."
+            throw "Signed installer smoke test did not install JPDFs.App.exe."
         }
         if ($RequireValidSignature) { Assert-FirstPartyPayloadSignatures $installRoot }
         & (Join-Path $PSScriptRoot 'build\Test-GuiStartup.ps1') -ExePath $installedExe
     }
     finally {
-        [Environment]::SetEnvironmentVariable('KILLERPDF_TEST_INSTALL_ROOT', $previousTestRoot)
-        [Environment]::SetEnvironmentVariable('KILLERPDF_SKIP_REGISTRATION', $previousSkipRegistration)
+        [Environment]::SetEnvironmentVariable('JPDFS_TEST_INSTALL_ROOT', $previousTestRoot)
+        [Environment]::SetEnvironmentVariable('JPDFS_SKIP_REGISTRATION', $previousSkipRegistration)
         if ([IO.Directory]::Exists($installRoot)) { [IO.Directory]::Delete($installRoot, $true) }
     }
     Write-Host "    Installer, installed app, and portable startup checks passed." -ForegroundColor Green
@@ -182,14 +182,14 @@ function Test-ReleaseArtifacts(
 
 Write-Host "`n==> Release metadata preflight..." -ForegroundColor Cyan
 Assert-ReleaseReadme ([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'README.md')))
-Assert-ReleaseStoreListing ([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'store\KillerPDF-Store-listing.csv')))
+Assert-ReleaseStoreListing ([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'store\JPDFs-Store-listing.csv')))
 $csprojRaw = Get-Content -Path $proj -Raw
 if ($csprojRaw -notmatch '<Version>([0-9]+\.[0-9]+\.[0-9]+)</Version>') {
-    throw "No <Version>x.y.z</Version> found in KillerPDF.csproj"
+    throw "No <Version>x.y.z</Version> found in JPDFs.csproj"
 }
 $Version = $Matches[1]
 $Tag = "v$Version"
-$engineProject = Join-Path $PSScriptRoot 'engine\KillerPdf.Engine\KillerPdf.Engine.csproj'
+$engineProject = Join-Path $PSScriptRoot 'engine\JPDFs.Engine\JPDFs.Engine.csproj'
 [xml]$engineMetadata = Get-Content -LiteralPath $engineProject -Raw
 $engineVersion = [string]$engineMetadata.Project.PropertyGroup.Version
 if ($engineVersion -ne $Version) {
@@ -208,7 +208,7 @@ if ($changelog -notmatch [regex]::Escape("## [$Version]")) {
 # something checks it - that something is here. It must equal the date on this
 # version's CHANGELOG section, which is the date the release actually goes out.
 if ($csprojRaw -notmatch '<ReleaseDate>([0-9]{4}-[0-9]{2}-[0-9]{2})</ReleaseDate>') {
-    throw "No <ReleaseDate>yyyy-MM-dd</ReleaseDate> found in KillerPDF.csproj"
+    throw "No <ReleaseDate>yyyy-MM-dd</ReleaseDate> found in JPDFs.csproj"
 }
 $releaseDate = $Matches[1]
 if ($changelog -notmatch ('## \[' + [regex]::Escape($Version) + '\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})')) {
@@ -293,7 +293,7 @@ if (-not $SkipSign) {
 # 0. Translation parity
 # Every localization must carry the complete English key set, and the placeholders have to match:
 # a translation loads perfectly and still throws at runtime when string.Format is handed a value
-# the translation dropped or renumbered. Ported from KillerNotes, which took it from Killendar.
+# the translation dropped or renumbered. Ported from JpdfsNotes, which took it from Killendar.
 #
 # First, because it is a pure source check and costs nothing. Without it this tree silently drifted
 # to ten locales missing the same 20 keys - the whole crash dialog among them - and a pl-PL key that
@@ -417,13 +417,13 @@ if (-not $SkipSign) {
     }
 
     # Sign the real installed application before it is compressed into the public launcher.
-    # Third-party binaries retain their publishers' signatures; only Killer-owned binaries are signed here.
+    # Third-party binaries retain their publishers' signatures; only Jpdfs-owned binaries are signed here.
     Write-Host "`n==> Signing inner applications before payload packaging..." -ForegroundColor Cyan
     foreach ($innerExe in $innerFiles) {
         $innerSigned = $false
         foreach ($tsa in $tsaList) {
             & $signtool sign /fd sha256 /tr $tsa /td sha256 @certArgs `
-                /d "KillerPDF Application" /du "https://killerpdf.net" /v $innerExe
+                /d "JPDFs Application" /du "https://jpdfs.net" /v $innerExe
             if ($LASTEXITCODE -eq 0) { $innerSigned = $true; break }
             Start-Sleep -Seconds 3
         }
@@ -444,7 +444,7 @@ if (-not $SkipSign) {
         foreach ($tsa in $tsaList) {
             Write-Host "    Trying TSA for $([IO.Path]::GetFileName($publicExe)): $tsa"
             & $signtool sign /fd sha256 /tr $tsa /td sha256 @certArgs `
-                /d "KillerPDF" /du "https://killerpdf.net" /v $publicExe
+                /d "JPDFs" /du "https://jpdfs.net" /v $publicExe
             if ($LASTEXITCODE -eq 0) { $signed = $true; break }
             Start-Sleep -Seconds 3
         }
@@ -489,11 +489,11 @@ if (-not $SkipSign) {
 # Generate the GPL source artifact once, beside the final public launcher.
 $projectXml = [xml](Get-Content -Raw -LiteralPath $proj)
 $releaseVersionNode = $projectXml.SelectSingleNode('/Project/PropertyGroup/Version')
-if (-not $releaseVersionNode) { throw "Version missing from KillerPDF.csproj." }
+if (-not $releaseVersionNode) { throw "Version missing from JPDFs.csproj." }
 $sourceBundleScript = Join-Path $PSScriptRoot 'build\bundle-source.ps1'
 $releaseBuildVersion = $releaseVersionNode.InnerText
 & powershell -NoProfile -ExecutionPolicy Bypass -File $sourceBundleScript `
-    -ProjectDir $PSScriptRoot -Version $releaseBuildVersion -AppName 'KillerPDF' -PublishDir $publishDir
+    -ProjectDir $PSScriptRoot -Version $releaseBuildVersion -AppName 'JPDFs' -PublishDir $publishDir
 if ($LASTEXITCODE -ne 0) { throw "Source bundle failed." }
 
 # 3b. Microsoft Store installer
@@ -526,12 +526,12 @@ Write-Host "`n==> Computing final EXE SHA256 values..." -ForegroundColor Cyan
 $portableHash  = (Get-FileHash $portableExe -Algorithm SHA256).Hash
 $installerHash = (Get-FileHash $installerExe -Algorithm SHA256).Hash
 $storeHash     = (Get-FileHash $storeExe -Algorithm SHA256).Hash
-Write-Host "    KillerPDF-Portable.exe : $portableHash" -ForegroundColor Green
-Write-Host "    KillerPDF.exe          : $installerHash" -ForegroundColor Green
-Write-Host "    KillerPDF-Store.exe    : $storeHash" -ForegroundColor Green
+Write-Host "    JPDFs-Portable.exe : $portableHash" -ForegroundColor Green
+Write-Host "    JPDFs.exe          : $installerHash" -ForegroundColor Green
+Write-Host "    JPDFs-Store.exe    : $storeHash" -ForegroundColor Green
 
 # 5. Source zip
-$srcZipPath = Join-Path $publishDir "KillerPDF-$Version-src.zip"
+$srcZipPath = Join-Path $publishDir "JPDFs-$Version-src.zip"
 if (-not [IO.File]::Exists($srcZipPath)) {
     throw "The exact source archive for $Version is missing: $srcZipPath"
 }
@@ -547,9 +547,9 @@ if ($PublishOnly -and (Test-Path $sumsPath)) {
     $srcHash = (Get-FileHash $srcZip.FullName -Algorithm SHA256).Hash
     $sumsRaw = Get-Content -LiteralPath $sumsPath -Raw
     foreach ($expected in @(
-        @{ Name = 'KillerPDF.exe'; Hash = $installerHash },
-        @{ Name = 'KillerPDF-Portable.exe'; Hash = $portableHash },
-        @{ Name = 'KillerPDF-Store.exe'; Hash = $storeHash },
+        @{ Name = 'JPDFs.exe'; Hash = $installerHash },
+        @{ Name = 'JPDFs-Portable.exe'; Hash = $portableHash },
+        @{ Name = 'JPDFs-Store.exe'; Hash = $storeHash },
         @{ Name = $srcZip.Name; Hash = $srcHash }
     )) {
         $pattern = '(?im)^' + [regex]::Escape($expected.Name) + '\s+' + [regex]::Escape($expected.Hash) + '\s*$'
@@ -560,9 +560,9 @@ if ($PublishOnly -and (Test-Path $sumsPath)) {
     Write-Host "`n==> PublishOnly: existing checksums match the exact release artifacts." -ForegroundColor Green
 } else {
 $lines    = [System.Collections.Generic.List[string]]::new()
-$lines.Add("KillerPDF.exe           $installerHash")
-$lines.Add("KillerPDF-Portable.exe  $portableHash")
-$lines.Add("KillerPDF-Store.exe     $storeHash")
+$lines.Add("JPDFs.exe           $installerHash")
+$lines.Add("JPDFs-Portable.exe  $portableHash")
+$lines.Add("JPDFs-Store.exe     $storeHash")
 if ($srcZip) {
     $srcHash = (Get-FileHash $srcZip.FullName -Algorithm SHA256).Hash
     $lines.Add("$($srcZip.Name.PadRight(23)) $srcHash")
@@ -573,7 +573,7 @@ Write-Host "`n==> SHA256SUMS.txt written to: $sumsPath" -ForegroundColor Green
 
 # 7. Summary
 Write-Host "`n==============================================================" -ForegroundColor Cyan
-Write-Host   "  KillerPDF release artifacts" -ForegroundColor White
+Write-Host   "  JPDFs release artifacts" -ForegroundColor White
 Write-Host   "  SETUP   : $installerExe"
 Write-Host   "  PORTABLE: $portableExe"
 if ($srcZip) { Write-Host "  SRC  : $($srcZip.FullName)" }
@@ -589,7 +589,7 @@ Write-Host   "  in the publish preflight below - no hand-pasting."
 Write-Host "==============================================================" -ForegroundColor Cyan
 
 # ============================================================================
-# Publish phases (ported from the KillerNotes release script): notes from the
+# Publish phases (ported from the JpdfsNotes release script): notes from the
 # CHANGELOG, git preflight, tag + push, and GitHub release. Publishing the release triggers
 # .github/workflows/winget-release.yml, the single WinGet submission path.
 # ============================================================================
@@ -598,7 +598,7 @@ Write-Host "==============================================================" -For
 Write-Host "`n==> Publish preflight..." -ForegroundColor Cyan
 $csprojRaw = Get-Content -Path $proj -Raw
 if ($csprojRaw -notmatch '<Version>([0-9]+\.[0-9]+\.[0-9]+)</Version>') {
-    throw "No <Version>x.y.z</Version> found in KillerPDF.csproj"
+    throw "No <Version>x.y.z</Version> found in JPDFs.csproj"
 }
 $Version = $Matches[1]
 $Tag = "v$Version"
@@ -622,7 +622,7 @@ try {
     # ReadAllText/WriteAllText: UTF-8 no BOM, PS 5.1-safe (absolute paths).
     $readmePath = Join-Path $PSScriptRoot 'README.md'
     $readmeRaw  = [System.IO.File]::ReadAllText($readmePath)
-    $readmeNew  = $readmeRaw -replace 'releases/download/v[0-9]+\.[0-9]+\.[0-9]+/KillerPDF-[0-9]+\.[0-9]+\.[0-9]+-src\.zip', "releases/download/v$Version/KillerPDF-$Version-src.zip"
+    $readmeNew  = $readmeRaw -replace 'releases/download/v[0-9]+\.[0-9]+\.[0-9]+/JPDFs-[0-9]+\.[0-9]+\.[0-9]+-src\.zip', "releases/download/v$Version/JPDFs-$Version-src.zip"
     if ($readmeNew -ne $readmeRaw) {
         if ($DryRun) {
             Write-Host "    DryRun: README source link is stale, would update it to $Tag" -ForegroundColor Yellow
@@ -635,9 +635,9 @@ try {
     }
 
     # Landing page release info (pdf-landing)
-    # Ported from Killendar's release.ps1 step 7 (the family standard - KillerNotes has it
-    # too; KillerPDF was the odd one out and its hero went stale by hand every release).
-    # killerpdf.net is a MANUAL Cloudflare Pages drop, so nothing here deploys - the hero
+    # Ported from Killendar's release.ps1 step 7 (the family standard - JpdfsNotes has it
+    # too; JPDFs was the odd one out and its hero went stale by hand every release).
+    # jpdfs.net is a MANUAL Cloudflare Pages drop, so nothing here deploys - the hero
     # block (version, released, size, sha256), the verEgg footer on every page, and the
     # translated footers in kp-i18n.js are rewritten and committed BEFORE the tag.
     # Two site-specific differences from Killendar's copy: the hash is stored LOWERCASE
@@ -647,7 +647,7 @@ try {
     # already checked against the CHANGELOG - Get-Date would stamp whatever day the script
     # happened to run.
     if ($csprojRaw -notmatch '<ReleaseDate>([0-9]{4}-[0-9]{2}-[0-9]{2})</ReleaseDate>') {
-        throw "No <ReleaseDate>yyyy-MM-dd</ReleaseDate> found in KillerPDF.csproj"
+        throw "No <ReleaseDate>yyyy-MM-dd</ReleaseDate> found in JPDFs.csproj"
     }
     $releaseDate = $Matches[1]
     $hashLower   = $installerHash.ToLower()
@@ -658,7 +658,7 @@ try {
     $indexRaw  = [System.IO.File]::ReadAllText($indexPath)
     $indexNew  = $indexRaw
     $releaseFields = @(
-        @{ Pattern = '(<span class="k"[^>]*>version</span>&nbsp;<span class="v">)KillerPDF v[0-9]+\.[0-9]+\.[0-9]+'; Value = "KillerPDF v$Version" },
+        @{ Pattern = '(<span class="k"[^>]*>version</span>&nbsp;<span class="v">)JPDFs v[0-9]+\.[0-9]+\.[0-9]+'; Value = "JPDFs v$Version" },
         @{ Pattern = '(<span class="k"[^>]*>released</span>&nbsp;<span class="v">)[0-9]{4}-[0-9]{2}-[0-9]{2}'; Value = $releaseDate },
         @{ Pattern = '(<span class="k"[^>]*>size</span>&nbsp;<span class="v">)[^<]*'; Value = "~$exeMB MB exe" },
         @{ Pattern = '(<span class="v hash">)[0-9A-Fa-f]{32}<br>[0-9A-Fa-f]{32}'; Value = $hashLower.Substring(0, 32) + '<br>' + $hashLower.Substring(32, 32) }
@@ -671,15 +671,15 @@ try {
     }
 
     if (-not $ReuseDryRun) {
-        dotnet test (Join-Path $PSScriptRoot 'engine\KillerPdf.Engine.Tests\KillerPdf.Engine.Tests.csproj') -c Release --nologo -v quiet --logger 'trx;LogFileName=engine.trx' --results-directory $validationDirectory
+        dotnet test (Join-Path $PSScriptRoot 'engine\JPDFs.Engine.Tests\JPDFs.Engine.Tests.csproj') -c Release --nologo -v quiet --logger 'trx;LogFileName=engine.trx' --results-directory $validationDirectory
         if ($LASTEXITCODE -ne 0) { throw 'Engine unit tests failed - fix them before releasing' }
-        Assert-ReleaseTestResult $engineTrxPath 'KillerPdf.Engine.Tests.dll'
+        Assert-ReleaseTestResult $engineTrxPath 'JPDFs.Engine.Tests.dll'
     }
     & (Join-Path $PSScriptRoot 'build/Update-EngineSiteFacts.ps1') -TrxPath $engineTrxPath -DryRun:$DryRun
 
     if ($DryRun) {
         Write-Host "    DryRun: would write these release facts to pdf-landing and commit:" -ForegroundColor Yellow
-        Write-Host "      version  : KillerPDF v$Version"
+        Write-Host "      version  : JPDFs v$Version"
         Write-Host "      released : $releaseDate"
         Write-Host "      size     : ~$exeMB MB exe"
         Write-Host "      sha256   : $hashLower"
@@ -704,7 +704,7 @@ try {
             git commit -m "v${Version}: landing release info" --quiet
             if ($LASTEXITCODE -ne 0) { throw "Landing page commit failed" }
             Write-Host "    pdf-landing updated to v$Version (pushed with the release)"
-            Write-Host "    Remember: killerpdf.net does NOT auto-deploy. Drag pdf-landing/ into Cloudflare Pages." -ForegroundColor Yellow
+            Write-Host "    Remember: jpdfs.net does NOT auto-deploy. Drag pdf-landing/ into Cloudflare Pages." -ForegroundColor Yellow
         } else {
             Write-Host "    pdf-landing already current"
         }
@@ -757,18 +757,18 @@ try {
     # A red test cannot ship. Same gate as the date checks above - fail the release, not a reminder.
     if (-not $ReuseDryRun) {
         Write-Host "    Running host-safe desktop unit tests against the fresh installer payload..."
-        Invoke-ReleaseDesktopTests -TestProject (Join-Path $PSScriptRoot 'KillerPDF.Tests\KillerPDF.Tests.csproj') `
-            -CliExecutable (Join-Path $installerPayloadDir 'KillerPDF.App.exe') -ExpectedVersion "$Version.0" -ResultsDirectory $validationDirectory
+        Invoke-ReleaseDesktopTests -TestProject (Join-Path $PSScriptRoot 'JPDFs.Tests\JPDFs.Tests.csproj') `
+            -CliExecutable (Join-Path $installerPayloadDir 'JPDFs.App.exe') -ExpectedVersion "$Version.0" -ResultsDirectory $validationDirectory
         Write-Host "    Desktop unit tests passed" -ForegroundColor Green
     }
 
     Write-Host "    Preflight OK" -ForegroundColor Green
 
-    # The Microsoft Store listing installs KillerPDF-Store.exe, which the Cloudflare Worker serves
-    # from this release at killerpdf.net/store. Check the Store credentials and that no submission
+    # The Microsoft Store listing installs JPDFs-Store.exe, which the Cloudflare Worker serves
+    # from this release at jpdfs.net/store. Check the Store credentials and that no submission
     # is in progress now, so a problem stops the release before anything is published.
     $storeScript = Join-Path $PSScriptRoot 'store\Submit-StoreRelease.ps1'
-    $storeArgs = @{ ProductId = 'XPDCHHP2XLG338'; PackageUrl = "https://killerpdf.net/store/$Version/KillerPDF-Store.exe" }
+    $storeArgs = @{ ProductId = 'XPDCHHP2XLG338'; PackageUrl = "https://jpdfs.net/store/$Version/JPDFs-Store.exe" }
     if (-not $SkipStoreSubmission) { & $storeScript @storeArgs -PreflightOnly }
     else { Write-Host '    Microsoft Store preflight and submission skipped.' -ForegroundColor Yellow }
 
@@ -783,7 +783,7 @@ try {
         if ($inSection) { $notes.Add($line) }
     }
     if ($notes.Count -eq 0) { throw "Could not extract [$Version] notes from CHANGELOG.md" }
-    $notesFile = Join-Path $env:TEMP "KillerPDF-$Version-notes.md"
+    $notesFile = Join-Path $env:TEMP "JPDFs-$Version-notes.md"
     $notes -join "`r`n" | Set-Content -Path $notesFile -Encoding UTF8
     Write-Host "    Notes written to $notesFile ($($notes.Count) lines)"
 
@@ -807,7 +807,7 @@ try {
         $null = Read-ReleaseDryRun -PublishDirectory $publishDir -Version $Version -SourceCommit $releaseBase
     }
     Write-Host "`n==> Checking WinGet fork synchronization..." -ForegroundColor Cyan
-    gh api --method POST repos/SteveTheKiller/winget-pkgs/merge-upstream -f branch=master
+    gh api --method POST repos/JPDFs/winget-pkgs/merge-upstream -f branch=master
     if ($LASTEXITCODE -ne 0) {
         throw "WinGet fork synchronization failed. Nothing has been pushed or published; resolve the GitHub API error above and run the release again."
     }
@@ -819,7 +819,7 @@ try {
     }
 
     Write-Host "`n==> Tagging $Tag..." -ForegroundColor Cyan
-    git tag -a $Tag -m "KillerPDF $Tag"
+    git tag -a $Tag -m "JPDFs $Tag"
     git push origin $Tag
     if ($LASTEXITCODE -ne 0) { throw "Tag push failed. The release commits are on origin/$defaultBranch but no tag or release exists; push $Tag and create the release, or delete the local tag and run again." }
 
@@ -828,13 +828,13 @@ try {
     $assets = @($installerExe, $portableExe, $storeExe)
     if ($srcZip) { $assets += $srcZip.FullName }
     if (Test-Path $sumsPath) { $assets += $sumsPath }
-    gh release create $Tag @assets --title "KillerPDF $Tag" --notes-file $notesFile --verify-tag
+    gh release create $Tag @assets --title "JPDFs $Tag" --notes-file $notesFile --verify-tag
     if ($LASTEXITCODE -ne 0) { throw "gh release create failed. $Tag is pushed; create the release for it with the same assets and notes." }
 
-    Write-Host "`n==> Refreshing thekiller.net software page..." -ForegroundColor Cyan
-    gh workflow run deploy.yml --repo SteveTheKiller/thekiller-site
+    Write-Host "`n==> Refreshing thejpdfs.net software page..." -ForegroundColor Cyan
+    gh workflow run deploy.yml --repo JPDFs/thejpdfs-site
     if ($LASTEXITCODE -ne 0) {
-        Write-Warning "The release is published, but thekiller.net refresh could not be started. Run: gh workflow run deploy.yml --repo SteveTheKiller/thekiller-site"
+        Write-Warning "The release is published, but thejpdfs.net refresh could not be started. Run: gh workflow run deploy.yml --repo JPDFs/thejpdfs-site"
     }
 
     if (-not $SkipStoreSubmission) {

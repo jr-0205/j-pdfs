@@ -1,15 +1,15 @@
 <!--
-    KillerUI family control styles, identical in every app. Theme-independent; merge AFTER a
+    JpdfsUiKit family control styles, identical in every app. Theme-independent; merge AFTER a
     Themes/{Theme}.xaml palette and BEFORE the app's own AppStyles.xaml. All brushes use
-    DynamicResource so theme/accent changes repaint. Promoted from KillerShell, the family
+    DynamicResource so theme/accent changes repaint. Promoted from JpdfsShell, the family
     reference for theme colors, grain and geometry; app-only styles live in AppStyles.xaml.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:kl="clr-namespace:KillerFamily.Layout"
-                    xmlns:input="clr-namespace:KillerFamily.Controls"
+                    xmlns:kl="clr-namespace:JpdfsUi.Layout"
+                    xmlns:input="clr-namespace:JpdfsUi.Controls"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:kui="clr-namespace:KillerPDF.Controls"
-                    xmlns:snap="clr-namespace:KillerFamily.Windowing"
+                    xmlns:kui="clr-namespace:JPDFs.Controls"
+                    xmlns:snap="clr-namespace:JpdfsUi.Windowing"
                     xmlns:cm="clr-namespace:System.ComponentModel;assembly=System"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
@@ -20,8 +20,8 @@
     <kui:LastChildConverter x:Key="IsLastChild"/>
 
     <!-- Family brand faces, bundled in Fonts/ with their licenses beside them: Punktype
-         (commercial license) for "Killer", Lacquer (OFL) for the app name and primary headings, and
-         Killer Sans (OFL) for secondary headings and the footer. -->
+         (commercial license) for "Jpdfs", Lacquer (OFL) for the app name and primary headings, and
+         Jpdfs Sans (OFL) for secondary headings and the footer. -->
     <FontFamily x:Key="WordmarkFont">Segoe UI Semibold</FontFamily>
     <FontFamily x:Key="WordmarkAccentFont">Segoe UI</FontFamily>
     <FontFamily x:Key="BrandSansFont">Segoe UI Semibold</FontFamily>
@@ -959,7 +959,7 @@
     </Style>
 
     <Style TargetType="ContextMenu">
-        <!-- Display + Grayscale on the menu itself, as KillerPDF sets on every menu it builds. The window's ClearType is inherited into a menu otherwise, and a menu lives in a transparent popup where ClearType cannot render, so the labels are left to a fallback instead of asking for antialiasing. -->
+        <!-- Display + Grayscale on the menu itself, as JPDFs sets on every menu it builds. The window's ClearType is inherited into a menu otherwise, and a menu lives in a transparent popup where ClearType cannot render, so the labels are left to a fallback instead of asking for antialiasing. -->
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale"/>
         <Setter Property="Background" Value="{DynamicResource MenuBackgroundBrush}"/>
@@ -1007,7 +1007,7 @@
                                 <!-- IsSharedSizeScope so every MenuItem's Header/Gesture columns in THIS
                                      popup align as real columns (see the MenuItem template's SharedSizeGroup
                                      names) instead of each row sizing its shortcut text independently. -->
-                                <!-- A menu taller than the screen scrolls instead of cutting off its last items (KillerShot menu-overflow). -->
+                                <!-- A menu taller than the screen scrolls instead of cutting off its last items (JpdfsShot menu-overflow). -->
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
                                     <StackPanel IsItemsHost="True" Margin="{TemplateBinding Padding}" KeyboardNavigation.DirectionalNavigation="Cycle"
                                                 Grid.IsSharedSizeScope="True"/>
@@ -1056,16 +1056,16 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Ported wholesale from KillerPDF's MenuItem template (MainWindow.xaml), brush names
-         translated. What changed from KillerShell's own version:
+    <!-- Ported wholesale from JPDFs's MenuItem template (MainWindow.xaml), brush names
+         translated. What changed from JpdfsShell's own version:
            - Padding 24,7 -> 8,6,10,6. The old row carried 24px of padding IN FRONT of a 28px
-             icon gutter, so text started roughly twice as far in as KillerPDF's.
+             icon gutter, so text started roughly twice as far in as JPDFs's.
            - Icon gutter: an Auto column holding an 18px presenter plus a 10px margin -> a fixed
              16px column, which is also the check-glyph column. Items with no icon no longer
              collapse the gutter, so every row's text lines up whether or not it has an icon.
            - Highlight gets CornerRadius 3 instead of a square block running edge to edge, and
-             no longer recolors the text to the accent - KillerPDF moves the background only.
-           - InputGestureText column and submenu arrow: KillerShell's template had NEITHER, so a
+             no longer recolors the text to the accent - JPDFs moves the background only.
+           - InputGestureText column and submenu arrow: JpdfsShell's template had NEITHER, so a
              shortcut hint on a menu item silently rendered nothing and a submenu had no
              affordance. Both are here now, with the same collapse-when-empty trigger.
            - Submenu popup mirrors the ContextMenu surface, with the same background and grain. -->
@@ -1207,7 +1207,7 @@
     </Style>
 
     <!-- Glyph for a MenuItem.Icon, so an icon in the new gutter is one line at the call site
-         and the size lives in one place (family standard, from KillerScan).
+         and the size lives in one place (family standard, from JpdfsScan).
          No Foreground here on purpose. The colour is inherited from the menu item, which is what
          lets the highlighted state change it with the row's text in every menu style: a style
          setter here would outrank that, and an ancestor-bound IsHighlighted trigger does not
@@ -1229,7 +1229,7 @@
     </Style>
 
     <!-- ============================================================
-         Family flyout standard, ported verbatim from KillerPDF - the exact KillerPDF menu is
+         Family flyout standard, ported verbatim from JPDFs - the exact JPDFs menu is
          the reference for everything here. The rail's theme and language flyouts are
          Button.ContextMenus whose chrome comes ONLY from FlyoutCard + FlyoutGrain, with
          PanelMenuItem stripping the MenuItem container for panel content (a StackPanel of
@@ -1283,7 +1283,7 @@
         </Setter>
     </Style>
 
-    <!-- Accent picker dot, family-standard (KillerPDF AccentDot). 18px filled circle, rings
+    <!-- Accent picker dot, family-standard (JPDFs AccentDot). 18px filled circle, rings
          in TextBrush when it is the family's current pick (set from code). -->
     <Style x:Key="AccentDot" TargetType="Border">
         <Setter Property="Width" Value="18"/>
@@ -1296,8 +1296,8 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
     </Style>
 
-    <!-- Ringed radio row for the theme/language flyouts (KillerPDF ThemeRadio). PrimaryBrush
-         stands in for PDF's RadioAccent, which KillerShell has no separate resource for. -->
+    <!-- Ringed radio row for the theme/language flyouts (JPDFs ThemeRadio). PrimaryBrush
+         stands in for PDF's RadioAccent, which JpdfsShell has no separate resource for. -->
     <Style x:Key="ThemeRadio" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
@@ -1310,7 +1310,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <!-- Transparent ROW, not RadioWellBrush: that key is the little white circle
-                         well behind the radio RING (see KillerNotes' copy of this template), and
+                         well behind the radio RING (see JpdfsNotes' copy of this template), and
                          painting it across the whole row turned every flyout option into a WHITE
                          pill on 98SE - the "wrong color" flyouts. The well
                          ellipse below is where it actually belongs; both are transparent on every
@@ -1365,7 +1365,7 @@
         </Setter>
     </Style>
 
-    <!-- ThemeRadio's square sibling for on/off switches in the theme flyout (Film Grain): the same row, hover and accent, with a box and checkmark in place of the ring and dot. Derived from this file's ThemeRadio, as KillerPDF's ThemeCheck is from its own. -->
+    <!-- ThemeRadio's square sibling for on/off switches in the theme flyout (Film Grain): the same row, hover and accent, with a box and checkmark in place of the ring and dot. Derived from this file's ThemeRadio, as JPDFs's ThemeCheck is from its own. -->
 <Style x:Key="ThemeCheck" TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
@@ -1577,7 +1577,7 @@
     </Style>
 
     <!-- Main-window close button: the WHOLE button fills danger red with a white glyph on
-         hover, like KillerPDF's. The dialog close X's keep the glyph-only treatment. -->
+         hover, like JPDFs's. The dialog close X's keep the glyph-only treatment. -->
     <!-- Inherits geometry and the bevel from ChromeButton; only the corner and the hover differ.
          On a flat theme it is a beveled gray button with a black glyph and NO hover fill, which
          is how Win98 drew it - it reacted to being pressed, not hovered. -->
@@ -1706,7 +1706,7 @@
         </Setter>
     </Style>
 
-    <!-- Elevation (KillerPDF ShadowBar): lifts panels/cards slightly off the surface. -->
+    <!-- Elevation (JPDFs ShadowBar): lifts panels/cards slightly off the surface. -->
     <DropShadowEffect x:Key="ShadowBar" Color="Black" BlurRadius="6" ShadowDepth="3" Direction="270" Opacity="0.38"/>
     <!-- Stronger elevation for the results pane; casts down over the footer. -->
     <!-- Kept for anything still referencing it directly. The LIVE one is PaneShadowEffect, built
@@ -1762,7 +1762,7 @@
         </Setter>
     </Style>
 
-    <!-- KillerUI sidebar icon-rail button: bare
+    <!-- JpdfsUiKit sidebar icon-rail button: bare
          glyph with a soft shadow, turning the accent color on hover. Set Content to the glyph;
          override FontFamily/FontSize for text glyphs like a "?" button. -->
     <Style x:Key="RailButton" TargetType="Button">
@@ -2108,7 +2108,7 @@
         </Setter>
     </Style>
 
-    <!-- SCROLL EDGE SHADOWS for the file browser and Performance. KillerScan 1.8.0 is the
+    <!-- SCROLL EDGE SHADOWS for the file browser and Performance. JpdfsScan 1.8.0 is the
          reference: a dark gradient at an edge only while more content lies past it. The cues
          span the scrollbar column and row and the bars draw above them, so the shadow runs
          underneath the scrollbars out to the pane edges. List spacing belongs in the
@@ -2517,8 +2517,8 @@
     </ItemsPanelTemplate>
 
     <!-- ═══════════════════════════════════════════════════════════
-         DATAGRID  -  KillerScan's DataGrid styling (MainWindow.xaml), ported rather than
-         reinvented: this is the FIRST DataGrid in KillerShell (Tools/ProcessListControl.cs, the
+         DATAGRID  -  JpdfsScan's DataGrid styling (MainWindow.xaml), ported rather than
+         reinvented: this is the FIRST DataGrid in JpdfsShell (Tools/ProcessListControl.cs, the
          Task Manager tab's process list), so the row/cell/header treatment lives here rather
          than beside that one call site - any future grid in the app reuses these three keys
          instead of growing its own. Every brush is one already themed elsewhere in the app
@@ -2647,7 +2647,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════════════════════════════════════════════
-         Kit styles from the other apps that KillerShell's own views never needed: the F1 map
+         Kit styles from the other apps that JpdfsShell's own views never needed: the F1 map
          toggle, the annotation bar, the implicit Slider and RadioButton, toolbar and card close
          buttons, the sidebar rail host, resize grip and fades, tree names, the picker's combo
          box, and the text input context menu.
@@ -2801,7 +2801,7 @@
          Content color is left alone. CheckBox mutes its label until checked, which suits a
          switch; an unselected choice still has to be readable enough to choose.
 
-         Added 2026-08-06 - KillerNotes' speech-model chooser was the family's first plain radio,
+         Added 2026-08-06 - JpdfsNotes' speech-model chooser was the family's first plain radio,
          and until then a RadioButton fell through to WPF's default template and painted system
          colors on a themed card. -->
     <Style TargetType="RadioButton">
@@ -2841,7 +2841,7 @@
     </Style>
 
     <!-- Toolbar button. The glyph sits DIRECTLY on the chrome - no box at rest. Hover FILLS the
-         background and nothing else: no colored border, no glyph recolor. KillerPDF has always
+         background and nothing else: no colored border, no glyph recolor. JPDFs has always
          worked this way and it is the family standard (2026-07-30). Deliberately NO fixed
          Width/Height: a toolbar with text-beside / text-under display modes has to grow, so this
          sizes to content and the app varies only Padding per mode. An ACTIVE toolbar button is

@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The working copy of an encrypted file and what the tab must remember about it.</summary>
 internal sealed record ProtectedOpen(bool Stripped, bool StartsDirty, OpenedProtection Protection);
@@ -24,9 +24,9 @@ internal static class ProtectedDocumentFiles
     /// <summary>Writes a smaller copy of a finished document, which keeps the file's protection as a
     /// save does. Returns what the size report needs, with the size of the file delivered: the
     /// encryption writes each object on its own, so a sealed copy is not the size of the plain one.</summary>
-    internal static (long Before, long After, int Resampled, IReadOnlyList<KillerPdf.Engine.Writing.PdfReferenceRepair> Repairs) ReduceSize(
+    internal static (long Before, long After, int Resampled, IReadOnlyList<JPDFs.Engine.Writing.PdfReferenceRepair> Repairs) ReduceSize(
         string finishedPath, string destinationPath, string workingPath,
-        KillerPdf.Engine.Writing.PdfImageDownsampleOptions? images, CancellationToken cancellation,
+        JPDFs.Engine.Writing.PdfImageDownsampleOptions? images, CancellationToken cancellation,
         OpenedProtection protection)
     {
         if (!protection.KeepsEncryption)

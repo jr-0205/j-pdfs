@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,9 +13,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -90,7 +90,7 @@ namespace KillerPDF.Shell
         {
             if (_doc is null || string.IsNullOrEmpty(_currentFile))
             {
-                KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+                JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
                 return;
             }
             if (!EnsureMayWrite(PdfOutput.Printable, continueAfterUnlock: true)) return;
@@ -111,7 +111,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Sign_Failed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Sign_Failed") + "\n" + ex.Message,
                     Loc("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -194,7 +194,7 @@ namespace KillerPDF.Shell
         private static void HideBusyOverlay(Border overlay)
             => (overlay.Parent as Panel)?.Children.Remove(overlay);
 
-        // RenderToPng lives in Services/BitmapHelpers.cs (KillerUI refactor), with the other
+        // RenderToPng lives in Services/BitmapHelpers.cs (JpdfsUiKit refactor), with the other
         // raw-bitmap helpers.
     }
 }

@@ -1,17 +1,17 @@
 using System.Globalization;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>The panels the sidebar can show, one rail button each.</summary>
     internal enum SidebarPanel { Pages, Outlines, Comments, Attachments, Layers, Signatures }
@@ -258,7 +258,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Attachment_Failed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Attachment_Failed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -578,7 +578,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                KillerDialog.Show(this, Loc("Str_DocumentTools_Failed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_DocumentTools_Failed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -626,7 +626,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 check.IsChecked = !visible;
-                KillerDialog.Show(this, Loc("Str_DocumentTools_LayersFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_DocumentTools_LayersFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

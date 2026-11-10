@@ -1,11 +1,11 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Automation;
 using System.Windows.Media;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class ExportDocumentDialog : Window
 {

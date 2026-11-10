@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal readonly record struct VisibleRenderRegion(int Left, int Top, int Width, int Height,
     int DisplayLeft, int DisplayTop, int DisplayWidth, int DisplayHeight)

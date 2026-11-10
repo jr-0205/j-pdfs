@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 public sealed class SafeWrapPanel : WrapPanel
 {

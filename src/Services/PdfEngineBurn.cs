@@ -4,19 +4,19 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
-using KillerPdf.Engine.Fonts;
-using EngineImage = KillerPdf.Engine.Authoring.PdfImage;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
+using JPDFs.Engine.Fonts;
+using EngineImage = JPDFs.Engine.Authoring.PdfImage;
 using WpfPoint = System.Windows.Point;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed record PdfTextWatermarkOptions(string Text, double FontSize = 64,
     double Opacity = .25, double RotationDegrees = 45);
 
-/// <summary>Burns KillerPDF markup into typed engine page content.</summary>
+/// <summary>Burns JPDFs markup into typed engine page content.</summary>
 internal static class PdfEngineBurn
 {
     internal static PdfMacroStep WatermarkStep(PdfTextWatermarkOptions options)

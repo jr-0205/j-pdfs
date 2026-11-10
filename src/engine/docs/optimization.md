@@ -16,8 +16,8 @@ Creating a plan inspects the document without applying its changes. Retain the
 same immutable document and source bytes while reviewing and applying the plan.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
 
 static PdfOptimizationPlan PreviewCompression(PdfDocument document)
 {
@@ -58,8 +58,8 @@ the text report displays page numbers starting at one.
 After the host has chosen the plan, apply that same instance:
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
 
 static PdfOptimizationResult ApplySelectedPlan(PdfOptimizationPlan plan)
 {
@@ -88,8 +88,8 @@ intended output, independently of compression. This example removes document
 information/XMP, attachments, and the opening action:
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
 
 static PdfOptimizationPlan PreviewRemoval(PdfDocument document)
 {
@@ -135,8 +135,8 @@ boxes that are degenerate or outside the effective media box. It does not perfor
 the renderer's broad compatibility recovery or reconstruct missing page content.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
 
 static byte[] ApplySaveRepair(PdfDocument document)
 {

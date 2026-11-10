@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Media;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>WCAG contrast arithmetic for theme colors that are derived rather than stated.</summary>
     internal static class ColorContrast

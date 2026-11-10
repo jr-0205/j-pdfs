@@ -15,7 +15,7 @@ using System.Windows.Interop;
 // An About card option, "Close to system tray". With it on, closing the main window hides it
 // and leaves an icon in the notification area: a click on the icon brings the window back, and
 // its menu has Open <App> and Exit. With it off, closing quits, as it always did. The icon is
-// there only while the window is hidden. KillerShot, a tray app, keeps its own permanent icon
+// there only while the window is hidden. JpdfsShot, a tray app, keeps its own permanent icon
 // and is on by default; every other app is off until the user turns it on.
 //
 // ---- Wiring it up -------------------------------------------------------------------------
@@ -48,7 +48,7 @@ using System.Windows.Interop;
 //      keepIcon  an app option that keeps the icon while the window is open too. Call
 //                RefreshIcon after that option changes and once after attaching.
 // ============================================================
-namespace KillerFamily.Shell
+namespace JpdfsUi.Shell
 {
     internal sealed class CloseToTray : IDisposable
     {

@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerFamily.Controls
+namespace JpdfsUi.Controls
 {
     public sealed class InputContentHost : ScrollViewer
     {

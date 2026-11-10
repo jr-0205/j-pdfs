@@ -3,9 +3,9 @@ using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerFamily.Accessibility;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // The owner-restriction notice. A PDF whose owner password forbids editing opens read-only,
     // and this bar says so at the top of the pane with a button that asks for the owner password.

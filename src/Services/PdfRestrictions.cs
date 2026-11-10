@@ -1,8 +1,8 @@
 using System.IO;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Security;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Security;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Who a PDF took the reader for, which decides what its permissions mean.</summary>
 internal enum PdfAccessRole

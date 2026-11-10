@@ -1,6 +1,6 @@
 using System;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static class PrintOrientationPolicy
 {

@@ -8,7 +8,7 @@ labels and [macros](macros.md) for host execution.
 ## Format text with explicit values
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static string FormatFooter()
 {
@@ -44,7 +44,7 @@ This example assumes an unrotated page with an origin of zero and a reviewed,
 clear footer area:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] AddFooter(PdfDocument document)
 {
@@ -69,7 +69,7 @@ pixel coverage. It does not account for a rotated mark automatically.
 ## Use the page-numbering macro
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] NumberPages(byte[] source)
 {
@@ -121,7 +121,7 @@ Incremental removal does not erase the earlier bytes.
 ## Plan continuous Bates values
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static IReadOnlyList<PdfBatesNumber> PlanBatesBatch()
 {

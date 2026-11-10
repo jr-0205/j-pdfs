@@ -1,13 +1,13 @@
 using System.Globalization;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>A unit the Measure tool can show, and how many inches one of it is.</summary>
 internal sealed record MeasureUnit(string Id, string Symbol, double Inches, bool Metric);
 
 /// <summary>
 /// Units, scales and value text for the Measure tool. Plain numbers in and text out, free of WPF
-/// so KillerPDF.Tests can link this file. A scale is kept the way the PDF stores it: drawing units
+/// so JPDFs.Tests can link this file. A scale is kept the way the PDF stores it: drawing units
 /// per PDF point (1/72 inch on paper).
 /// </summary>
 internal static class MeasurementUnits

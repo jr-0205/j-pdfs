@@ -6,19 +6,19 @@
   including five measured passes per version and collection.
 - **1.8.90:** [Corpus benchmark and 1.8.80 outcome comparison](benchmarks/1.8.90/CORPUS.md),
   including five measured passes per collection.
-- **1.8.80:** [Corpus benchmark and alternating 1.8.71 comparison](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.80.md),
+- **1.8.80:** [Corpus benchmark and alternating 1.8.71 comparison](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.80.md),
   including five measured passes per version and collection.
-- **1.8.71:** [Corpus baseline from the alternating 1.8.80 comparison](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.71.md),
+- **1.8.71:** [Corpus baseline from the alternating 1.8.80 comparison](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.71.md),
   including this version's own five measured passes per collection.
-- **1.8.70:** [Corpus benchmark and release comparison](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.70.md),
+- **1.8.70:** [Corpus benchmark and release comparison](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.70.md),
   including five measured passes and comparison with 1.8.6.
-- **1.8.6:** [Corpus benchmark and release comparison](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.6.md),
+- **1.8.6:** [Corpus benchmark and release comparison](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.6.md),
   including five measured passes and exact comparison with 1.8.4.
-- **1.8.4:** [Corpus benchmark and release comparison](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.4.md),
+- **1.8.4:** [Corpus benchmark and release comparison](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.4.md),
   including five measured passes of the official release payload and exact comparison with 1.8.3.
-- **1.8.3:** [Corpus benchmark and release comparison](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.3.md),
+- **1.8.3:** [Corpus benchmark and release comparison](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.3.md),
   including five measured passes and the comparison with 1.8.2.
-- **1.8.2:** [Corpus release record](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.2.md),
+- **1.8.2:** [Corpus release record](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.2.md),
   including complete per-file logs and five measured passes.
 - **1.8.1:** The standards-conformance run is preserved below.
 
@@ -32,19 +32,19 @@ and five measured passes in alternating order, and every paired pass agreed on e
 path, status, diagnostic, and exit code. These open/save benchmarks
 and the standards checks below measure different things.
 
-## Standards-conformance validation: KillerPDF 1.8.1
+## Standards-conformance validation: JPDFs 1.8.1
 
 Validation date: 2026-08-29
 
-KillerPDF 1.8.1 rewrote 2,898 of 2,907 deliberately hostile conformance PDFs through
-The KillerPDF.Engine. The release candidate completed with zero rewrite failures, zero new
+JPDFs 1.8.1 rewrote 2,898 of 2,907 deliberately hostile conformance PDFs through
+The JPDFs.Engine. The release candidate completed with zero rewrite failures, zero new
 veraPDF failures, and zero qpdf structural regressions.
 
-Question under test: does saving a PDF through KillerPDF degrade its
+Question under test: does saving a PDF through JPDFs degrade its
 standards conformance? Every file in a 2,907-file public corpus was validated, resaved through
-KillerPDF's standard open/save pipeline, and validated again.
+JPDFs's standard open/save pipeline, and validated again.
 
-Result: **Zero** conformance regressions across every file KillerPDF saved. **74 files came
+Result: **Zero** conformance regressions across every file JPDFs saved. **74 files came
 out more conformant than they went in.**
 
 ## Tools
@@ -53,7 +53,7 @@ out more conformant than they went in.**
 |---|---|---|
 | veraPDF | 1.30.2 | PDF/A + PDF/UA validation (the industry reference validator) |
 | qpdf | 12.3.2 | Structural check (`--check` exit codes) |
-| KillerPDF | 1.8.1 | `--batch-resave` through the standard open/save pipeline |
+| JPDFs | 1.8.1 | `--batch-resave` through the standard open/save pipeline |
 | Compare-VeraPDF.ps1 | `tools/validation` | Diffs the two veraPDF reports file by file |
 | QpdfSweep.ps1 | `tools/validation` | Structural before/after sweep (`qpdf --check` exit codes) |
 
@@ -67,7 +67,7 @@ standard, so any structural damage a resave introduces shows up as a new failed 
 ## Method
 
 1. Validate the pristine corpus: `verapdf --recurse --format json <corpus> > baseline.json`
-2. Resave every file through KillerPDF: `KillerPDF.exe --batch-resave <corpus> <resaved> --log resave.csv`
+2. Resave every file through JPDFs: `JPDFs.exe --batch-resave <corpus> <resaved> --log resave.csv`
 3. Validate the resaved tree the same way into `after.json`
 4. `Compare-VeraPDF.ps1` matches files by relative path and flags any file that fails a rule
    after the resave that it did not fail before
@@ -111,7 +111,7 @@ No file's structural health got worse; 374 files with qpdf warnings came out cle
 
 ## Build under test
 
-KillerPDF 1.8 replaces the legacy document pipeline with The KillerPDF.Engine. This gate
+JPDFs 1.8 replaces the legacy document pipeline with The JPDFs.Engine. This gate
 used the 1.8.1 Release candidate built from the current source tree.
 
 | Gate | Result |
@@ -129,7 +129,7 @@ corpora). On a tree containing the corpus:
 
 ```
 verapdf --recurse --format json C:\pdf-corpus > baseline.json
-Start-Process -Wait KillerPDF.exe -ArgumentList '--batch-resave','C:\pdf-corpus','C:\pdf-corpus-resaved','--log','resave.csv'
+Start-Process -Wait JPDFs.exe -ArgumentList '--batch-resave','C:\pdf-corpus','C:\pdf-corpus-resaved','--log','resave.csv'
 verapdf --recurse --format json C:\pdf-corpus-resaved > after.json
 ..\tools\validation\Compare-VeraPDF.ps1 -Baseline baseline.json -After after.json `
     -BaselineRoot C:\pdf-corpus -AfterRoot C:\pdf-corpus-resaved `
@@ -138,6 +138,6 @@ verapdf --recurse --format json C:\pdf-corpus-resaved > after.json
     -ResaveLog resave.csv -CsvOut qpdf-results.csv
 ```
 
-The resave step must wait for KillerPDF to exit before the after-scan starts. The comparison
+The resave step must wait for JPDFs to exit before the after-scan starts. The comparison
 uses `resave.csv` to distinguish the nine explicit skips from missing output. Any other missing
 file, newly failed rule, or new veraPDF parse failure is a regression.

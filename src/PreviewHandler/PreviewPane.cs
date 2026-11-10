@@ -11,11 +11,11 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Rendering;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Rendering;
+using JPDFs.Services;
 
-namespace KillerPDF.PreviewHandler;
+namespace JPDFs.PreviewHandler;
 
 /// <summary>
 /// The preview itself: a small toolbar over the pages in one scrolling column, hosted as a
@@ -116,7 +116,7 @@ internal sealed partial class PreviewPane : IDisposable
         left.Children.Add(MakeButton(template, 0xE8A3, null, PreviewStrings.Get(PreviewStrings.Key.ZoomIn), () => Step(1.25)));
         DockPanel.SetDock(left, Dock.Left);
         toolbar.Children.Add(left);
-        Button open = MakeButton(template, 0xE8A7, PreviewStrings.Get(PreviewStrings.Key.Open), null, OpenInKillerPdf);
+        Button open = MakeButton(template, 0xE8A7, PreviewStrings.Get(PreviewStrings.Key.Open), null, OpenInJPDFs);
         DockPanel.SetDock(open, Dock.Right);
         toolbar.Children.Add(open);
         var bar = new Border { Child = toolbar, BorderBrush = subtle, BorderThickness = new Thickness(0, 0, 0, 1) };
@@ -329,7 +329,7 @@ internal sealed partial class PreviewPane : IDisposable
         retry.Foreground = SystemColors.InfoTextBrush;
         slot.Retry = retry;
         actions.Children.Add(retry);
-        Button open = MakeButton(template, null, PreviewStrings.Get(PreviewStrings.Key.Open), null, OpenInKillerPdf);
+        Button open = MakeButton(template, null, PreviewStrings.Get(PreviewStrings.Key.Open), null, OpenInJPDFs);
         open.Foreground = SystemColors.InfoTextBrush;
         actions.Children.Add(open);
         content.Children.Add(actions);
@@ -395,7 +395,7 @@ internal sealed partial class PreviewPane : IDisposable
     // ── Open in J-PDF's ────────────────────────────────────────────────────────────────
 
     // The shell hands over a stream, not a path, so the app opens a read-only copy of it.
-    private void OpenInKillerPdf()
+    private void OpenInJPDFs()
     {
         try
         {

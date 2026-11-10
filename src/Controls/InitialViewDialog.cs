@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class InitialViewDialog : Window
 {
@@ -145,7 +145,7 @@ internal sealed class InitialViewDialog : Window
         _ => null
     };
 
-    private void Invalid() => KillerDialog.Show(this, L("Str_InitialView_Invalid"),
+    private void Invalid() => JpdfsDialog.Show(this, L("Str_InitialView_Invalid"),
         "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
 
     private static ComboBox AddCombo<T>(StackPanel host, string label,

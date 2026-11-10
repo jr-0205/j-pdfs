@@ -9,11 +9,11 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
-    /// KillerPDF's side of the family theme engine. ThemeManager.cs is the KillerUI template and is
-    /// never edited here; everything particular to KillerPDF comes in through its hooks: the saved
+    /// JPDFs's side of the family theme engine. ThemeManager.cs is the JpdfsUiKit template and is
+    /// never edited here; everything particular to JPDFs comes in through its hooks: the saved
     /// settings, the Dark/Green first run, the keys the kit palette does not define (the values in
     /// Themes/App, their completion and the comparison bar), the app-scope radius and font
     /// mirrors, the icon refresh and the DWM title bar. Every key the kit defines keeps the kit's
@@ -31,21 +31,15 @@ namespace KillerPDF.Services
         /// <summary>Call once before ThemeManager.Initialize or InitializeInstaller.</summary>
         internal static void Configure()
         {
-            // The Black theme's saved value was once "HighContrast".
-            ThemeManager.GetSetting = name =>
-            {
-                string? value = App.GetSetting(name);
-                return name == "Theme" && value == "HighContrast" ? nameof(Theme.Black) : value;
-            };
+            ThemeManager.GetSetting = App.GetSetting;
             ThemeManager.SetSetting = App.SetSetting;
-            // One-time move to the light Acrobat base. Builds before this one opened on the dark
-            // theme, so without this an existing installation would keep the old default after the
-            // redesign and never see the new reading room. The marker makes it a single migration:
-            // choosing the dark theme afterwards is respected.
-            if (App.GetSetting("Theme") is not null && App.GetSetting("ThemePaletteRevision") != "2")
+            // One-time move to the light Acrobat base. The theme set was reduced to the two
+            // Acrobat palettes, so every existing value is rewritten once; choosing the dark
+            // palette afterwards is respected. The marker makes it a single migration.
+            if (App.GetSetting("Theme") is not null && App.GetSetting("ThemePaletteRevision") != "3")
             {
-                App.SetSetting("Theme", nameof(Theme.Word));
-                App.SetSetting("ThemePaletteRevision", "2");
+                App.SetSetting("Theme", nameof(Theme.AcrobatLight));
+                App.SetSetting("ThemePaletteRevision", "3");
             }
             ConfigureTokens();
             ConfigureKit();
@@ -59,12 +53,12 @@ namespace KillerPDF.Services
             // This build opens on the light Acrobat theme ("Acrobat claro"): white panels on a
             // light chrome, a gray reading canvas, Adobe blue for action and Adobe red for the
             // brand mark. The graphite Acrobat theme stays one click away.
-            ThemeManager.SetDefaults(Theme.Word, dark: Accent.Green, light: Accent.Green, black: Accent.Green, se98: Accent.Blue);
+            ThemeManager.SetDefaults(Theme.AcrobatLight);
             ThemeManager.AppTokens = null;
             ThemeManager.AppDerivedTokens = AppDerivedTokens;
         }
 
-        /// <summary>KillerPDF's settings for the shared UI kit files in Controls and Shell.</summary>
+        /// <summary>JPDFs's settings for the shared UI kit files in Controls and Shell.</summary>
         internal static void ConfigureKit()
         {
             // Kit dialog captions (Controls/DialogChrome.cs): title icon and wordmark.
@@ -85,26 +79,26 @@ namespace KillerPDF.Services
             if (hwnd != IntPtr.Zero) ApplyDwm(hwnd);
         }
 
-        private static string FileName(Theme theme) => theme == Theme.SE98 ? "98SE" : theme.ToString();
+        private static string FileName(Theme theme) => theme.ToString();
 
-        // The kit owns every key its palette defines, value included. KillerPDF only adds the keys
+        // The kit owns every key its palette defines, value included. JPDFs only adds the keys
         // the kit does not define: Themes/App values, the completion below and the comparison bar,
-        // each worked out from the kit's finished palette, so a KillerPDF key derived from a kit
+        // each worked out from the kit's finished palette, so a JPDFs key derived from a kit
         // key follows the kit's value.
         private static void AppDerivedTokens(ResourceDictionary d, Theme theme, Accent accent)
         {
             var palette = BuildPalette(d, theme, accent);
             foreach (object key in palette.Keys)
                 if (!d.Contains(key)) d[key] = palette[key];
-            // KillerPDF's tabs have no icon, so the kit's 2px tab padding put the title against the
-            // tab's left edge. 98SE already pads its tabs 8px and needs nothing more.
-            d["TabLabelInset"] = theme == Theme.SE98 ? new Thickness(0) : new Thickness(7, 0, 0, 0);
+            // JPDFs's tabs have no icon, so the kit's 2px tab padding put the title against the
+            // tab's left edge; 7px restores the label inset.
+            d["TabLabelInset"] = new Thickness(7, 0, 0, 0);
 
             var app = Application.Current;
             if (app == null) return;
             // App.xaml owns startup fallbacks for these legacy aliases, and local application
-            // resources outrank merged dictionaries. Keep those fallbacks synchronized so 98SE's
-            // zero radius actually reaches panes, tabs, flyouts, and dialogs.
+            // resources outrank merged dictionaries. Keep those fallbacks synchronized with the
+            // active palette's radii.
             var appResources = app.Resources;
             appResources["RadWindow"] = d["WindowCornerRadius"];
             appResources["RadCard"] = d["PanelCornerRadius"];
@@ -121,7 +115,7 @@ namespace KillerPDF.Services
             catch (IOException) { return null; }
         }
 
-        // The kit's finished palette with KillerPDF's own keys added and completed.
+        // The kit's finished palette with JPDFs's own keys added and completed.
         private static ResourceDictionary BuildPalette(ResourceDictionary kit, Theme theme, Accent accent)
         {
             var palette = new ResourceDictionary();
@@ -135,15 +129,6 @@ namespace KillerPDF.Services
 
             var own = Load($"Themes/App/{FileName(theme)}.xaml");
             Add(own);
-            if (ThemeManager.SupportsAccents(theme) && accent != Accent.Green)
-            {
-                string sub = theme == Theme.Light ? "Light/" : theme == Theme.Black ? "Black/" : theme == Theme.SE98 ? "98SE/" : "Dark/";
-                var ownAccent = Load($"Themes/App/Accents/{sub}{accent}.xaml");
-                Add(ownAccent);
-                // The theme file's Install fill is its base accent; a colored accent takes over.
-                if (own?.Contains("InstallBtnBg") == true && ownAccent?.Contains("InstallBtnBg") != true)
-                    palette["InstallBtnBg"] = palette["PrimaryBrush"];
-            }
 
             CompleteAppPalette(palette);
             if (!palette.Contains("FooterAccentBrush"))
@@ -154,55 +139,17 @@ namespace KillerPDF.Services
 
         private static void ApplyComparisonBarPalette(ResourceDictionary resources, Theme theme, Accent accent)
         {
+            // Both Acrobat palettes carry a blue action fill, so the comparison bar is the same
+            // in each: the palette's primary surface with its on-primary ink.
             object background = resources["PrimaryBrush"];
             object foreground = resources["OnPrimaryBrush"];
-            object? effect = null;
+            object? effect = resources["TextStroke"];
 
             static SolidColorBrush Solid(byte red, byte green, byte blue, byte alpha = 0xff)
             {
                 var brush = new SolidColorBrush(Color.FromArgb(alpha, red, green, blue));
                 brush.Freeze();
                 return brush;
-            }
-
-            switch (theme)
-            {
-                case Theme.Dark:
-                case Theme.Black:
-                    if (accent == Accent.Red || (theme == Theme.Black && accent == Accent.Purple))
-                    {
-                        background = resources["SelectionBg"];
-                        foreground = Brushes.White;
-                        effect = resources["TextStroke"];
-                    }
-                    else foreground = Solid(0x24, 0x21, 0x2b);
-                    break;
-                case Theme.Light:
-                    if (accent == Accent.Orange) foreground = Solid(0x1e, 0x1f, 0x22);
-                    else
-                    {
-                        foreground = resources["OnPrimaryBrush"];
-                        effect = resources["TextStroke"];
-                    }
-                    break;
-                case Theme.Blood:
-                    background = Solid(0x8f, 0x3f, 0x46);
-                    foreground = Brushes.White;
-                    effect = resources["TextStroke"];
-                    break;
-                case Theme.Greed:
-                    background = Solid(0x17, 0x6a, 0x46);
-                    foreground = Brushes.White;
-                    effect = resources["TextStroke"];
-                    break;
-                case Theme.Cyanotic:
-                    background = Solid(0x12, 0x6f, 0x9f);
-                    foreground = Brushes.White;
-                    effect = resources["TextStroke"];
-                    break;
-                case Theme.Ectoplasm:
-                    foreground = Solid(0x5e, 0x17, 0x64);
-                    break;
             }
 
             resources["ComparisonBarBrush"] = background;
@@ -217,8 +164,6 @@ namespace KillerPDF.Services
 
         private static Brush BuildComparisonBarVerticalMask(Theme theme)
         {
-            if (theme == Theme.SE98) return Brushes.Black;
-
             var mask = new LinearGradientBrush
             {
                 StartPoint = new Point(0.5, 0),
@@ -235,9 +180,9 @@ namespace KillerPDF.Services
             return mask;
         }
 
-        private static bool UsesLightChrome(Theme theme) => theme is Theme.Light or Theme.SE98 or Theme.Word;
+        private static bool UsesLightChrome(Theme theme) => theme == Theme.AcrobatLight;
 
-        // KillerPDF's own keys only; every key here is one the kit palette does not define.
+        // JPDFs's own keys only; every key here is one the kit palette does not define.
         private static void CompleteAppPalette(ResourceDictionary d)
         {
             object Pick(string key, string fallback) => d.Contains(key) ? d[key] : d[fallback];
@@ -250,7 +195,7 @@ namespace KillerPDF.Services
                 if (!d.Contains(key)) d[key] = value;
             }
 
-            // The footer's status text. KillerPDF has no status light in the footer corner, and the kit's
+            // The footer's status text. JPDFs has no status light in the footer corner, and the kit's
             // FooterPadding is 0, so 16 restores the inset 1.8.91 shipped. 98SE states its cell padding.
             Default("FooterStatusInset", new Thickness(16, 0, 0, 0));
             // The checked label in the theme menu. Matches RadioAccent unless an accent is too pale to read as text.
@@ -305,7 +250,7 @@ namespace KillerPDF.Services
             d["CaptionFontGlyphVisibility"] = classicCaption ? Visibility.Collapsed : Visibility.Visible;
             d["CaptionDrawnGlyphVisibility"] = classicCaption ? Visibility.Visible : Visibility.Collapsed;
             // The active tab's corner (matched by the card's corners at each end of the band), the
-            // title and the close x, as KillerShell has them. 98SE keeps its classic sizes.
+            // title and the close x, as JpdfsShell has them. 98SE keeps its classic sizes.
             bool compactDialogCaption = d["UseDialogCaption"] is true;
             Default("TabActiveCornerRadius", compactDialogCaption ? new CornerRadius(2, 2, 0, 0) : new CornerRadius(3, 3, 0, 0));
             Default("TabTitleFontSize", compactDialogCaption ? 11.0 : 12.0);

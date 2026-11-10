@@ -379,21 +379,9 @@ Les redimensionner à une taille prise en charge ? Les pages conservent leur app
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Sombre</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Clair</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Noir</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Sang</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Avarice</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Cyanotique</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat clair</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ectoplasme</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Décomposition</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Deuil</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat clair</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat sombre</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Grain de film</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Sépulcre</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Délire</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Malaise</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">Ajuster à la largeur</sys:String>
@@ -1591,7 +1579,6 @@ Les redimensionner à une taille prise en charge ? Les pages conservent leur app
     <sys:String x:Key="Str_KS_DisabledStatus">Raccourcis clavier désactivés. Appuyez sur Ctrl+Maj+K pour les activer.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Rechercher les mises à jour au démarrage</sys:String>
     <sys:String x:Key="Str_PasswordProtected">« {0} » est protégé par un mot de passe.</sys:String>
-    <sys:String x:Key="Str_About_Aka">Aussi connu sous le nom de</sys:String>
     <sys:String x:Key="Str_Btn_Run">Exécuter</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Macros</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Macros enregistrées</sys:String>

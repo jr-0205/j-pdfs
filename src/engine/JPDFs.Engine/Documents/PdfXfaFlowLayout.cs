@@ -1,0 +1,251 @@
+using System.Globalization;
+using System.Xml;
+using System.Xml.Linq;
+
+namespace JPDFs.Engine.Documents;
+
+/// <summary>Plans bounded top-to-bottom XFA flow with repeated data and pagination.</summary>
+public static class PdfXfaFlowLayout
+{
+    private const int MaximumPlacements = 10_000;
+
+    /// <summary>Flows bound fields into explicit page dimensions using top-left coordinates.</summary>
+    public static PdfXfaFlowLayoutPlan Plan(PdfXfaInfo info, PdfFormDataSet data,
+        double pageWidth, double pageHeight, double margin = 36)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        ArgumentNullException.ThrowIfNull(data);
+        if (!double.IsFinite(pageWidth) || !double.IsFinite(pageHeight)
+            || !double.IsFinite(margin) || pageWidth <= margin * 2
+            || pageHeight <= margin * 2 || margin < 0)
+            throw new ArgumentOutOfRangeException(nameof(pageWidth),
+                "Flowed XFA pages require finite positive dimensions and margins.");
+        PdfXfaPacket packet = info.Packets.FirstOrDefault(item =>
+            item.Name.Equals("template", StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException("The XFA data has no template packet.");
+        XDocument document = Load(packet);
+        Dictionary<string, PdfFormDataField> values = data.Fields.ToDictionary(
+            field => field.Name, StringComparer.Ordinal);
+        var placements = new List<PdfXfaFlowFieldPlacement>();
+        var definitions = document.Descendants().Where(element =>
+                element.Name.LocalName.Equals("field", StringComparison.OrdinalIgnoreCase))
+            .GroupBy(field => Path(field, required: false), StringComparer.Ordinal)
+            .Where(group => group.Key.Length != 0)
+            .SelectMany(group => group.Select((field, index) => (Field: field, Index: index)))
+            .ToDictionary(item => item.Field, item => item.Index);
+        int pageIndex = 0;
+        double cursor = margin;
+        bool breakAfterPrevious = false;
+        XElement[] rows = [.. document.Descendants().Where(element =>
+            element.Name.LocalName.Equals("subform", StringComparison.OrdinalIgnoreCase)
+            && Attribute(element, "layout")?.Equals("row", StringComparison.OrdinalIgnoreCase) == true)];
+        var rowSet = rows.ToHashSet();
+        IEnumerable<XElement> nodes = document.Descendants().Where(element =>
+            rowSet.Contains(element) || (element.Name.LocalName.Equals(
+                "field", StringComparison.OrdinalIgnoreCase)
+                && !element.Ancestors().Any(rowSet.Contains)));
+        foreach (XElement node in nodes)
+        {
+            XElement? container = node.Ancestors().FirstOrDefault(element =>
+                element.Name.LocalName.Equals("subform", StringComparison.OrdinalIgnoreCase)
+                && IsFlowed(Attribute(element, "layout")));
+            if (container is null) continue;
+            if (rowSet.Contains(node))
+            {
+                XElement[] cells = [.. node.Descendants().Where(element =>
+                    element.Name.LocalName.Equals("field", StringComparison.OrdinalIgnoreCase)
+                    && !element.Ancestors().TakeWhile(parent => parent != node)
+                        .Any(rowSet.Contains))];
+                if (cells.Length == 0) continue;
+                string rowName = Attribute(node, "name") ?? "row";
+                double rowGap = Measure(Attribute(node, "y"), "y", rowName, false);
+                double startX = margin + Measure(Attribute(node, "x"), "x", rowName, false);
+                var cellData = cells.Select(cell =>
+                {
+                    string path = Path(cell);
+                    double width = Measure(Attribute(cell, "w"), "w", path, true);
+                    double height = Measure(Attribute(cell, "h"), "h", path, true);
+                    return (Cell: cell, Path: path, Width: width, Height: height,
+                        Values: Repeated(cell, path, values));
+                }).ToArray();
+                double rowHeight = cellData.Max(cell => cell.Height);
+                int repeatCount = cellData.Max(cell => cell.Values.Length);
+                if ((breakAfterPrevious || HasPageBreak(node, "breakBefore")) && cursor > margin)
+                {
+                    pageIndex++;
+                    cursor = margin;
+                }
+                breakAfterPrevious = false;
+                for (int occurrence = 0; occurrence < repeatCount; occurrence++)
+                {
+                    if (cursor + rowGap + rowHeight > pageHeight - margin)
+                    {
+                        pageIndex++;
+                        cursor = margin;
+                    }
+                    double runningX = startX;
+                    foreach (var cell in cellData)
+                    {
+                        double cellX = Attribute(cell.Cell, "x") is string explicitX
+                            ? startX + Measure(explicitX, "x", cell.Path, false) : runningX;
+                        if (cell.Width <= 0 || cell.Height <= 0
+                            || cellX + cell.Width > pageWidth - margin)
+                            throw new InvalidOperationException(
+                                $"XFA table row field '{cell.Path}' does not fit the requested page area.");
+                        Add(cell.Cell, cell.Path, occurrence, pageIndex, cellX,
+                            cursor + rowGap, cell.Width, cell.Height,
+                            occurrence < cell.Values.Length ? cell.Values[occurrence] : string.Empty);
+                        runningX = cellX + cell.Width;
+                    }
+                    cursor += rowGap + rowHeight;
+                }
+                breakAfterPrevious = HasPageBreak(node, "breakAfter");
+                continue;
+            }
+
+            XElement field = node;
+            string path = Path(field);
+            double x = margin + Measure(Attribute(field, "x"), "x", path, false);
+            double gap = Measure(Attribute(field, "y"), "y", path, false);
+            double width = Measure(Attribute(field, "w"), "w", path, true);
+            double height = Measure(Attribute(field, "h"), "h", path, true);
+            if (width <= 0 || height <= 0 || x + width > pageWidth - margin
+                || height > pageHeight - margin * 2)
+                throw new InvalidOperationException(
+                    $"XFA flowed field '{path}' does not fit the requested page area.");
+            string[] repeated = Repeated(field, path, values);
+            if ((breakAfterPrevious || HasPageBreak(field, "breakBefore")) && cursor > margin)
+            {
+                pageIndex++;
+                cursor = margin;
+            }
+            breakAfterPrevious = false;
+            for (int occurrence = 0; occurrence < repeated.Length; occurrence++)
+            {
+                if (cursor + gap + height > pageHeight - margin)
+                {
+                    pageIndex++;
+                    cursor = margin;
+                }
+                cursor += gap;
+                Add(field, path, occurrence, pageIndex, x, cursor, width, height, repeated[occurrence]);
+                cursor += height;
+            }
+            breakAfterPrevious = HasPageBreak(field, "breakAfter");
+        }
+        return new PdfXfaFlowLayoutPlan(pageIndex + 1,
+            Array.AsReadOnly(placements.ToArray()));
+
+        void Add(XElement field, string path, int occurrence, int page, double x, double y,
+            double width, double height, string value)
+        {
+            if (placements.Count >= MaximumPlacements)
+                throw new InvalidOperationException(
+                    $"An XFA flow cannot contain more than {MaximumPlacements} placements.");
+            placements.Add(new PdfXfaFlowFieldPlacement(
+                path, occurrence, page, x, y, width, height, value)
+            { TemplateOccurrenceIndex = definitions[field] });
+        }
+    }
+
+    private static XDocument Load(PdfXfaPacket packet)
+    {
+        using var input = new MemoryStream(packet.Data.ToArray(), writable: false);
+        using XmlReader reader = XmlReader.Create(input, new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null,
+            MaxCharactersInDocument = 64 * 1024 * 1024,
+            IgnoreComments = true
+        });
+        XDocument document = XDocument.Load(reader, LoadOptions.None);
+        return document.Root is null
+            ? throw new InvalidOperationException("The XFA template packet has no root element.")
+            : document;
+    }
+
+    private static bool IsFlowed(string? layout) => layout is not null
+        && (layout.Equals("tb", StringComparison.OrdinalIgnoreCase)
+            || layout.Equals("lr-tb", StringComparison.OrdinalIgnoreCase)
+            || layout.Equals("rl-tb", StringComparison.OrdinalIgnoreCase));
+
+    private static bool HasPageBreak(XElement field, string name) =>
+        field.Elements().Any(element => element.Name.LocalName.Equals(
+            name, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(Attribute(element, "targetType"), "pageArea",
+                StringComparison.OrdinalIgnoreCase));
+
+    private static string? BindingName(XElement field)
+    {
+        XElement? bind = field.Elements().FirstOrDefault(element =>
+            element.Name.LocalName.Equals("bind", StringComparison.OrdinalIgnoreCase));
+        string? value = bind is null ? null : Attribute(bind, "ref");
+        const string record = "$record.";
+        return value?.StartsWith(record, StringComparison.Ordinal) == true
+            ? value[record.Length..] : value;
+    }
+
+    private static string[] Repeated(XElement field, string path,
+        Dictionary<string, PdfFormDataField> values)
+    {
+        string dataName = BindingName(field) ?? path;
+        return values.TryGetValue(dataName, out PdfFormDataField? dataField)
+            && dataField.Values.Count > 0 ? [.. dataField.Values] : [string.Empty];
+    }
+
+    private static double Measure(string? source, string attribute, string path, bool required)
+    {
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            if (required) throw new InvalidOperationException(
+                $"XFA field '{path}' has no {attribute} measurement.");
+            return 0;
+        }
+        string value = source.Trim();
+        int split = 0;
+        while (split < value.Length && (char.IsAsciiDigit(value[split])
+            || value[split] is '+' or '-' or '.' or 'e' or 'E')) split++;
+        if (!double.TryParse(value[..split], NumberStyles.Float,
+                CultureInfo.InvariantCulture, out double number) || !double.IsFinite(number))
+            throw new InvalidOperationException(
+                $"XFA field '{path}' has an invalid {attribute} measurement.");
+        double scale = value[split..].ToLowerInvariant() switch
+        {
+            "" or "pt" => 1,
+            "in" => 72,
+            "mm" => 72 / 25.4,
+            "cm" => 72 / 2.54,
+            _ => throw new NotSupportedException(
+                $"XFA field '{path}' uses an unsupported {attribute} unit.")
+        };
+        return number * scale;
+    }
+
+    private static string Path(XElement field, bool required = true)
+    {
+        string path = string.Join('.', field.AncestorsAndSelf().Reverse()
+            .Where(element => element == field || element.Name.LocalName.Equals(
+                "subform", StringComparison.OrdinalIgnoreCase))
+            .Select(element => Attribute(element, "name"))
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
+        return string.IsNullOrWhiteSpace(path) && required
+            ? throw new InvalidOperationException("An XFA template field has no path.") : path;
+    }
+
+    private static string? Attribute(XElement element, string name) =>
+        element.Attributes().FirstOrDefault(attribute => attribute.Name.LocalName.Equals(
+            name, StringComparison.OrdinalIgnoreCase))?.Value;
+}
+
+/// <summary>A paginated top-to-bottom XFA flow plan.</summary>
+public sealed record PdfXfaFlowLayoutPlan(
+    int PageCount, IReadOnlyList<PdfXfaFlowFieldPlacement> Placements);
+
+/// <summary>One repeated flowed field using top-left page coordinates in PDF points.</summary>
+public sealed record PdfXfaFlowFieldPlacement(
+    string FieldPath, int OccurrenceIndex, int PageIndex,
+    double X, double Y, double Width, double Height, string Value)
+{
+    /// <summary>Gets the zero-based template definition among fields sharing this path.</summary>
+    public int TemplateOccurrenceIndex { get; init; }
+}

@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -32,7 +32,7 @@ namespace KillerPDF.Shell
         private const uint SWP_NOZORDER       = 0x0004;
         private const uint SWP_NOACTIVATE     = 0x0010;
 
-        // KillerPDF answers its own frame messages: the kit's Chrome.cs hands each one here first.
+        // JPDFs answers its own frame messages: the kit's Chrome.cs hands each one here first.
         // The background erase, the live move/resize bracket and the maximize clamp stay with the
         // kit, which took them from here; F11 reaches its clamp through CoverWholeMonitor.
         partial void FilterWindowMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam,
@@ -320,10 +320,10 @@ namespace KillerPDF.Shell
         // The kit's corner call on a state change gives the same answer as UpdateWindowChrome.
         partial void AdjustRoundedCorners(ref bool rounded)
         {
-            if (_fullScreen || IsSnapped() || ThemeManager.Current == Theme.SE98) rounded = false;
+            if (_fullScreen || IsSnapped()) rounded = false;
         }
 
-        // KillerPDF saves its own window bounds (SaveWindowSettings), not the kit's WindowPlacement.
+        // JPDFs saves its own window bounds (SaveWindowSettings), not the kit's WindowPlacement.
         partial void AdjustSaveWindowPlacement(ref bool save) => save = false;
 
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
@@ -386,37 +386,11 @@ namespace KillerPDF.Shell
             bar.IsVisibleChanged -= AnnotBarVisibilityChanged;
             bar.IsVisibleChanged += AnnotBarVisibilityChanged;
             bool canDeferLayout = WindowState != WindowState.Minimized && bar.IsVisible && bar.IsLoaded;
-            if (!canDeferLayout || bar.ActualHeight > 0 || ThemeManager.Current != Theme.SE98)
+            if (!canDeferLayout || bar.ActualHeight > 0)
                 CancelAnnotationBarLayout(bar);
-            // 98SE: classic toolbar band - flush, truly full width, no floating gaps and no slide
-            // parking. The document scroller is inset by the band's height (SyncSe98BarInset), so
-            // the vertical scrollbar starts BELOW the band instead of poking up beside its right
-            // end. Restores the theme's own edge thickness and padding: SetBarDockedBorder below
-            // writes hardcoded 1px borders and 4px padding straight over the BarEdgeThickness /
-            // BarPadding resource references, which is what flattened the classic 2px light bevel
-            // into a thin misplaced line.
-            if (ThemeManager.Current == Theme.SE98)
-            {
-                bar.HorizontalAlignment = HorizontalAlignment.Stretch;
-                bar.Margin = new Thickness(0);
-                bar.SetResourceReference(Border.BorderThicknessProperty, "BarEdgeThickness");
-                bar.SetResourceReference(Border.PaddingProperty, "BarPadding");
-                bar.SetResourceReference(Border.CornerRadiusProperty, "AnnotationBarCornerRadius");
-                // Allow one deferred layout pass, never a self-requeueing Loaded loop that
-                // starves input while the band has no height. Size/load/visibility events and
-                // window restore resume positioning when layout becomes possible again.
-                if (bar.ActualHeight <= 0 && canDeferLayout && deferUntilMeasured && !_annotationBarLayout.ContainsKey(bar))
-                    _annotationBarLayout[bar] = Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
-                        (Action)(() =>
-                        {
-                            _annotationBarLayout.Remove(bar);
-                            if (bar.IsLoaded && bar.IsVisible && WindowState != WindowState.Minimized && bar.Parent is Grid a)
-                                PositionAnnotationBar(bar, a, deferUntilMeasured: false);
-                        }));
-                SyncSe98BarInset(bar, area);
-                return;
-            }
-            SyncSe98BarInset(bar, area);   // clears a leftover 98SE inset after a theme switch
+            // The document scroller carries no reserved band inset. Keep it at zero so a bar
+            // removed after a layout change cannot leave stale top margin behind.
+            SyncBarInset(bar, area);
             double w = bar.ActualWidth;
             // The document's vertical scrollbar lives on the right edge of the area. Keep the bar clear
             // of it when it's showing; when it isn't, the bar can use the full edge.
@@ -477,13 +451,13 @@ namespace KillerPDF.Shell
         // of the bar floating over them. Every other theme (and a removed bar) resolves to 0, which
         // also clears a leftover inset after a theme switch. The scroller is looked up from the
         // bar's own area so the inset always lands on the pane the bar actually lives in.
-        private static void SyncSe98BarInset(Border bar, Grid area, bool removing = false)
+        private static void SyncBarInset(Border bar, Grid area, bool removing = false)
         {
             ScrollViewer? sv = null;
             foreach (object child in area.Children)
                 if (child is ScrollViewer s) { sv = s; break; }
             if (sv is null) return;
-            double inset = !removing && ThemeManager.Current == Theme.SE98 ? bar.ActualHeight : 0;
+            double inset = 0;
             if (Math.Abs(sv.Margin.Top - inset) > 0.5)
                 sv.Margin = new Thickness(0, inset, 0, 0);
         }
@@ -520,7 +494,7 @@ namespace KillerPDF.Shell
             bool max     = WindowState == WindowState.Maximized || _fullScreen;
             // Only Windows 11 rounds the HWND; on Windows 10 rounded content would show a notch.
             bool nativeCorners = OsRoundsCorners();
-            bool squared = max || IsSnapped() || ThemeManager.Current == Theme.SE98 || !nativeCorners;
+            bool squared = max || IsSnapped() || !nativeCorners;
             _chromeSquared = squared;
 
             // The chrome treatment depends ONLY on the maximized/snapped state, not on the live size
@@ -547,7 +521,7 @@ namespace KillerPDF.Shell
                 // frame left a strip of the window background showing on three sides. Otherwise only a
                 // maximized window drops the 1px frame (it's flush to every screen edge); a
                 // snapped window keeps it so it still reads against the window beside it.
-                RootBorder.BorderThickness = new Thickness(max || nativeCorners || ThemeManager.Current == Theme.SE98 ? 0 : 1);
+                RootBorder.BorderThickness = new Thickness(max || nativeCorners ? 0 : 1);
             }
             TitleBarBorder?.CornerRadius = new CornerRadius(0);
             FooterBorder?.CornerRadius = new CornerRadius(0);
@@ -693,7 +667,7 @@ namespace KillerPDF.Shell
             revision = SessionEndingEditRevision;
             if (_isDirty || AllSessions().Any(session => session.IsDirty))
             {
-                var result = KillerDialog.AskToSave(this, Loc("Str_Dlg_UnsavedExit"),
+                var result = JpdfsDialog.AskToSave(this, Loc("Str_Dlg_UnsavedExit"),
                     Loc("Str_Btn_Save"), Loc("Str_Btn_DontSave"), Loc("Str_Btn_CancelDlg"), fadeClose: false);
                 if (result == MessageBoxResult.Cancel
                     || (result == MessageBoxResult.Yes && !SaveAllDirtyDocuments())) return false;
@@ -748,7 +722,7 @@ namespace KillerPDF.Shell
                 // unsaved work still asks about the open tabs in the same single dialog. Save saves
                 // every unsaved document and then quits, Don't Save quits without saving, and Enter
                 // is Save, so a stray keypress keeps the work instead of discarding it.
-                var (choice, closeTabs, remember) = KillerDialog.ShowTwoCheckChoice(this,
+                var (choice, closeTabs, remember) = JpdfsDialog.ShowTwoCheckChoice(this,
                     Loc("Str_Dlg_UnsavedExit"),
                     Loc("Str_Chk_CloseTabs"), App.GetSetting("RememberOpenFiles") == "0",
                     Loc("Str_Dlg_RememberChoice"), false,
@@ -765,7 +739,7 @@ namespace KillerPDF.Shell
             {
                 // fadeClose:false so the prompt closes instantly instead of adding its own 150ms fade
                 // before the app's fade-out starts - otherwise the two run back-to-back (300ms of waiting).
-                var res = KillerDialog.AskToSave(this, Loc("Str_Dlg_UnsavedExit"),
+                var res = JpdfsDialog.AskToSave(this, Loc("Str_Dlg_UnsavedExit"),
                     Loc("Str_Btn_Save"), Loc("Str_Btn_DontSave"), Loc("Str_Btn_CancelDlg"), fadeClose: false);
                 if (res == MessageBoxResult.Cancel || (res == MessageBoxResult.Yes && !SaveAllDirtyDocuments()))
                 {
@@ -773,7 +747,7 @@ namespace KillerPDF.Shell
                     return;
                 }
             }
-            // #105, KillerFind-style (family standard): ONE quit prompt with two opt-out
+            // #105, JpdfsFind-style (family standard): ONE quit prompt with two opt-out
             // checkboxes replaces the old Yes=forget / No=reopen question. Unchecked
             // "Close my open tabs" = the session reopens next launch; "Remember my choice"
             // locks the answer so we stop asking. Cancel keeps the app open.
@@ -784,7 +758,7 @@ namespace KillerPDF.Shell
             // the quit prompt on top of it (one dialog max per close).
             if (!anyDirty && askOpenTabs)
             {
-                var (confirmed, closeTabs, remember) = KillerDialog.ShowQuitPrompt(this,
+                var (confirmed, closeTabs, remember) = JpdfsDialog.ShowQuitPrompt(this,
                     Loc("Str_Dlg_QuitMsg"),
                     Loc("Str_Chk_CloseTabs"), App.GetSetting("RememberOpenFiles") == "0",
                     Loc("Str_Dlg_RememberChoice"),

@@ -1,6 +1,6 @@
-# The KillerPDF.Engine Changelog
+# The JPDFs.Engine Changelog
 
-All notable changes to The KillerPDF.Engine are documented here. Application changes remain in the root [KillerPDF changelog](../CHANGELOG.md).
+All notable changes to The JPDFs.Engine are documented here. Application changes remain in the root [JPDFs changelog](../CHANGELOG.md).
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -129,11 +129,11 @@ The 1.9.0 engine adds page-content extraction, complete engine-owned rendering, 
 
 ## [1.8.91] - 2026-10-14
 
-The 1.8.91 engine package matches the KillerPDF theme-picker hotfix release.
+The 1.8.91 engine package matches the JPDFs theme-picker hotfix release.
 
 ### Changed
 
-- Kept the engine package version aligned with KillerPDF; engine behavior is unchanged.
+- Kept the engine package version aligned with JPDFs; engine behavior is unchanged.
 
 ## [1.8.90] - 2026-10-14
 
@@ -154,7 +154,7 @@ The 1.8.80 engine package improves compatibility with malformed PDFs.
 
 ## [1.8.71] - 2026-09-26
 
-The 1.8.71 engine package includes document compatibility fixes shipped with KillerPDF 1.8.71.
+The 1.8.71 engine package includes document compatibility fixes shipped with JPDFs 1.8.71.
 
 ### Fixed
 
@@ -163,7 +163,7 @@ The 1.8.71 engine package includes document compatibility fixes shipped with Kil
 
 ## [1.8.6] - 2026-09-22
 
-The 1.8.6 engine package matches the engine source shipped with KillerPDF 1.8.6.
+The 1.8.6 engine package matches the engine source shipped with JPDFs 1.8.6.
 
 ### Fixed
 
@@ -183,22 +183,22 @@ The 1.8.4 engine supports the application maintenance fixes.
 
 ## [1.8.3] - 2026-09-02
 
-The 1.8.3 engine package matches the engine source shipped with KillerPDF 1.8.3.
+The 1.8.3 engine package matches the engine source shipped with JPDFs 1.8.3.
 
 - Empty signature strings emitted by other PDF tools are treated as unsigned fields during reading, writing, and signing.
 - Engine packages now follow app releases automatically, with matching versions required before building or publishing.
 
 ## [1.8.2] - 2026-08-31
 
-The 1.8.2 engine release includes the document transformation and reliability fixes shipped with KillerPDF 1.8.2.
+The 1.8.2 engine release includes the document transformation and reliability fixes shipped with JPDFs 1.8.2.
 
 ## [1.8.0] - 2026-08-28
 
-The KillerPDF.Engine 1.8.0 establishes the independent PDF 2.0 document engine that now powers KillerPDF's parsing, authoring, editing, validation, security, and writing pipelines.
+The JPDFs.Engine 1.8.0 establishes the independent PDF 2.0 document engine that now powers JPDFs's parsing, authoring, editing, validation, security, and writing pipelines.
 
 ### Highlights
 
-- Completed the desktop migration to The KillerPDF.Engine and removed PdfSharpCore from the application, test suite, solution, and portable package.
+- Completed the desktop migration to The JPDFs.Engine and removed PdfSharpCore from the application, test suite, solution, and portable package.
 - Built an independent PDF 2.0 parser, object model, deterministic writer, incremental editor, and full-rewrite pipeline with bounded processing and fail-closed validation.
 - Added byte-preserving editing for pages, annotations, bookmarks, links, forms, metadata, attachments, optional content, and document structure.
 - Added complete document and selected-page imports with preservation for AcroForms, tagged PDF structure, bookmarks, named destinations, page labels, attachments, and optional-content layers.
@@ -271,7 +271,7 @@ The KillerPDF.Engine 1.8.0 establishes the independent PDF 2.0 document engine t
 - Every standard Type 1 font, image dimension and color-space property, indexed palette model, and AES-256 password and permission option now provides a complete XML summary.
 - Signed-revision changes and permission assessments, cryptographic verification outcomes, and deterministic round-trip validation results now provide complete XML summaries across their public models and entry points.
 - The remaining authoring models and visual annotation methods plus all public parsing, filtering, document, cross-reference, signing, syntax, diagnostic, and writing entry points now provide complete XML summaries; the reusable engine's strict documentation build is warning-free.
-- The desktop regression-test project is now part of `KillerPDF.sln`, so a normal solution-wide test run covers all 1,404 engine tests and all 90 existing application tests instead of silently omitting the application suite.
+- The desktop regression-test project is now part of `JPDFs.sln`, so a normal solution-wide test run covers all 1,404 engine tests and all 90 existing application tests instead of silently omitting the application suite.
 - Incremental page editing can now set existing named checkbox and radio-button values without requesting viewer-generated appearances. Hierarchical field names, separate widget children, exact on and off appearance states, cleared radio selections, page-tree rebuilds, field-type validation, and button-kind rejection are handled while preserving the original byte prefix.
 - Existing named text fields can now receive new plain-text values with regenerated normal appearances imported from the authoring engine. Field flags, maximum lengths, multiline, password, comb, alignment, font size, RGB appearance colors, standard border styles, default values, hierarchical names, missing appearances, and page-tree rebuilds are handled without enabling viewer-generated appearances; callers can supply an embedded font for Unicode values.
 - Existing combo boxes and list boxes can now update their selections with regenerated appearances from the authoring engine. Separate export and display values, editable custom combo values, single and multiselect lists, selection indexes, cleared selections, top indexes, default values, styling, alignment, supplied Unicode fonts, and page-tree rebuilds remain synchronized without enabling viewer-generated appearances.
@@ -435,7 +435,7 @@ The KillerPDF.Engine 1.8.0 establishes the independent PDF 2.0 document engine t
 - Tagged-annotation traversal updates final top-level structure-element identities and validates reciprocal parent links after bounded alias resolution.
 - Stream parsing now resolves bounded multi-hop indirect `/Length` chains and reports reference cycles or excessive depth deterministically before consuming payload bytes.
 - Compressed-object loading now resolves bounded indirect object-stream `/Type`, `/N`, and `/First` scalars after cross-reference bootstrap, while cross-reference stream fields remain deliberately direct because no document resolver exists yet.
-- Added a standalone, UI-free .NET 10 document-engine project and test project that will replace KillerPDF's PdfSharpCore document pipeline without replacing PDFium rendering.
+- Added a standalone, UI-free .NET 10 document-engine project and test project that will replace JPDFs's PdfSharpCore document pipeline without replacing PDFium rendering.
 - Complete-document imports validate PDF 2.0 requirement penalties, version descriptors, signature constraints, and encryption constraints while preserving extensible registered requirement and requirement-handler subtype names.
 - Catalog extension merging no longer restores namespace entries whose values resolve to null after the extension merge deliberately skips them.
 - Complete-document imports validate PDF 2.0 document security stores, including typed DSS and VRI dictionaries, uppercase signature digests, indirect certificate and revocation streams, VRI membership in document-wide validation pools, creation dates, and timestamp exclusivity.
@@ -466,7 +466,7 @@ The KillerPDF.Engine 1.8.0 establishes the independent PDF 2.0 document engine t
 - Imported page annotations now strictly decode `/NM` text and reject duplicate annotation names on the same page.
 - Imported annotation contents, names, authors, and subjects now use strict PDF text decoding and reject malformed UTF-16BE or PDF 2.0 UTF-8 payloads.
 - Incremental annotation editing now strictly decodes retained `/NM` text and rejects duplicate annotation names before appending.
-- Incremental annotation editing now checks generated KillerPDF annotation names against retained `/NM` values before writing, preventing object-number-based name collisions.
+- Incremental annotation editing now checks generated JPDFs annotation names against retained `/NM` values before writing, preventing object-number-based name collisions.
 - Incremental annotation editing now strictly decodes retained contents, authors, and subjects before extending page annotation arrays.
 - Incremental annotation editing now validates retained modification and creation dates, nonnegative flags, and bounded opacity before extending page annotation arrays.
 - Incremental annotation editing now validates retained structure-parent keys, appearance dictionaries, nonempty appearance-state maps, and `/AS` selection consistency before appending.
@@ -802,7 +802,7 @@ The KillerPDF.Engine 1.8.0 establishes the independent PDF 2.0 document engine t
 - Newly freed objects now link to the inherited free-list head, and canonical free actions contribute to revision-identifier derivation so distinct free-only revisions receive distinct updated `/ID` values.
 - Incremental page and annotation editors now accept structural write options and can emit compressed cross-reference and object-stream revisions. The compressed annotation-editor smoke output passes qpdf.
 - Compressed page editing works across independently encrypted AES-256 source and destination documents, and a dedicated AES-256 compressed incremental smoke output authenticates and passes qpdf without syntax or stream errors.
-- Detached signatures now accept compressed cross-reference and object-stream policies while keeping only the patchable signature dictionary direct. A real certification CMS revision contains compressed field updates and passes OpenSSL, KillerPDF verification, and qpdf.
+- Detached signatures now accept compressed cross-reference and object-stream policies while keeping only the patchable signature dictionary direct. A real certification CMS revision contains compressed field updates and passes OpenSSL, JPDFs verification, and qpdf.
 - AES-256 encrypted documents can receive cryptographically verified signatures with compressed cross-reference and object streams while retaining destination-password authentication and a direct signature dictionary.
 - Signed-revision analysis now has explicit coverage for added compressed objects, updated objects, and freed objects in later structural revisions.
 - Signed-revision analysis now reports malformed filtered cross-reference data, unsupported historical syntax, and numeric overflow in a signed prefix as an invalid historical revision instead of throwing.
@@ -814,7 +814,7 @@ The KillerPDF.Engine 1.8.0 establishes the independent PDF 2.0 document engine t
 - Encrypted documents can now receive incremental updates, full rewrites, and detached signatures without exposing new strings or streams. Encryption dictionaries and permanent identifiers are preserved, signature contents remain verifiable, and outputs interoperate with qpdf across every supported security revision.
 - New PDF 2.0 documents can now be authored with AES-256 revision 6 password protection, distinct user and owner credentials, encrypted strings, streams, metadata, and embedded files, authenticated typed controls for printing, modification, copying, annotations, form filling, accessibility extraction, and assembly, and explicit rejection of encryption combined with PDF/A conformance.
 - Revision 5 and 6 password encoding now rejects unpaired UTF-16 surrogates instead of silently replacing them during UTF-8 conversion, preventing invalid passwords from collapsing to identical authentication bytes.
-- Revision 6 password preparation now removes every RFC 3454 table B.1 character before compatibility normalization. User and owner passwords containing soft hyphens or BOMs authenticate through their mapped forms in KillerPDF and qpdf.
+- Revision 6 password preparation now removes every RFC 3454 table B.1 character before compatibility normalization. User and owner passwords containing soft hyphens or BOMs authenticate through their mapped forms in JPDFs and qpdf.
 - Revision 6 password preparation now rejects SASLprep-prohibited controls, formatting and direction controls, private-use scalars, noncharacters, inappropriate plain-text and canonical characters, and tagging characters.
 - Revision 6 password preparation now enforces generated Unicode 3.2 A.1, D.1, and D.2 tables, including unassigned-code-point rejection and complete RandALCat/LCat endpoint and mixing rules. Non-ASCII spaces and compatibility characters map to qpdf-compatible forms.
 - AES-256 authentication now validates the permission block's required reserved bytes. Revisions 2 through 6 reject a non-boolean `/EncryptMetadata` value rather than silently treating malformed state as false, and named crypt filters validate method-specific lengths and authentication-event values.

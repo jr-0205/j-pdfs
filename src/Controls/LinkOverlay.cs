@@ -4,7 +4,7 @@ using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// The hit area over a PDF link on the page. Besides the mouse, it is a Tab stop that Enter

@@ -3,10 +3,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
-    /// A document tab's face, drawn the way KillerShell's tabs are (its TabSurfaceBorder). The
+    /// A document tab's face, drawn the way JpdfsShell's tabs are (its TabSurfaceBorder). The
     /// active tab draws its own outline and face; on 98SE with the strip below the page it also
     /// draws the tab's Win98 edges.
     /// </summary>

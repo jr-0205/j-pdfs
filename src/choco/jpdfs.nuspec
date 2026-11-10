@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>jpdfs</id>
+    <version>REPLACE_VERSION</version>
+    <packageSourceUrl>https://github.com/JPDFs/JPDFs</packageSourceUrl>
+    <owners>JPDFs</owners>
+    <title>JPDFs</title>
+    <authors>J-PDF's</authors>
+    <copyright>Copyright (c) 2026 J-PDF's</copyright>
+    <projectUrl>https://jpdfs.net</projectUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/JPDFs/JPDFs@vREPLACE_VERSION/Resources/kp-icon.ico</iconUrl>
+    <licenseUrl>https://github.com/JPDFs/JPDFs/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/JPDFs/JPDFs</projectSourceUrl>
+    <docsUrl>https://github.com/JPDFs/JPDFs/blob/main/README.md</docsUrl>
+    <bugTrackerUrl>https://github.com/JPDFs/JPDFs/issues</bugTrackerUrl>
+    <tags>pdf viewer editor annotate merge split sign ocr redact convert cli portable</tags>
+    <summary>Open-source PDF editor for Windows with text editing, OCR, annotations, redaction, signatures, forms, Office export and page organization.</summary>
+    <description>PDF editor for Windows. View, annotate, OCR, merge, split, edit text, draw, sign, fill forms, redact, protect, convert, print, flatten, and open password-protected PDFs without an Adobe subscription or telemetry.
+
+**Features:**
+
+- Rendering, text extraction, search, editing and document processing through JPDFs's own PDF engine
+- Four view modes (Single, Continuous, Two-Page with a book layout option, Grid), tabbed documents that restore their page, zoom and view mode, and a split pane (F10) for two documents side by side
+- Sidebar panels for pages, outline, comments, attachments, layers and signatures, dockable on any side of the window; tabs at the top or the bottom
+- Edit a page's own text line by line or by paragraph, with font matching, or change matching text everywhere with Find and Replace
+- Text boxes, freehand drawing, lines, shapes, highlights, strikethrough, underline, stamps and images, with an RGB color picker and screen eyedropper
+- Calibrated Distance, Perimeter, Area and Angle measurements with units, snapping and a report
+- Built-in OCR, no cloud: OCR a page or region to the clipboard, make a searchable PDF, or convert a scan to real text; languages download on demand
+- Export to Word, Excel, PowerPoint, HTML, Markdown, text, JSON and page images, with reviewed table export to XLSX or CSV; convert Word and Excel files to PDF; scan through TWAIN
+- Permanent redaction by area, text search or sensitive-data pattern, with verification and optional sanitization
+- Protect copies with passwords, permissions or certificate recipients; restricted PDFs open read-only and unlock with the owner password
+- Form filling with live text, checkbox, radio, dropdown and comb fields; recognize fields, flatten forms, and exchange FDF and XFDF data
+- Digital signatures from a Windows certificate or .pfx file with RFC 3161 timestamps; verify signers, certificate chains and later changes
+- Compare two documents with the changes marked; merge, split, extract, reorder, rotate, reverse, straighten and divide scanned spreads
+- Correct a photographed page's perspective, adjust color and levels, crop with handles, and rasterize a region
+- Headers, footers, page numbers, watermarks and Bates batches; N-up, booklet and poster layouts; preflight, accessibility and print-production reports; Reduce File Size
+- Guided tasks, reusable macros, watched folders and data merge from CSV, JSON or XLSX
+- Full command line with scripting-friendly exit codes for merging, splitting, rendering, printing, OCR, redaction, export and batch work
+- Bookmark editing, table of contents generation, page labels, full-text search, and column-aware text selection
+- Undo and redo across annotations, page operations and document edits
+- Print with a real in-app preview (paper, scale, margins, pages per sheet, two-sided)
+- Optional File Explorer and Outlook PDF previews for installed copies
+- Thirteen themes and 41 looks, twenty languages, interface scaling, custom shortcuts, and Search Tools (Ctrl+K)
+- Compact installer (per-user or machine-wide, uses the .NET 10 Desktop Runtime) or a self-contained portable download
+- GPLv3, local-only, no account, no telemetry
+    </description>
+    <releaseNotes>https://github.com/JPDFs/JPDFs/releases/tag/vREPLACE_VERSION</releaseNotes>
+    <dependencies>
+      <dependency id="dotnet-10.0-desktopruntime" version="[10.0.0,11.0.0)" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

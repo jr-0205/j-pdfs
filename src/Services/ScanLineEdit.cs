@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Media;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>What an edit of a scanned line changes: the words' area, the slightly larger area to
 /// cover so no scanned edge shows, the text set over it, and the first word it replaces.</summary>

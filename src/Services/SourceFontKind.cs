@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // An embedded font is rarely installed, so a paragraph edit needs a stand-in. A serif paper set in
     // Segoe UI runs about 8 percent wider and spills onto the next paragraph, so the stand-in comes

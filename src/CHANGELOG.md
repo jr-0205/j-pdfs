@@ -1,6 +1,6 @@
-# KillerPDF Changelog
+# JPDFs Changelog
 
-All notable changes to KillerPDF are documented here.
+All notable changes to JPDFs are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -32,7 +32,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 - Password-protected PDFs open when their writer left XMP metadata unencrypted, and PDFs whose user password forbids editing open read-only with an option to enter the owner password. (#470)
 - A PDF that is open read-only because its owner forbids editing prints when its permissions allow printing, and its Comments panel, navigation audit, auto-bookmarks, table of contents, separations, structure comparison, accessibility review and preflight work instead of failing on its encryption.
 - `optimize` works on a healthy encrypted PDF and keeps its protection, and commands that cannot change an encrypted PDF say what to do in plain words.
-- An all-users update reopens KillerPDF for the signed-in user at normal rights, whether it finishes or stops early. Windows was refusing that relaunch, so the app stayed closed.
+- An all-users update reopens JPDFs for the signed-in user at normal rights, whether it finishes or stops early. Windows was refusing that relaunch, so the app stayed closed.
 - Reloading a PDF rewritten at the same size shows the new pages instead of the old ones.
 - Raster images retain fine detail when reduced along one axis, preventing some pages from rendering blank.
 - Corrected Japanese character order, rotated paragraph line order, mixed horizontal and vertical reading order, vertical-text selection, hit testing, and accessible text ranges. (#465)
@@ -55,7 +55,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ### Changed
 
-- KillerPDF follows a PDF owner's limits. Save, Save As and Reduce File Size keep a protected PDF's encryption, passwords and permissions, with no owner password needed. Printing a PDF whose owner forbids it, or above low quality where only that is allowed, takes the owner password. So do removing protection from a file that sets limits, and making new PDFs, page images or text and data exports that its limits forbid, including page drags and saved attachments. On-screen selection, the clipboard and screen readers are not limited.
+- JPDFs follows a PDF owner's limits. Save, Save As and Reduce File Size keep a protected PDF's encryption, passwords and permissions, with no owner password needed. Printing a PDF whose owner forbids it, or above low quality where only that is allowed, takes the owner password. So do removing protection from a file that sets limits, and making new PDFs, page images or text and data exports that its limits forbid, including page drags and saved attachments. On-screen selection, the clipboard and screen readers are not limited.
 - Command-line tools follow a PDF owner's limits the same way the app does. On a PDF whose limits forbid the output, `decrypt`, `protect`, `extract-pages`, `split`, `merge`, `flatten`, `to-image`, `ocr`, `scan-to-text`, `straighten`, `export`, `export-form-data`, `attachments` with an output folder, `comments`, `measurements`, `recognize-fields` without an output file, `data-merge`, `batch-render` and `macro` need the owner password through `--password`, and stop with exit code 1 without it. `batch-render` lists such a file as skipped, and `print` declines a PDF that forbids printing.
 - An unknown double-dash command-line switch prints the usage and exits 2 instead of opening the app.
 
@@ -118,7 +118,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [1.9.0] - 2026-10-29
 
-1.9.0 replaces PDFium with KillerPDF's own engine and expands document editing, conversion, security and automation.
+1.9.0 replaces PDFium with JPDFs's own engine and expands document editing, conversion, security and automation.
 
 ### Security
 
@@ -137,16 +137,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 - The elevated part of an update compiles its helper code in a folder only administrators can open, so another program running as you cannot slip code into it, and an update that finished is no longer reported as failed when the app cannot be reopened afterward.
 - An all-users installation applies automatic updates again. The elevated update step opened a second copy of the app as administrator instead of installing, and the verified download was thrown away once that copy closed.
 
-- The tray icon's menu opens from the pointer upward, out of the notification area, the same way in every Killer app. A short menu no longer covers the tray icons and a taller one no longer floats about 40 pixels above them.
+- The tray icon's menu opens from the pointer upward, out of the notification area, the same way in every Jpdfs app. A short menu no longer covers the tray icons and a taller one no longer floats about 40 pixels above them.
 - Saving, flattening, extraction, printing, production layouts, Data Merge and current-document macros retain pending edits and page rotations. Incremental saves rebuild damaged cross-reference chains, including compressed and encrypted documents. Protection, batch resaves and optimization report repairs to broken references without claiming missing content was recovered. Failed or canceled document writes preserve existing outputs, with recovery copies retained after failed replacements; Save As and Extract Pages enforce the PDF extension (#433, #450).
 - Close prompts protect active text and keep documents open after cancellation or save failure, including Windows sign-out and shutdown. Saving detects outside changes even when file size and timestamp match; browser downloads ask for a destination, splitting protects the source, and Bates batches reject output collisions. Esc no longer closes the app.
-- Saving a new blank document asks where to save it. It used to write Untitled.pdf into whatever folder KillerPDF was started from, and Compare no longer offers an unsaved new document.
+- Saving a new blank document asks where to save it. It used to write Untitled.pdf into whatever folder JPDFs was started from, and Compare no longer offers an unsaved new document.
 - In Two-Page view, the second page of a newly opened document's first spread shows at full size. It used to appear at about a third of the first page's size, and stayed small after paging away and back.
 - A tab that had not loaded yet opens its document when you drag it to the other pane or out into a new window, instead of showing an empty pane.
 - A comparison reads the same saved file the right pane shows, and F9 no longer changes the sidebar while in full screen.
 - New document tab names, file-type lists, the damaged-file and read-only prompts, and recent-file dates follow the app language and your region. The repair prompt on opening a file no longer says the file couldn't be added.
 - Command-line search reports a document it cannot read instead of zero hits, batch resave refuses to write over its own input, an unusable --dpi or option value is reported as bad usage (exit 2), and --dpi reads a period as the decimal point in every region.
-- On a computer with both a per-user and an all-users copy, answering the duplicate-installation prompt at startup no longer closes KillerPDF. The prompt now appears over the open window.
+- On a computer with both a per-user and an all-users copy, answering the duplicate-installation prompt at startup no longer closes JPDFs. The prompt now appears over the open window.
 - A file opened once with forward slashes in its path, from a script or another program, no longer shows up twice in the recent files list.
 - A comparison started away from the first page opens both documents on that page, with the changes marked in both panes, instead of showing the second document from its cover. A page jump made while a document is still loading also stays put.
 - The comparison details name both documents by their file names instead of the temporary working copy's generated name.
@@ -170,21 +170,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 - Incomplete scans report errors and retain recovered pages; parallel PNG export preserves every completed page. OCR checks installed languages, retains the Tesseract fallback for invalid models, and can save when no words are recognized. Watched folders check OCR support before starting and identify unsupported or failed macro steps (#73).
 - Editable color conversion rejects unsupported profiled-image conversions. Restored Archival, Scanning and Privacy macro starters, including searchable OCR and reviewed redaction. Editing a Validate step preserves its existing profile and other settings (#343).
 - Updates preserve custom install paths and wait for unsaved changes in every window; failed portable updates retain executable copies and a recovery report. Startup cleanup preserves active temporary PDFs, Office conversion timeouts preserve existing sessions, and PDF/model downloads enforce response-body timeouts. Release checks include the final Store installer, embedded signatures and checksum.
-- Installers honor desktop-shortcut choices for both per-user and all-users installs, verify shortcut targets and icons, and finish with a warning when Windows refuses the optional desktop shortcut. Uninstall refuses while KillerPDF is open in another Windows session, and removes KillerPDF from a user folder whose name has accented or non-Latin letters. Setup no longer restores a partly removed previous version after a completed upgrade, or leaves a failed first install into an empty folder listed without its program.
+- Installers honor desktop-shortcut choices for both per-user and all-users installs, verify shortcut targets and icons, and finish with a warning when Windows refuses the optional desktop shortcut. Uninstall refuses while JPDFs is open in another Windows session, and removes JPDFs from a user folder whose name has accented or non-Latin letters. Setup no longer restores a partly removed previous version after a completed upgrade, or leaves a failed first install into an empty folder listed without its program.
 - Printer properties apply to the job, including duplex settings from drivers that use document-level controls. Fixed confirmation buttons acting as Cancel, page extraction order and unchanged all-page selections (#454).
 - Fixed keyboard focus entry, containment and restoration for About and Shortcuts. PDF text supports keyboard reading and selection with readable lines in zoomed spreads; commands follow the pane reached by keyboard, and radio options announce their individual values. Added accessible names to icon buttons, thumbnails, scrollbars, file-picker rows, shortcut options and RGB fields; decorative elements stay out of the accessibility tree. Website shortcut lists include current commands and preserve Unicode text.
 - Export reviews identify affected pages, content limitations and counts before saving.
 - Fixed long paths overlapping the recent-locations arrow in 98SE, missing app and installer translations, and truncated installer version text (#321, #409, #440).
 - Release publishing validates artifacts before upload and reports steps needing a retry. Chocolatey publishing reports failure if validation still fails after retrying.
 - Command-line runs report an unexpected failure on the console and exit instead of opening the crash window, which stalled scripts.
-- The website's film grain is lighter, matching KillerTools, and the theme menu can turn it off (Alt+Shift+G). The top bar no longer leaves extra space above the page on narrower windows, and the release details box lifts with an accent border on hover.
+- The website's film grain is lighter, matching JpdfsTools, and the theme menu can turn it off (Alt+Shift+G). The top bar no longer leaves extra space above the page on narrower windows, and the release details box lifts with an accent border on hover.
 
 ### Added
 
 - **Permanent redaction:** Remove content by area, text search or sensitive-data pattern, including text in form fields and annotations, with verification, batches, optional sanitization and separate output. Content rewriting retains unaffected searchable text and uncovered image pixels; whole-page raster fallback requires approval (#341).
 - **Document protection:** Save AES-256 encrypted copies with passwords, permissions or certificate recipients, and open certificate-encrypted PDFs using a matching Windows certificate.
 - Added recovery snapshots and restart handling for display failures (#456).
-- **Signatures and certificates:** Inspect signers, certificate chains, signing times and document changes, with RFC 3161 timestamps. Browse Windows certificates and import, inspect, trust or remove certificates used only by KillerPDF (#336, #425).
+- **Signatures and certificates:** Inspect signers, certificate chains, signing times and document changes, with RFC 3161 timestamps. Browse Windows certificates and import, inspect, trust or remove certificates used only by JPDFs (#336, #425).
 - **Document and table export:** Export to Word, Excel, PowerPoint, HTML, Markdown, text and JSON with page selection, reviewed OCR, batches and loss warnings. Word and PowerPoint support editable text, ruled tables and pictures or page-image output; selected ruled tables can be corrected before XLSX/CSV export (#345, #346).
 - **Paragraph editing and Find and Replace:** Edit simple paragraphs with a resizable box, font size, alignment, spacing, preview and Undo, with specific guidance when page rotation or tagged structure prevents editing. Find and Replace rewrites supported source text (#422, #431).
 - **Convert Scan to Text:** Replace scanned words with searchable text using approximate font matching. Review uncertain matches, retain rejected words as scans, and keep compact lossless black-and-white images where possible; command-line review controls are included.
@@ -205,9 +205,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ### Changed
 
-- **Install:** The footer's PORTABLE button installs the running portable copy in place, for this account or for everyone, from the same confirm as the other Killer Tools apps, and the installed copy reopens the active document. Unsaved changes hold the install.
-- **Updates:** The About card and the startup update prompt use the same update dialog as the other Killer Tools apps. Portable updates stop waiting for a stuck launcher after five minutes and report the failure instead.
-- **PDF engine:** Replaced PDFium, Docnet.Core and PdfPig with KillerPDF.Engine for rendering, text extraction, search, selection, editing, printing and export, including encrypted documents, forms and common PDF image formats.
+- **Install:** The footer's PORTABLE button installs the running portable copy in place, for this account or for everyone, from the same confirm as the other Jpdfs Tools apps, and the installed copy reopens the active document. Unsaved changes hold the install.
+- **Updates:** The About card and the startup update prompt use the same update dialog as the other Jpdfs Tools apps. Portable updates stop waiting for a stuck launcher after five minutes and report the failure instead.
+- **PDF engine:** Replaced PDFium, Docnet.Core and PdfPig with JPDFs.Engine for rendering, text extraction, search, selection, editing, printing and export, including encrypted documents, forms and common PDF image formats.
 - **Rendering and startup:** Moved rendering off the UI thread with viewport priority, cancellation and zoom refinement. Precompiled the app and engine, cached installed fonts and moved discovery into the background; batch work releases resources sooner and uses lower default rendering concurrency (#424).
 - Restricted PDFs open read-only with their original text and bookmarks and can be unlocked using the owner password. Forms whose author allows filling can still be filled and saved, keeping their protection, as in Acrobat. PDFs encrypted for a certificate recipient that may not edit them also open read-only.
 - Expanded command-line workflows with flexible splitting, single-input merging and batch rendering; macros and command-line workflows support editable resize, color conversion and separate exports. Installed copies support commands through PATH with exit codes; portable copies run directly.
@@ -218,16 +218,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 - Undo and Redo follow Print in the default toolbar. Toolbar and overflow actions are dimmed and disabled when unavailable. Exported redacted copies open in an empty second pane or a new tab.
 - Reorganized navigation with Comments, Attachments, Layers and Signatures panels, four sidebar positions and remembered rail order. Bookmarks and their children can be dragged into order; narrow layouts, horizontal scrolling and full titles keep navigation reachable (#391).
 - Windows and split panes adapt to the current monitor and app scale. Windows contrast themes use system colors without grain or shadows; option groups use a single Tab stop and arrow-key navigation.
-- Tabs match KillerShell's font, spacing, subtle corners, fading outline, larger close targets and New Tab button. Tab menus and shortcuts choose top or bottom placement, with bottom borders and dividers mirrored; 98SE bottom tabs keep Win98's top-left lighting. Black table headers match their content, and Blood, Greed and Cyanotic tabs use cream borders. About groups settings in two columns and can hide menu and tooltip shortcut hints.
+- Tabs match JpdfsShell's font, spacing, subtle corners, fading outline, larger close targets and New Tab button. Tab menus and shortcuts choose top or bottom placement, with bottom borders and dividers mirrored; 98SE bottom tabs keep Win98's top-left lighting. Black table headers match their content, and Blood, Greed and Cyanotic tabs use cream borders. About groups settings in two columns and can hide menu and tooltip shortcut hints.
 - Silent installation supports per-user installs without elevation, bundles .NET in the Store package, detects Arm64 runtimes and rejects concurrent installs with useful error codes.
 - Unified message and setup dialogs, kept actions visible in long forms, and simplified Table Export and About. Interface fonts now resolve from embedded files, including menus, tooltips and shortcuts.
 - Updated theme contrast, selection colors and field presets. Light uses gray window surfaces, lighter document panes and white input fields; several dark themes use darker menus and bars to distinguish them from panes (#340).
-- Every theme and accent uses the shared Killer Tools palette for each color, size and spacing value the family defines, so tabs, menus, buttons, captions and accent colors match the other Killer Tools apps.
-- The window menu from the title bar or Alt+Space uses the shared Killer Tools menu, and opens at the window's corner on the correct monitor when the window is maximized.
-- Ctrl+Q quits KillerPDF, as in the other Killer Tools apps, with the usual save and quit prompts. Close All Tabs moves to Ctrl+Shift+Q.
-- The maximize button shows the restore glyph while the window is maximized, as in the other Killer Tools apps.
-- The theme and language menus on the rail are the shared Killer Tools menus: they open in the corner of the document area, and a theme or accent change cross-fades.
-- File dialogs use the shared Killer Tools picker, which shows image thumbnails in the icon view, and dialogs take the shared Killer Tools styles for text fields, drop-down lists, check boxes, sliders and menus.
+- Every theme and accent uses the shared Jpdfs Tools palette for each color, size and spacing value the family defines, so tabs, menus, buttons, captions and accent colors match the other Jpdfs Tools apps.
+- The window menu from the title bar or Alt+Space uses the shared Jpdfs Tools menu, and opens at the window's corner on the correct monitor when the window is maximized.
+- Ctrl+Q quits JPDFs, as in the other Jpdfs Tools apps, with the usual save and quit prompts. Close All Tabs moves to Ctrl+Shift+Q.
+- The maximize button shows the restore glyph while the window is maximized, as in the other Jpdfs Tools apps.
+- The theme and language menus on the rail are the shared Jpdfs Tools menus: they open in the corner of the document area, and a theme or accent change cross-fades.
+- File dialogs use the shared Jpdfs Tools picker, which shows image thumbnails in the icon view, and dialogs take the shared Jpdfs Tools styles for text fields, drop-down lists, check boxes, sliders and menus.
 - Modern menus and Search Tools results use readable accent-colored hover text; Customize Toolbar button rows have clearer hover contrast. Theme-menu hover fills have equal side insets, and About/Shortcuts edges follow gradient themes.
 - Reduced Black film grain and refined checkbox ticks, radio alignment and file-picker styling. Popup textures cover their padding, sliders have tighter corners without square surrounds, and 98SE keeps classic bevels, compact fields and a gray document workspace.
 - Wordmarks and headings use a subtle bevel in their own color, retaining shadows where enabled. Dark's red accent uses the brand red; the empty drop target uses corner brackets and aiming marks at 80% opacity.
@@ -259,8 +259,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 - Saving over a digitally signed PDF now asks first, because saving removes the signature.
 - Tooltips and status messages read as plain sentences, and the Transform tooltip lists scaling, flipping and perspective correction instead of saying scaling is coming soon.
-- The wordmarks use Punktype and Lacquer with a soft shadow on every theme, and the app, installer and website use Killer Sans in place of the typewriter font. The installer also matches the new family setup layout.
-- Message, confirm, install and uninstall dialogs use the family setup dialog layout, with a notice icon, a larger Killer Sans heading, evenly sized buttons and the action button last. Dialog and installer action buttons are hollow in the accent color and fill with the button gradient on hover, instead of showing a solid block with hidden text.
+- The wordmarks use Punktype and Lacquer with a soft shadow on every theme, and the app, installer and website use Jpdfs Sans in place of the typewriter font. The installer also matches the new family setup layout.
+- Message, confirm, install and uninstall dialogs use the family setup dialog layout, with a notice icon, a larger Jpdfs Sans heading, evenly sized buttons and the action button last. Dialog and installer action buttons are hollow in the accent color and fill with the button gradient on hover, instead of showing a solid block with hidden text.
 - Hovered outline buttons and accent picker pills use gradients outside 98SE that start at the outline color and darken toward the bottom, and accent swatches lift on hover.
 
 ### Fixed
@@ -311,8 +311,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 - Tool option checkboxes now change without flashing the annotation bar.
 - Aligned the sidebar divider with the thumbnail edge and restored arrow cursors on window caption controls.
 - Annotation bars now show an aligned hand cursor only over draggable areas.
-- The installer and uninstaller have their own taskbar buttons, labeled "KillerPDF Installer" and "Uninstall KillerPDF", with the app icon.
-- The portable package reports a start failure in a KillerPDF-styled dialog instead of a plain Windows message box.
+- The installer and uninstaller have their own taskbar buttons, labeled "JPDFs Installer" and "Uninstall JPDFs", with the app icon.
+- The portable package reports a start failure in a JPDFs-styled dialog instead of a plain Windows message box.
 - The Document Info text menu now follows the active theme.
 - Improved text contrast across themes and accents, and replaced Delirium's red menu dividers with gray.
 - Main window, dialog, and launcher title bar icons now use sharp size-matched images.
@@ -322,7 +322,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 - Document tabs now use complete 98SE geometry and themed drag previews, and can be moved into a new window without losing their live editing state.
 - Reduced memory use when opening large PDFs.
-- The installer now offers upgrade, reinstall, uninstall, or cancel when KillerPDF is already installed.
+- The installer now offers upgrade, reinstall, uninstall, or cancel when JPDFs is already installed.
 - Split the language picker into two columns for 19 locales.
 - Menu rows now show accent text and icons on the theme's hover color.
 - Selected states now use subtle gradients outside 98SE, Light buttons have softer gray borders, and yellow wordmarks match their accent.
@@ -334,7 +334,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ### Added
 
-- Added CLI commands for page rotation, deletion, reordering, blank-page insertion, duplication, document details, and text search. KillerMCP can also use every headless app operation.
+- Added CLI commands for page rotation, deletion, reordering, blank-page insertion, duplication, document details, and text search. JpdfsMCP can also use every headless app operation.
 
 ### Fixed
 
@@ -343,7 +343,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [1.8.70] - 2026-09-24
 
-1.8.70 introduces KillerPDF's four-digit version numbering, hardens releases, repairs difficult PDF editing and saving cases, and polishes comparison, tabs, localization, and other interface behavior.
+1.8.70 introduces JPDFs's four-digit version numbering, hardens releases, repairs difficult PDF editing and saving cases, and polishes comparison, tabs, localization, and other interface behavior.
 
 ### Changed
 
@@ -377,7 +377,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ### Fixed
 
-- Kept the KillerPDF icon visible on Windows 11 taskbar buttons throughout slower portable launches.
+- Kept the JPDFs icon visible on Windows 11 taskbar buttons throughout slower portable launches.
 - Restored the document display after minimizing or switching back from another window (#415).
 - Allowed page extraction to ignore malformed optional thumbnail images (#423).
 - Preserved annotations during normal saves when cached page dimensions are unavailable.
@@ -429,7 +429,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 ### Fixed
 
 - Restored title-bar controls, including the close button and logo zoom control.
-- Registered the PDF handler as KillerPDF instead of the internal KillerPDF.App executable name.
+- Registered the PDF handler as JPDFs instead of the internal JPDFs.App executable name.
 - Preserved visible pixels when pasted clipboard images contain an empty alpha channel (#389).
 - Preserved pasted images and other unsaved annotations when inserting blank pages (#388).
 - Rendered the correct first page after opening or switching documents in Single, Two-Page, and Grid views (#378, #379, thanks @Ryokoxx).
@@ -458,7 +458,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 - Added name, size, and last-modified sorting to the file picker, with the selected order remembered between sessions.
 - Added contributor guidance for code, documentation, and translation work.
-- Portable builds now keep settings, signatures, swatches, and OCR models in a `KillerPDF-Data` folder beside the launcher (#327).
+- Portable builds now keep settings, signatures, swatches, and OCR models in a `JPDFs-Data` folder beside the launcher (#327).
 
 ### Changed
 
@@ -466,7 +466,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 - The footer now shows page size with direct view-mode and zoom controls (#301).
 - Image export and Transform now show output pixel dimensions for the selected DPI (#310).
 - First launch now uses a supported Windows display language instead of always starting in English (#322).
-- Crash reports now use KillerPDF's themed dialog chrome and a clearer error summary layout.
+- Crash reports now use JPDFs's themed dialog chrome and a clearer error summary layout.
 - Grayscale Transform output now stores one color channel instead of three equal RGB channels (#324).
 - Updated interface translations, including fillable-field and page-copy status messages (#227).
 
@@ -535,20 +535,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 - Turning off two-sided printing now explicitly overrides printer-driver duplex defaults (#284).
 - Measurement rulers and readouts now remain legible at fitted and multi-page zoom levels.
 - Setup now closes legacy installations safely before upgrading, keeps installer failures inside themed notices, and repairs duplicate installation scopes without removing settings or PDF files (#285).
-- The Help and How To page now explains every 1.8 tool and workflow, including PDF comparison, measurement, touch navigation, letter spacing, Transform batches and output controls, form-aware OCR, token signing, page transfer, packaging, all fifteen OCR languages, and The KillerPDF.Engine.
+- The Help and How To page now explains every 1.8 tool and workflow, including PDF comparison, measurement, touch navigation, letter spacing, Transform batches and output controls, form-aware OCR, token signing, page transfer, packaging, all fifteen OCR languages, and The JPDFs.Engine.
 
 ## [1.8.0] - 2026-08-28
 
-KillerPDF 1.8 replaces its legacy PdfSharpCore document pipeline with an independently authored .NET 10 PDF document engine. It is responsible for reading, validating, authoring, structurally editing, and writing PDF files. PDFium remains KillerPDF's rendering and display backend, while PdfPig continues to handle text extraction.
+JPDFs 1.8 replaces its legacy PdfSharpCore document pipeline with an independently authored .NET 10 PDF document engine. It is responsible for reading, validating, authoring, structurally editing, and writing PDF files. PDFium remains JPDFs's rendering and display backend, while PdfPig continues to handle text extraction.
 
 ### PDF document engine
 
-KillerPDF 1.8 introduces The KillerPDF.Engine. Its detailed development history is maintained in [The KillerPDF.Engine changelog](engine/CHANGELOG.md).
+JPDFs 1.8 introduces The JPDFs.Engine. Its detailed development history is maintained in [The JPDFs.Engine changelog](engine/CHANGELOG.md).
 
 ### Added
 
 - Dual-pane PDF comparison now opens a second document beside the original, synchronizes page navigation, zoom, and scrolling, highlights visual difference regions, reports changed-page percentages and dimension mismatches, and identifies pages present in only one document (#160).
-- KillerPDF now builds separate standard and portable packages. The standard package uses a compact Dark-theme installer with the product identity rail, raised grain-textured content card, runtime detection, account scope, shortcut selection, verified installation, elevation, rollback, and launch completion.
+- JPDFs now builds separate standard and portable packages. The standard package uses a compact Dark-theme installer with the product identity rail, raised grain-textured content card, runtime detection, account scope, shortcut selection, verified installation, elevation, rollback, and launch completion.
 - Digital signatures can use certificates backed by Windows-compatible USB tokens and now include an editable visible layout with template fields, live preview, page placement, dimensions, and text sizing (#125).
 - Transform can now preview settings page by page, apply them to every selected page as one undoable batch, convert pages to grayscale or thresholded black and white, resample from 72 to 600 DPI, and use selectable JPEG compression (#173, #204).
 - OCR can now use existing form-field geometry as recognition boundaries, apply numeric constraints, read comb fields cell by cell, honor maximum lengths, and validate close matches against choice lists. Plain OCR remains the default (#242).
@@ -565,11 +565,11 @@ KillerPDF 1.8 introduces The KillerPDF.Engine. Its detailed development history 
 
 ### Changed
 
-- KillerPDF now uses its own .NET 10 document engine throughout the desktop app, command line tools, tests, and packaged builds. PdfSharpCore and its compatibility code have been fully removed.
+- JPDFs now uses its own .NET 10 document engine throughout the desktop app, command line tools, tests, and packaged builds. PdfSharpCore and its compatibility code have been fully removed.
 - The standard installer now uses the .NET 10 Desktop Runtime, while the portable edition remains self-contained for offline use.
 - Document undo is now recorded automatically for every successful serialized document mutation, including page deletion, insertion, reordering, cross-pane copying, forms, links, metadata, bookmarks, crop, and rotation. Undo and redo restore annotations and page rotations with the PDF, while a 20-action and 256 MB per-document history budget prevents unbounded memory growth (#266).
-- Saving, exporting, flattening, printing, signing, and searchable OCR now use The KillerPDF.Engine while preserving Unicode text, transparency, rotations, form values, link targets, signatures, and annotation appearance.
-- Page insertion, deletion, duplication, extraction, reordering, merging, and Transform replacement now preserve complete page and catalog structures through The KillerPDF.Engine, including forms, tags, bookmarks, named destinations, layers, attachments, and inherited page state.
+- Saving, exporting, flattening, printing, signing, and searchable OCR now use The JPDFs.Engine while preserving Unicode text, transparency, rotations, form values, link targets, signatures, and annotation appearance.
+- Page insertion, deletion, duplication, extraction, reordering, merging, and Transform replacement now preserve complete page and catalog structures through The JPDFs.Engine, including forms, tags, bookmarks, named destinations, layers, attachments, and inherited page state.
 - Document viewing and editing now share one immutable engine session for page geometry, metadata, forms, links, bookmarks, crop boundaries, rotations, and document lifecycle state.
 - Opening, repairing, and importing difficult PDFs now preserve complete document graphs through the engine, with tolerant handling for encrypted files, damaged structures, unusual page sizes, and last-resort raster recovery.
 - Command-line merge, extract, split, image export, flatten, print, OCR, decryption, and batch resave now use the same engine as the desktop app.
@@ -578,7 +578,7 @@ KillerPDF 1.8 introduces The KillerPDF.Engine. Its detailed development history 
 - Fillable choice fields now bind their displayed option and saved export value explicitly, so selecting another dropdown option updates the live field and persists the new value.
 - Direct PDFium loading now uses explicit UTF-8 marshalling for document paths and passwords, preserving international characters instead of passing them through the Windows ANSI code page.
 - Installed-payload verification now rejects files absent from the signed manifest, preventing untrusted assemblies in the application probing path, and its tamper test now exercises a same-length SHA-256 mismatch.
-- Moving from a per-user installation to an all-users installation now removes the stale per-user `killerpdf:` protocol registration so it cannot shadow the Program Files handler.
+- Moving from a per-user installation to an all-users installation now removes the stale per-user `jpdfs:` protocol registration so it cannot shadow the Program Files handler.
 - The all-users installer handoff now completes once and leaves the final installed-app relaunch to the portable UI, preventing duplicate restarts. Portable packaging also runs a disposable install smoke test (#238).
 - Portable builds identify themselves with a `PORTABLE` upgrade badge linked to the installed release instead of offering to install their temporary self-contained payload.
 - Portable cleanup now validates both process identity and start time instead of trusting a reusable PID, and legacy extraction markers retain a directory only when their recorded child still runs from that directory.
@@ -591,15 +591,15 @@ KillerPDF 1.8 introduces The KillerPDF.Engine. Its detailed development history 
 ### Fixed
 
 - Typewriter text keeps its on-screen vertical position after saving, and clicking dotted or underscored blanks on flattened forms now creates an empty text entry box over the detected field instead of selecting the surrounding label (#273, thanks bel57).
-- Repeated Unicode form edits now reuse any previously embedded KillerPDF font subset that covers the new value, even after an intervening Latin-only value or a different glyph set, so revisiting earlier form text no longer embeds another duplicate font program (#256, thanks Ryokoxx).
+- Repeated Unicode form edits now reuse any previously embedded JPDFs font subset that covers the new value, even after an intervening Latin-only value or a different glyph set, so revisiting earlier form text no longer embeds another duplicate font program (#256, thanks Ryokoxx).
 - Silent all-users installation now refuses with exit code 10 before writing any files when the .NET 10 Desktop Runtime is unavailable, and portable payload verification accepts the launcher's own identity marker while continuing to reject unrelated unlisted files (#275, #279, thanks Ryokoxx).
 - Typst bookmark outlines now remain enabled and navigate correctly when an `/XYZ` destination uses the valid zero value for retaining the current zoom (#269).
-- A portable launch that forwards to an already-running installed copy no longer takes over the `killerpdf:` protocol handler, and portable copies no longer shadow a valid installed handler (#267).
+- A portable launch that forwards to an already-running installed copy no longer takes over the `jpdfs:` protocol handler, and portable copies no longer shadow a valid installed handler (#267).
 - Push-button form appearances remain visible in the interactive viewer, bounded list-box appearances stay inside their field rectangles, and multi-select choice values now load, display, edit, and save as complete selections (#245).
 - Shipped builds no longer run a dead Costura-only pdfium startup check. The new `--verify` and `/verify` commands validate every installed payload file against `payload.manifest` on demand, covering the complete installation without adding launch latency.
 - Application shortcuts such as Save, Save As, Find, Print, Open, tab commands, and F1 through F12 now remain available while a fillable form field or typewriter box has focus, while ordinary typing and standard text-editing shortcuts stay inside the field (#237).
 - Duplicating a page now keeps the new copy selected in both the sidebar and active viewer after the rebuilt page tree and deferred layout finish loading.
-- Merge now validates each input with The KillerPDF.Engine and routes unreadable PDFs through the same lossless repair, import repair, and raster recovery sequence used by Open and drag-drop.
+- Merge now validates each input with The JPDFs.Engine and routes unreadable PDFs through the same lossless repair, import repair, and raster recovery sequence used by Open and drag-drop.
 - Selected rows in the file dialog no longer apply a dark text-stroke effect inside the yellow selection background, keeping filenames crisp and undoubled.
 - PDF parsing now accepts qpdf-compatible stream lengths while safely rejecting oversized cross-reference and object streams, reused tree nodes, malformed shared form fields, and repeated structure elements.
 - Link annotations now include the print flag required for PDF/A-4 annotation conformance.
@@ -607,13 +607,13 @@ KillerPDF 1.8 introduces The KillerPDF.Engine. Its detailed development history 
 
 ## [1.7.5] - 2026-08-22
 
-KillerPDF 1.7.5 is a small maintenance release that closes several visible annotation, scrolling, shortcut, theme, and localization regressions. It keeps the faster scrolling introduced in 1.7.4, makes Transform trustworthy with freshly placed text, and gives the text annotation toolbar a cleaner two-row layout.
+JPDFs 1.7.5 is a small maintenance release that closes several visible annotation, scrolling, shortcut, theme, and localization regressions. It keeps the faster scrolling introduced in 1.7.4, makes Transform trustworthy with freshly placed text, and gives the text annotation toolbar a cleaner two-row layout.
 
 ### Added
 
 - Shift+mouse wheel now scrolls wide pages horizontally, using the same scrolling path as a tilt wheel (#209, thanks Ryokoxx).
 - Ctrl+B, Ctrl+I and Ctrl+U now bold, italicize and underline while you are editing a text box. They were listed in the shortcuts for weeks without ever being wired up.
-- Hungarian OCR completes the twelve-language OCR catalog, so every language available for the KillerPDF interface now has a matching downloadable recognition model.
+- Hungarian OCR completes the twelve-language OCR catalog, so every language available for the JPDFs interface now has a matching downloadable recognition model.
 
 ### Changed
 
@@ -639,7 +639,7 @@ KillerPDF 1.7.5 is a small maintenance release that closes several visible annot
 
 ## [1.7.4] - 2026-08-21
 
-KillerPDF 1.7.4 keeps the convenience of one portable download while installing as a normal multi-file application, cutting initial startup time substantially. This release also fixes annotation rotation, form fields on comma-decimal locales, installation scope, and a range of viewer, dialog, and localization problems. Hungarian localization and page image export are included as well.
+JPDFs 1.7.4 keeps the convenience of one portable download while installing as a normal multi-file application, cutting initial startup time substantially. This release also fixes annotation rotation, form fields on comma-decimal locales, installation scope, and a range of viewer, dialog, and localization problems. Hungarian localization and page image export are included as well.
 
 ### Added
 
@@ -651,7 +651,7 @@ KillerPDF 1.7.4 keeps the convenience of one portable download while installing 
 
 ### Changed
 
-- KillerPDF now remains one portable download while installing as a normal multi-file application. The portable EXE carries one compressed, verified payload and cleans up its temporary files after use; installed shortcuts launch the inner app directly, avoiding Costura extraction and reducing measured first startup by about 40% on the development machine (#189, thanks ags1234). The new package is also roughly 34% smaller than the previous woven EXE.
+- JPDFs now remains one portable download while installing as a normal multi-file application. The portable EXE carries one compressed, verified payload and cleans up its temporary files after use; installed shortcuts launch the inner app directly, avoiding Costura extraction and reducing measured first startup by about 40% on the development machine (#189, thanks ags1234). The new package is also roughly 34% smaller than the previous woven EXE.
 - Builds no longer risk the net48 CS8336 attribute collision introduced by compiler-generated polyfills (PR #218, thanks Ryokoxx).
 
 ### Fixed
@@ -662,7 +662,7 @@ KillerPDF 1.7.4 keeps the convenience of one portable download while installing 
 - Print, flatten, image export, and thumbnails no longer draw a form field twice when its stored appearance disagrees with the regenerated one.
 - Installation scope is now guarded end to end: a per-user install cannot sit beside an all-users install, existing dual installs are detected with an offer to remove the inactive copy, converting to all-users removes the older per-user copy, and machine-wide uninstall requests administrator access instead of reporting success after permission failures.
 - The Open dialog no longer crashes where Explorer's Quick Access cannot be read, such as under Wine and CrossOver; the pinned folders and drives still list (#210, thanks Ximelay).
-- Opening a PDF from Explorer while KillerPDF is still starting no longer crashes; the file now opens once the window is ready (#202, thanks tgv123456).
+- Opening a PDF from Explorer while JPDFs is still starting no longer crashes; the file now opens once the window is ready (#202, thanks tgv123456).
 - Dropping a damaged PDF on the Pages panel now offers the same repair the Open dialog offers, instead of silently ignoring the file (#203, thanks 1mk3r).
 - After an install relaunch or split-pane session restore, the sidebar now attaches the active pane's thumbnail cache before the first visible frame instead of remaining blank until the user clicks a pane.
 - Snapping, maximizing, or restoring the window keeps the split panes' proportions, and a sidebar you closed stays closed when a tab loads its document.
@@ -696,7 +696,7 @@ KillerPDF 1.7.4 keeps the convenience of one portable download while installing 
 
 ## [1.7.2] - 2026-08-15
 
-KillerPDF 1.7.2 completes the split-pane viewer refactor and builds on it with seven new themes, Polish localization, book layout, Levels, expanded print controls, per-pane night mode, and a substantial round of rendering, memory, form, and interface fixes.
+JPDFs 1.7.2 completes the split-pane viewer refactor and builds on it with seven new themes, Polish localization, book layout, Levels, expanded print controls, per-pane night mode, and a substantial round of rendering, memory, form, and interface fixes.
 
 ### Added
 
@@ -731,8 +731,8 @@ KillerPDF 1.7.2 completes the split-pane viewer refactor and builds on it with s
 - Rotating a page that was opened with a non-zero /Rotate no longer swaps its MediaBox on save, which permanently clipped the content. Fixed in the vendored PdfSharpCore, whose landscape media-box flip fired on read pages (#184, thanks terada-d).
 - Documents opened from Explorer get keyboard focus immediately, so arrows and Page Up/Down work without clicking the window first, and horizontal scrolling from a touchpad or tilt wheel now pans the document (#196, thanks Subjuntivos).
 - Double-click text editing now maps PostScript font names (ArialMT, TimesNewRomanPSMT, Helvetica) to the installed Windows family, so edited text keeps its font instead of falling back to the default (#187, thanks fo-bo).
-- Machine-wide installs register the killerpdf:// handler for all users, and it now appears in Default apps under link types (#183, thanks adeit).
-- Themes are entirely owned by the KillerPDF repository again. The project no longer imports a private sibling `KillerUI` folder or overlays its resources at runtime, so a standalone clone contains every theme resource it builds and displays.
+- Machine-wide installs register the jpdfs:// handler for all users, and it now appears in Default apps under link types (#183, thanks adeit).
+- Themes are entirely owned by the JPDFs repository again. The project no longer imports a private sibling `JpdfsUiKit` folder or overlays its resources at runtime, so a standalone clone contains every theme resource it builds and displays.
 - Completed the PDF viewer extraction so split panes keep independent documents, tabs, pages, tools, selections, and sidebar positions.
 - Various UI and theme consistency tweaks, including clearer Black-theme surfaces and controls, consistent floating-bar borders, legible accent buttons, and balanced film grain across the themes.
 
@@ -743,20 +743,20 @@ KillerPDF 1.7.2 completes the split-pane viewer refactor and builds on it with s
 ### Added
 
 - Transform can now correct trapezoidal perspective distortion in pages photographed at an angle. Turn on perspective correction, drag four corner handles onto the photographed page outline, and Apply converts that quadrilateral into a straight rectangular page at the full transform resolution. The correction composes with rotation, deskew, scaling, and flipping in the same operation (#175, thanks 1mk3r).
-- KillerPDF now registers a `killerpdf://` link handler for the current user, laying the app-side foundation for the planned Chrome extension. A `killerpdf://open?url=...` link can hand a public HTTPS PDF to KillerPDF whether the app is closed or already running; downloads are size-limited and rejected unless their contents begin as a PDF. The registration refreshes itself when the executable moves.
-- Open and Save dialogs now return to the last folder successfully used for that kind of operation, unless the caller deliberately supplies another starting folder. The places rail also brings in the user's pinned Windows Explorer Quick Access folders alongside KillerPDF's own editable pins, while avoiding duplicate entries (#178, thanks sheafitzek).
+- JPDFs now registers a `jpdfs://` link handler for the current user, laying the app-side foundation for the planned Chrome extension. A `jpdfs://open?url=...` link can hand a public HTTPS PDF to JPDFs whether the app is closed or already running; downloads are size-limited and rejected unless their contents begin as a PDF. The registration refreshes itself when the executable moves.
+- Open and Save dialogs now return to the last folder successfully used for that kind of operation, unless the caller deliberately supplies another starting folder. The places rail also brings in the user's pinned Windows Explorer Quick Access folders alongside JPDFs's own editable pins, while avoiding duplicate entries (#178, thanks sheafitzek).
 
 ### Fixed
 
 - Fit Width and Fit Page are now remembered as the preferred fit for subsequently opened PDFs, so users on smaller screens no longer have to switch from Fit Page every time, thanks Thomas.
-- Owner-restricted encrypted PDFs with malformed linearization tables now pass through KillerPDF's tolerant PDFium cleanup instead of being retried through PdfSharp's fragile read-only parser. This fixes the array-index error that prevented the Fritzbox 4060 manual from opening, thanks Thomas.
-- Reopening a PDF no longer reapplies a raw zoom saved for a different window or monitor size, which could make the document appear enormous or tiny. KillerPDF keeps the saved page and view mode but fits the document to the current window, with Grid returning to a predictable three-column layout. Perspective correction's corner handles now retain their drag capture across child controls and release reliably, and applying the correction immediately redraws the edited page even when the current zoom does not change.
+- Owner-restricted encrypted PDFs with malformed linearization tables now pass through JPDFs's tolerant PDFium cleanup instead of being retried through PdfSharp's fragile read-only parser. This fixes the array-index error that prevented the Fritzbox 4060 manual from opening, thanks Thomas.
+- Reopening a PDF no longer reapplies a raw zoom saved for a different window or monitor size, which could make the document appear enormous or tiny. JPDFs keeps the saved page and view mode but fits the document to the current window, with Grid returning to a predictable three-column layout. Perspective correction's corner handles now retain their drag capture across child controls and release reliably, and applying the correction immediately redraws the edited page even when the current zoom does not change.
 - Multi-line highlights now follow the reading direction of Persian, Arabic, Hebrew, and other right-to-left text. The first selected line extends left from the starting point and the last line extends right to the ending point, while left-to-right documents keep their existing behavior. Direction is detected per line, so mixed-language pages work without a document-wide setting (#170, thanks playerbhr).
-- Installing KillerPDF for everyone now registers its PDF handler for the whole computer instead of writing it into the elevated administrator's personal registry. Every account can now find KillerPDF in Open With and Default apps, with the shared registration pointing at the Program Files copy; each user still chooses their own PDF default (#176, thanks adeit).
+- Installing JPDFs for everyone now registers its PDF handler for the whole computer instead of writing it into the elevated administrator's personal registry. Every account can now find JPDFs in Open With and Default apps, with the shared registration pointing at the Program Files copy; each user still chooses their own PDF default (#176, thanks adeit).
 - The keyboard-shortcut list now uses the available window width instead of squeezing both halves into a narrow fixed card. Longer translated descriptions have room to remain visible, wrap cleanly on smaller windows, and sit level with the shortcut text in both columns (#177, thanks Mr-Update).
 - The mouse wheel now moves the file picker's multi-column list horizontally, so folders and files beyond the right edge can be reached without dragging the bottom scrollbar. The folder tree's wheel works too, scrolling vertically normally and horizontally while Shift is held. The shared picker fix applies to Open, Save, image import, signatures, certificates, and every other file-selection flow; icon and details views keep their normal vertical wheel scrolling.
-- Text annotations, highlights, stamps, ink, and filled form fields already stored in a PDF now appear in KillerPDF and survive printing, flattening, image export, page transforms, thumbnails, and repair rasterization (#141, thanks zenfas). PDFium does not paint annotation appearance streams unless explicitly requested, so every pixel-producing path silently omitted them. Enabling Docnet's annotation flag was not safe because it creates and destroys a form-fill environment while its page remains in use, corrupting PDFium state and crashing on a later native call. KillerPDF now renders through its direct PDFium layer, owns the form callback memory for its full native lifetime, paints both ordinary annotations and interactive widget appearances, then immediately closes the form, page, and one-shot document together. The reporter's five-page D&D Beyond file from #179 now exports and flattens with its filled values and multiline fields intact, without the native teardown crash (#179, thanks hsnopi).
-- Annotations and stamps now save in the right position on PDFs that already carry a native page rotation when they are first opened (#169, thanks terada-d). The 1.7.0 fix read only KillerPDF's temporary rotation map, but that map is not populated until a page operation performs a temporary save and reload, so annotating an already rotated file and saving it immediately still treated the page as unrotated. Burn-in now falls back to the page's own `/Rotate` value, every newly opened document clears the previous document's temporary rotation map, and saving removes a malformed CropBox that extends outside its MediaBox instead of preserving contradictory portrait and landscape dimensions. Tests cover the reported invalid page boxes and preservation of a valid inset crop.
+- Text annotations, highlights, stamps, ink, and filled form fields already stored in a PDF now appear in JPDFs and survive printing, flattening, image export, page transforms, thumbnails, and repair rasterization (#141, thanks zenfas). PDFium does not paint annotation appearance streams unless explicitly requested, so every pixel-producing path silently omitted them. Enabling Docnet's annotation flag was not safe because it creates and destroys a form-fill environment while its page remains in use, corrupting PDFium state and crashing on a later native call. JPDFs now renders through its direct PDFium layer, owns the form callback memory for its full native lifetime, paints both ordinary annotations and interactive widget appearances, then immediately closes the form, page, and one-shot document together. The reporter's five-page D&D Beyond file from #179 now exports and flattens with its filled values and multiline fields intact, without the native teardown crash (#179, thanks hsnopi).
+- Annotations and stamps now save in the right position on PDFs that already carry a native page rotation when they are first opened (#169, thanks terada-d). The 1.7.0 fix read only JPDFs's temporary rotation map, but that map is not populated until a page operation performs a temporary save and reload, so annotating an already rotated file and saving it immediately still treated the page as unrotated. Burn-in now falls back to the page's own `/Rotate` value, every newly opened document clears the previous document's temporary rotation map, and saving removes a malformed CropBox that extends outside its MediaBox instead of preserving contradictory portrait and landscape dimensions. Tests cover the reported invalid page boxes and preservation of a valid inset crop.
 - Filled form fields now generate complete appearance streams, including the required stream length, multiline layout, and WinAnsi text encoding (#180, thanks Ryokoxx). This keeps entered values visible and readable in PDF viewers that strictly validate field appearances, resolving the damaged-file warning, missing line breaks, and replaced punctuation reported in #179 (#179, thanks hsnopi).
 - Double-clicking bold or italic PDF text to edit it no longer turns the replacement into regular text (#182, thanks fo-bo). PDF text usually carries its face styling inside the embedded font name, such as `Helvetica-BoldOblique`, rather than as separate bold and italic properties. The detector cleaned those suffixes off to find the font family, then explicitly reset both style flags before opening the editor, so the formatting was lost before the first keystroke. Font detection now separates the family from its bold and italic face, applies both to the live edit box, and carries them into the replacement annotation when it is committed. Focused tests cover subset font names and regular, bold, italic, and combined faces.
 - Clicking a page no longer crashes with "'∞' is not a valid value for property 'Height'" (#181, thanks lachlan-00). The page click rebuilds every annotation and form overlay, and malformed geometry could reach a WPF Width or Height property without being checked. WPF refuses NaN and infinity, so one bad form rectangle or a legacy saved signature with zero canvas dimensions took down the whole viewer during the redraw. Form rectangles and every sized annotation are now checked before they reach WPF; invalid form widgets are skipped, old signature dimensions fall back to the standard canvas size, and the render layer has a final guard for malformed persisted annotations.
@@ -768,13 +768,13 @@ KillerPDF 1.7.2 completes the split-pane viewer refactor and builds on it with s
 
 ## [1.7.0] - 2026-08-01
 
-KillerPDF 1.7.0 introduces split panes, with two documents side by side in one window. It also replaces every stock Windows file dialog, adds a themed system menu and picture-aware night mode, saves non-Latin scripts correctly, and places annotations accurately on rotated pages.
+JPDFs 1.7.0 introduces split panes, with two documents side by side in one window. It also replaces every stock Windows file dialog, adds a themed system menu and picture-aware night mode, saves non-Latin scripts correctly, and places annotations accurately on rotated pages.
 
 ### Added
 
 - Split pane: F10 shows two documents side by side in one window. Each pane is a card of its own, and the focused one carries an accent ring so it is obvious which pane the toolbar, sidebar and page list are acting on. Click either pane to move focus. The boundary between them has a handle on each side: grab the left one to size the left pane or the right one to size the right. Neither pane can be squeezed below a readable width. F10 closes the split again, and the rail button's icon follows along: a pane pushed out will open, while one pulled back in will close. Each pane has its own tab strip, but the shared toolbar, sidebar, and page list follow whichever pane has focus. Drag a tab from one pane's strip to the other to move it across. On a maximized or snapped window, F10 splits the space evenly instead of squeezing the second pane to its minimum.
-- Every Open and Save dialog is KillerPDF's own now, instead of the stock Windows one: the same themed window as the rest of the app, with a places rail, a folder tree, list/icon/details views, sortable columns, pinnable folders and recent locations. That covers opening and saving PDFs, merging, extracting pages, flatten, image export, image import, signature and certificate picking, OCR output and the zip export - including picking several files at once where that applies. Shared with the other Killer Tools apps, so the file dialog looks and behaves the same across the family.
-- Install for everyone on this computer. The Install button on the portable badge now opens a confirmation with two choices: add a desktop shortcut (on by default, as before) and install for all users (off by default because it needs an administrator). An all-users install puts KillerPDF in Program Files with a Start menu entry for every account, and removes the per-user copy so there is a single entry in Add/Remove Programs rather than two. Declining the administrator prompt leaves the app running portable exactly as it was. A `/silent` switch performs the machine-wide install with no interface for winget, Chocolatey, and RMM deployment. This matches Killendar and KillerShell. PDF file associations are still registered only for the current account; an all-users install does not change what PDFs open with for anyone else.
+- Every Open and Save dialog is JPDFs's own now, instead of the stock Windows one: the same themed window as the rest of the app, with a places rail, a folder tree, list/icon/details views, sortable columns, pinnable folders and recent locations. That covers opening and saving PDFs, merging, extracting pages, flatten, image export, image import, signature and certificate picking, OCR output and the zip export - including picking several files at once where that applies. Shared with the other Jpdfs Tools apps, so the file dialog looks and behaves the same across the family.
+- Install for everyone on this computer. The Install button on the portable badge now opens a confirmation with two choices: add a desktop shortcut (on by default, as before) and install for all users (off by default because it needs an administrator). An all-users install puts JPDFs in Program Files with a Start menu entry for every account, and removes the per-user copy so there is a single entry in Add/Remove Programs rather than two. Declining the administrator prompt leaves the app running portable exactly as it was. A `/silent` switch performs the machine-wide install with no interface for winget, Chocolatey, and RMM deployment. This matches Killendar and JpdfsShell. PDF file associations are still registered only for the current account; an all-users install does not change what PDFs open with for anyone else.
 - "Confirm before opening links" is back, on the About card beside the recent-files toggle. It asks before a link in a PDF opens in your browser, and it is off by default so links stay immediate unless you want the check. The prompt's own "Don't ask again" now simply switches the same option off, so the two can no longer disagree. The setting had no home after the Settings panel was dissolved; About is where the safety and data-hygiene controls live.
 - Ctrl+Shift+W closes every tab except the current one, alongside Close Tab on the tab's right-click menu - both now line their keyboard shortcuts up in a real column instead of each item sizing its own.
 - Right-clicking the title bar (or Alt+Space) shows a themed system menu that matches the app instead of the stock white Windows one. Same items, same behavior, in all ten languages.
@@ -782,22 +782,22 @@ KillerPDF 1.7.0 introduces split panes, with two documents side by side in one w
 ### Changed
 
 - Internal: the document view is now a self-contained control rather than part of the main window - the page rendering, zoom, annotations, text editing, crop, forms, links and text selection all moved into it, about 8,700 lines. Every function moved verbatim, verified line by line against the previous version, and no behavior change is intended. This is groundwork for showing two documents side by side in one window.
-- The document area is a rounded, lifted card like the rest of the Killer Tools apps, instead of a squared pane running flush into the window edges: rounded corners, an 8px inset on its outer side, and a real drop shadow that falls across the status bar. The sidebar's five-dot gripper is gone, replaced by the family divider - a thin line that lights up in the accent color when you hover or drag it. Full screen still fills the display edge to edge.
+- The document area is a rounded, lifted card like the rest of the Jpdfs Tools apps, instead of a squared pane running flush into the window edges: rounded corners, an 8px inset on its outer side, and a real drop shadow that falls across the status bar. The sidebar's five-dot gripper is gone, replaced by the family divider - a thin line that lights up in the accent color when you hover or drag it. Full screen still fills the display edge to edge.
 - Night mode no longer inverts pictures (#135, thanks dmantisk). Photos and figures keep their real colors while the page around them goes dark, matching the behavior requested from Okular. Right-click the moon (or press Shift+N) for "Invert images too" if you want the old full inversion back. This is useful on scanned documents, where the whole page is one image. Night mode only changes what you see on screen: saving, printing and exporting still produce the document's original colors.
-- The Settings panel and its gear are gone: every section moved to where the thing it configures lives, matching the rest of the Killer Tools apps. Theme and language are flyouts on new rail buttons (below the night-mode moon, with a ? button for the shortcuts overlay); the theme flyout stays open across a pick so themes can be compared.
+- The Settings panel and its gear are gone: every section moved to where the thing it configures lives, matching the rest of the Jpdfs Tools apps. Theme and language are flyouts on new rail buttons (below the night-mode moon, with a ? button for the shortcuts overlay); the theme flyout stays open across a pick so themes can be compared.
 - Toolbar appearance is a right-click menu on the toolbar itself, and it is two independent choices now instead of one list of five: icon size (small/large) and text placement (none/beside/under/text only) - so large icons with captions is finally possible. Fresh installs default to large icons with text underneath; existing installs keep their setting. Ctrl+Shift+1-6 pick the options directly.
-- Internal: the codebase has been reorganized into the Killer Tools family layout - document logic in service classes, the About/CLI/OCR/search features behind controllers, the window partials under Shell/. Every moved function is verbatim and no behavior change is intended; the repo root now holds only the entry files.
-- New app icon. The old document icon with the red bar across the bottom now marks PDF *files*, so a KillerPDF window and a PDF sitting in a folder are no longer the same picture. Explorer caches icons aggressively, so a PDF may keep showing the old art until the cache refreshes.
+- Internal: the codebase has been reorganized into the Jpdfs Tools family layout - document logic in service classes, the About/CLI/OCR/search features behind controllers, the window partials under Shell/. Every moved function is verbatim and no behavior change is intended; the repo root now holds only the entry files.
+- New app icon. The old document icon with the red bar across the bottom now marks PDF *files*, so a JPDFs window and a PDF sitting in a folder are no longer the same picture. Explorer caches icons aggressively, so a PDF may keep showing the old art until the cache refreshes.
 - View mode is a rail button wearing four view tiles, one per layout: click for a flyout (each mode with its F-key beside it), roll the wheel over it to step through the views, or press F9 to jog from the keyboard - F5-F8 still jump straight to one, and Ctrl+, is retired. All the new shortcuts are on the F1 overlay, in all ten languages.
-- Internal: the tab strip and split-pane drag/focus model were rewritten to match KillerShell's implementation, the family's reference for both, replacing the original hand-built version.
+- Internal: the tab strip and split-pane drag/focus model were rewritten to match JpdfsShell's implementation, the family's reference for both, replacing the original hand-built version.
 - The sidebar's left/right choice sits at the bottom of the sidebar's right-click menu, which now opens from any part of the sidebar; Ctrl+Shift+B flips the side, pairing with Ctrl+B's collapse.
-- The content pane's border is a shade lighter in every theme, so the edge between the pane and the chrome reads more clearly - the same value the other Killer Tools apps use.
-- The prompt offering to make KillerPDF your default PDF viewer is translated now; it was English-only in every interface language.
-- The sidebar's page list fades into the background at its top and bottom edges while there are pages scrolled past them - the same treatment KillerShell's folder tree and the killerpdf.net sidebar use. Each fade ramps in over its own height as a row slides under it, so nothing pops, and neither shows when the list is flush at that end.
+- The content pane's border is a shade lighter in every theme, so the edge between the pane and the chrome reads more clearly - the same value the other Jpdfs Tools apps use.
+- The prompt offering to make JPDFs your default PDF viewer is translated now; it was English-only in every interface language.
+- The sidebar's page list fades into the background at its top and bottom edges while there are pages scrolled past them - the same treatment JpdfsShell's folder tree and the jpdfs.net sidebar use. Each fade ramps in over its own height as a row slides under it, so nothing pops, and neither shows when the list is flush at that end.
 
 ### Fixed
 
-- Japanese and other non-Latin text no longer saves as empty boxes (#168, thanks terada-d). The editor is a Windows text box, which quietly borrows glyphs from any installed font, so what you type always looks right; the save path resolved a single font and wrote a box for every character that font lacked. Two things were wrong. Nearly every CJK font on Windows ships as a collection file (Yu Gothic, MS Gothic, Meiryo, YaHei, JhengHei), and the save path could not read collections at all. Even picking a Japanese font by hand did not help. Nothing checked whether the chosen font could carry the text either. KillerPDF now reads collection fonts, and when your font cannot render something it picks one that can, preferring the same faces Windows itself falls back to. Your own font is always used when it covers the text. This affects Bengali, Korean, Chinese, Thai, Arabic and Indic scripts too, and applies to page numbers and watermarks as well as placed text. Embedded fonts are subset, so a line of Japanese adds tens of KB to the file rather than the whole typeface. If nothing installed can draw a character, KillerPDF now says so when the text is placed and lists the unsupported characters. This rare case can happen when one box contains two non-Latin scripts or the PC has no font for the requested script.
+- Japanese and other non-Latin text no longer saves as empty boxes (#168, thanks terada-d). The editor is a Windows text box, which quietly borrows glyphs from any installed font, so what you type always looks right; the save path resolved a single font and wrote a box for every character that font lacked. Two things were wrong. Nearly every CJK font on Windows ships as a collection file (Yu Gothic, MS Gothic, Meiryo, YaHei, JhengHei), and the save path could not read collections at all. Even picking a Japanese font by hand did not help. Nothing checked whether the chosen font could carry the text either. JPDFs now reads collection fonts, and when your font cannot render something it picks one that can, preferring the same faces Windows itself falls back to. Your own font is always used when it covers the text. This affects Bengali, Korean, Chinese, Thai, Arabic and Indic scripts too, and applies to page numbers and watermarks as well as placed text. Embedded fonts are subset, so a line of Japanese adds tens of KB to the file rather than the whole typeface. If nothing installed can draw a character, JPDFs now says so when the text is placed and lists the unsupported characters. This rare case can happen when one box contains two non-Latin scripts or the PC has no font for the requested script.
 - Punctuation shortcuts work on keyboard layouts that need Shift for those characters (#153, thanks Mr-Update). Shortcuts were matched by key position, which is a US-layout assumption: on a German keyboard "?" lives on Shift+ss and "=" on Shift+0, so Ctrl+? and Ctrl+= pressed keys the app was not listening for, and the extra Shift broke the match a second time. Zoom and the shortcuts overlay now respond to the key that TYPES the character, whatever position it occupies, so they work on German, French, Nordic and other layouts rather than being fixed one at a time. The shortcuts overlay also prints the spelling that is right for the keyboard in use instead of always showing the US one.
 - Annotations and stamps are no longer burned into the wrong frame on a rotated page (#169, thanks terada-d for a report that diagnosed it down to the line). A page's rotation is deliberately kept outside the working document, so the canvas you draw on is in the rotated frame while the save path writes into the page's own unrotated one - and the save path was never told the angle. Anything placed on a quarter-turned page came out rotated 90 degrees from where you put it, offset, and scaled on swapped axes, which also squeezed text boxes narrow enough to wrap after almost every character. Stamps had the same fault, so page numbers and watermarks landed in the wrong corner and disagreed with their own preview. The rotation now travels with the burn, in the editor and in the background flatten that print uses.
 - The app-size readout parked itself on the status bar. Rolling the wheel over the logo wrote "App size N%" into the footer behind a short hold, which existed so the chrome resize could not stomp the message with its own page and zoom status the same frame. When that hold expired nothing repainted the line, so the readout stayed put until the next page change, tool switch or open happened to write over it. It is transient now. Each notch rewrites the readout and restarts a five second timer, and the status line goes back to what it was showing before the first notch when the timer expires. The hold is unchanged and still only covers the same-frame stomp. If something else wrote a status after the hold lapsed the restore is skipped, so a real message is never replaced by a stale one.
@@ -813,11 +813,11 @@ KillerPDF 1.7.0 introduces split panes, with two documents side by side in one w
 
 ## [1.6.6] - 2026-07-23
 
-KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects form fields that appeared in the wrong place on non-A4 documents. It also remaps tool hotkeys, adds Remove Password, and includes several menu, keyboard, and interface improvements.
+JPDFs 1.6.6 is primarily a bug fix release. Most importantly, it corrects form fields that appeared in the wrong place on non-A4 documents. It also remaps tool hotkeys, adds Remove Password, and includes several menu, keyboard, and interface improvements.
 
 ### Added
 
-- Remove Password in the Save dropdown (#149, thanks dmantisk): saves the open document back over the original with its password protection dropped - available whenever the file needed a password (or carried owner restrictions) to open. KillerPDF already strips encryption at open time because the editing pipeline cannot modify encrypted files in place, so every save has always written an unprotected PDF; this makes that behavior a visible, deliberate action, and regular saves of a previously protected file now say so in the status bar instead of dropping the password silently. In all ten languages.
+- Remove Password in the Save dropdown (#149, thanks dmantisk): saves the open document back over the original with its password protection dropped - available whenever the file needed a password (or carried owner restrictions) to open. JPDFs already strips encryption at open time because the editing pipeline cannot modify encrypted files in place, so every save has always written an unprotected PDF; this makes that behavior a visible, deliberate action, and regular saves of a previously protected file now say so in the status bar instead of dropping the password silently. In all ten languages.
 
 ### Changed
 
@@ -842,7 +842,7 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 - Export pages as images (#132, thanks KaneLeung): a new entry in the Save dropdown renders pages to PNG or JPEG files at a chosen DPI (24-1200, default 150) with an optional page range, through the same pipeline as the CLI's `--to-image`. Pending annotations and stamps are burned in, in-app rotations are honored, and files land as `<name>-page-001.png` next to the base name you pick.
 - Odd/even page printing (#134, thanks superaustingao): a new selector under Pages offers All pages, Odd pages only, and Even pages only. It filters the chosen page range, and the preview follows along. Print the odds, flip the stack, then print the evens for manual duplex on printers without a duplexer.
 - Invert document colors (#135, thanks dmantisk): a moon toggle at the bottom of the sidebar rail (or Ctrl+I) renders the document with inverted colors for dark-mode reading - the icon lights in the accent while active, and the choice is remembered across launches. Display only: saving, printing, exporting, OCR, and the sidebar thumbnails all keep the document's true colors.
-- App-wide size control for accessibility, the KillerNotes way: the title bar now shows the app icon next to the wordmark. Scrolling the mouse wheel over that logo scales the toolbar, sidebar, and tab strip in fine steps from 70% to 250%. Ctrl+Shift with the plus or minus key adjusts it from the keyboard, and Ctrl+Shift+0 resets it. The setting is remembered across launches. The document pane is deliberately untouched: app size and page zoom stay separate controls, so scaling the chrome never changes what the page looks like. It uses a layout scale so UI text stays sharp, and the title bar and footer stay fixed so the logo never moves out from under the cursor.
+- App-wide size control for accessibility, the JpdfsNotes way: the title bar now shows the app icon next to the wordmark. Scrolling the mouse wheel over that logo scales the toolbar, sidebar, and tab strip in fine steps from 70% to 250%. Ctrl+Shift with the plus or minus key adjusts it from the keyboard, and Ctrl+Shift+0 resets it. The setting is remembered across launches. The document pane is deliberately untouched: app size and page zoom stay separate controls, so scaling the chrome never changes what the page looks like. It uses a layout scale so UI text stays sharp, and the title bar and footer stay fixed so the logo never moves out from under the cursor.
 - Recent-files privacy controls (#146, thanks Bolle1987): a Clear list link on the start screen's Recent panel (matching the one already in the Open dropdown), and a "Don't remember recently opened files" toggle in the About window next to Clear all Data, where the data-hygiene controls live - turning it on also empties the existing list, so nothing about your documents persists on a shared machine. Translated into all ten languages.
 - Czech (cs-CZ) localization (#138, thanks jiri-ops): the tenth interface language, a full translation following Czech Windows/Adobe conventions, in the language picker as "Čeština" - with Czech ("ces") joining the OCR language catalog, downloadable on demand like the rest.
 
@@ -879,8 +879,8 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 - Keyboard view in the shortcuts overlay (F1): a visual keyboard with every bound key lit and color-coded by category. Toggle LIST / KEYBOARD in the header (the choice sticks), click a layer or hold Ctrl / Shift / Alt to preview it, and hover a lit key for its action. Follows the active theme and language.
 - More conventions from the big viewers: Home / End jump to the first / last page, Ctrl+1 / Ctrl+2 / Ctrl+3 set actual size / fit width / fit page, and the Menu key or Shift+F10 opens the right-click menu at the current selection (keyboard accessibility).
 - Japanese OCR language (`jpn`), downloadable on demand like the rest - the OCR language list now covers the same nine languages as the interface.
-- Command-line batch mode: `KillerPDF.exe --batch-resave <input> <output> [--log report.csv] [--quiet]` resaves a single PDF or a whole folder tree headlessly through the standard open/save pipeline, with per-file OK/SKIP/FAIL reporting. Built for the validation harness.
-- Standards-conformance validation harness (`validation/`): `Compare-VeraPDF.ps1` diffs two veraPDF batch reports (corpus baseline vs a `--batch-resave` output tree) and flags any file whose validation outcome a KillerPDF save changed. Verifies that saving through KillerPDF does not degrade PDF/A conformance.
+- Command-line batch mode: `JPDFs.exe --batch-resave <input> <output> [--log report.csv] [--quiet]` resaves a single PDF or a whole folder tree headlessly through the standard open/save pipeline, with per-file OK/SKIP/FAIL reporting. Built for the validation harness.
+- Standards-conformance validation harness (`validation/`): `Compare-VeraPDF.ps1` diffs two veraPDF batch reports (corpus baseline vs a `--batch-resave` output tree) and flags any file whose validation outcome a JPDFs save changed. Verifies that saving through JPDFs does not degrade PDF/A conformance.
 
 ### Changed
 
@@ -893,7 +893,7 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 ### Fixed
 
 - Resaving a PDF no longer reduces its PDF/A conformance. The PDF library (PdfSharpCore, MIT) is now vendored under third_party/ with six patches: no Producer/Creator stamping into an imported document's Info dictionary, no /ModDate rewrite at open, no transparency /Group injected into every page, stream /Length now always matches the spec's byte count (empty streams included), boolean values written as the spec's lowercase true/false keywords, and the debug-only verbose file layout removed. Found by the new veraPDF validation harness across a 2,900-file corpus.
-- Intermittent hard crash (native heap corruption) while scrolling or clicking through a document, most visible on annotation-heavy pages: KillerPDF's direct PDFium calls (link extraction, encryption stripping) could land at the same moment as a background page render inside PDFium, which is single-threaded. Every direct call now holds the same lock the render path uses. Diagnosed from a 1.6.3 crash dump showing two threads inside PDFium at once.
+- Intermittent hard crash (native heap corruption) while scrolling or clicking through a document, most visible on annotation-heavy pages: JPDFs's direct PDFium calls (link extraction, encryption stripping) could land at the same moment as a background page render inside PDFium, which is single-threaded. Every direct call now holds the same lock the render path uses. Diagnosed from a 1.6.3 crash dump showing two threads inside PDFium at once.
 - Saving a PDF that carries a digital signature kept the old signature value even though any edit breaks its digest (which must cover the entire file), so strict validators rejected the result. Saves now strip dead signature values and the matching /Perms entry; the signature fields themselves are kept.
 - Saving over the open file failed with "being used by another process" on PDFs whose pages carry annotations but no links readable by the primary parser (typically fillable forms): the cached PDFium link handle was holding the file open. It is now released before every save (#129, thanks Peter5164).
 - Opening a PDF whose page tree parses to zero pages crashed Continuous view with an out-of-range page index; it is now guarded (#130, thanks demo1866).
@@ -931,7 +931,7 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 
 ### Changed
 
-- Footer/status bar tightened to match the killerpdf.net statusbar: 4px shorter with larger text, and the corner grip dots now stay visible when the window is maximized or snapped.
+- Footer/status bar tightened to match the jpdfs.net statusbar: 4px shorter with larger text, and the corner grip dots now stay visible when the window is maximized or snapped.
 - Ctrl+scroll zooming is smooth: each wheel notch zooms by a constant 10% ratio, the view scales instantly while the wheel is moving, and the crisp high-resolution re-render happens once when the wheel rests. Precision touchpads glide proportionally.
 - Up / Down arrows now scroll the view like the mouse wheel, flipping pages at the top or bottom edge. Left / Right and PgUp / PgDn remain hard page jumps.
 - Status-bar and dialog messages that were still shown in English now follow the selected language across all nine locales.
@@ -947,7 +947,7 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 
 ### Added
 
-- On quit with documents open, KillerPDF asks whether to reopen them next launch, with a "remember my choice" option (#105).
+- On quit with documents open, JPDFs asks whether to reopen them next launch, with a "remember my choice" option (#105).
 - Enter and Esc now confirm and cancel dialogs (#111).
 - Right-clicking the Open, Save, and OCR toolbar buttons opens their dropdown menu (#109, thanks Ryokoxx).
 - Copies and custom Scale in the print dialog are numeric fields with an up/down spinner, arrow-key and wheel stepping (#109, thanks Ryokoxx).
@@ -1024,7 +1024,7 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 
 ### Fixed
 
-- PDFs that opened fine in browsers and Acrobat/Foxit but failed in KillerPDF with "Unexpected EOF" now open. PdfSharpCore rejected them during parsing; KillerPDF now falls back to re-saving the file losslessly through PDFium (which reads them) and opening that copy (Issue #72).
+- PDFs that opened fine in browsers and Acrobat/Foxit but failed in JPDFs with "Unexpected EOF" now open. PdfSharpCore rejected them during parsing; JPDFs now falls back to re-saving the file losslessly through PDFium (which reads them) and opening that copy (Issue #72).
 - Files opened from UNC / network shares (including the WSL `\\wsl$` filesystem) are now copied to a local temp before opening, avoiding partial-read failures on network filesystems.
 - Grid view now renders every page, and tiles stream in progressively as they render instead of blocking until the whole document is done. Grid was previously capped at the first 26 pages, so longer documents stopped loading partway through.
 - Ctrl+Scroll in grid view no longer re-renders every page when the zoom is already at its limit (the column count cannot change), which made large documents reload pointlessly.
@@ -1061,8 +1061,8 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 - Settings and keyboard shortcut overlay borders widened to 2px for better visibility.
 - Text tool size value is now interpreted as points. A size of 14 renders and exports as roughly 14pt instead of about 5pt of internal render units.
 - Placing an image now switches to the Select tool with the image selected, so you can immediately drag to reposition or use the corner handle to resize instead of the next click reopening the image picker (matching signature placement).
-- Extracted SignatureStore and SearchService into Services/ with unit tests (KillerPDF.Tests).
-- Encrypted PDF temp files written to `%LOCALAPPDATA%\KillerPDF\Temp\` instead of `%TEMP%`.
+- Extracted SignatureStore and SearchService into Services/ with unit tests (JPDFs.Tests).
+- Encrypted PDF temp files written to `%LOCALAPPDATA%\JPDFs\Temp\` instead of `%TEMP%`.
 - Reopens last file on startup; ESC closes the app when no overlay is active (Issue #69).
 - Grid view mode moved from a toolbar toggle to the Settings panel alongside Theme and Language. Four modes: Single Page, Continuous, Two-Page, Grid. Selection persists across sessions.
 - Switching to Single or Two-Page view fits the page to the window, Continuous opens fit-to-width, and Grid opens at its column-fit default, rather than carrying the previous mode's zoom level.
@@ -1085,10 +1085,10 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 
 ### Fixed
 
-- Encrypted PDFs (owner-restricted RC4) no longer fail with "Unexpected token 'xref'" when rotating pages. PdfSharpCore can silently produce a broken cross-reference entry after saving encrypted files; KillerPDF now pipes the file through PDFium to repair the XRef and retries the open automatically.
+- Encrypted PDFs (owner-restricted RC4) no longer fail with "Unexpected token 'xref'" when rotating pages. PdfSharpCore can silently produce a broken cross-reference entry after saving encrypted files; JPDFs now pipes the file through PDFium to repair the XRef and retries the open automatically.
 - Page view now fits to page after a rotation so the full rotated page is visible without manual rezoom.
-- Mailto and other link annotations with visible borders (e.g. colored rectangles that looked like strikethroughs) no longer render those borders in saved PDFs. KillerPDF strips `/AP`, `/C`, and `/BS` from link annotations and sets an invisible border on save.
-- Right-click a link annotation to remove it from the PDF entirely ("Remove Link from PDF"). Previously, clearing annotations only removed the KillerPDF overlay; the native PDF link remained active.
+- Mailto and other link annotations with visible borders (e.g. colored rectangles that looked like strikethroughs) no longer render those borders in saved PDFs. JPDFs strips `/AP`, `/C`, and `/BS` from link annotations and sets an invisible border on save.
+- Right-click a link annotation to remove it from the PDF entirely ("Remove Link from PDF"). Previously, clearing annotations only removed the JPDFs overlay; the native PDF link remained active.
 - Right-click a mailto link to copy just the email address; right-click an http/https link to copy the URL.
 
 ---
@@ -1159,7 +1159,7 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 
 ### Changed
 
-- Theme updated to match killertools.net: accent green changed from `#4ade80` to `#1ea54c`, backgrounds shifted to `#333333`/`#3a3a3a`, sidebar darkened to `#222222`, toolbar and title bar at `#222222`. Film grain overlay added to the main content area. Footer text lightened for readability.
+- Theme updated to match jpdfstools.net: accent green changed from `#4ade80` to `#1ea54c`, backgrounds shifted to `#333333`/`#3a3a3a`, sidebar darkened to `#222222`, toolbar and title bar at `#222222`. Film grain overlay added to the main content area. Footer text lightened for readability.
 - Sidebar scroll is now handled by an outer ScrollViewer wrapping the page list, allowing the list to size to its content rather than stretching to fill the panel height.
 
 ## [1.3.2] - 2026-05-11
@@ -1167,8 +1167,8 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 ### Fixed
 
 - Windows Program Compatibility Assistant popup on first launch. Added an app manifest declaring Windows 10/11 compatibility, which suppresses PCA when the app writes to uninstall registry keys.
-- "Set as default PDF viewer" prompt now only appears if KillerPDF is not already the default handler. Previously showed on every install/update regardless.
-- "Set as default PDF viewer" prompt now uses the dark KillerDialog instead of a native Windows message box.
+- "Set as default PDF viewer" prompt now only appears if JPDFs is not already the default handler. Previously showed on every install/update regardless.
+- "Set as default PDF viewer" prompt now uses the dark JpdfsDialog instead of a native Windows message box.
 
 ## [1.3.1] - 2026-05-11
 
@@ -1214,8 +1214,8 @@ KillerPDF 1.6.6 is primarily a bug fix release. Most importantly, it corrects fo
 
 ### Added
 
-- Self-installing EXE. Running the downloaded binary now shows an Install / Run dialog. Install copies the EXE to `%LOCALAPPDATA%\Programs\KillerPDF\` (no UAC required), creates Start Menu and optional Desktop shortcuts, registers as a PDF file handler, and adds an uninstall entry to Add/Remove Programs. Uninstall self-deletes via a deferred batch file. Running a newer version from outside the install path shows an Update prompt instead.
-- Command-line file argument support so file associations work: `KillerPDF.exe "file.pdf"` opens the file directly.
+- Self-installing EXE. Running the downloaded binary now shows an Install / Run dialog. Install copies the EXE to `%LOCALAPPDATA%\Programs\JPDFs\` (no UAC required), creates Start Menu and optional Desktop shortcuts, registers as a PDF file handler, and adds an uninstall entry to Add/Remove Programs. Uninstall self-deletes via a deferred batch file. Running a newer version from outside the install path shows an Update prompt instead.
+- Command-line file argument support so file associations work: `JPDFs.exe "file.pdf"` opens the file directly.
 - Password-protected PDF support. Opening an encrypted PDF now prompts for the password instead of showing a generic error. The decrypted copy is held in a temp file for the session so all rendering and editing works normally.
 - Save Flattened PDF (photo icon in toolbar). Rasterizes every page at 150 DPI via PDFium and writes them as embedded images into a new PDF, producing a fully uneditable document. Pending annotations are burned in before rasterization.
 

@@ -6,10 +6,10 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Page menu commands from the command line: Reverse Page Order, Fix Page Orientation,
     // Straighten Scanned Pages (#436), Divide Spreads (#382) and Rasterize Region (#369). Each
@@ -23,7 +23,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --reverse-pages <in.pdf> <out.pdf> [--pages <range>]");
+                con.WriteLine("Usage: JPDFs.exe --reverse-pages <in.pdf> <out.pdf> [--pages <range>]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out int pageCount, con)) return 2;
@@ -44,7 +44,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --fix-orientation <in.pdf> <out.pdf> [--pages <range>] [--lang <code>] [--password <password>]");
+                con.WriteLine("Usage: JPDFs.exe --fix-orientation <in.pdf> <out.pdf> [--pages <range>] [--lang <code>] [--password <password>]");
                 return 2;
             }
             options.TryGetValue("--password", out string? password);
@@ -103,7 +103,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --straighten <in.pdf> <out.pdf> [--pages <range>] [--password <password>]");
+                con.WriteLine("Usage: JPDFs.exe --straighten <in.pdf> <out.pdf> [--pages <range>] [--password <password>]");
                 return 2;
             }
             options.TryGetValue("--password", out string? password);
@@ -178,7 +178,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --divide-spreads <in.pdf> <out.pdf> [--pages <range>] "
+                con.WriteLine("Usage: JPDFs.exe --divide-spreads <in.pdf> <out.pdf> [--pages <range>] "
                     + "[--direction vertical|horizontal] [--position <0.1-0.9>]");
                 return 2;
             }
@@ -214,7 +214,7 @@ namespace KillerPDF.Features
         // The box is in PDF points on the unrotated page, measured from its bottom-left corner.
         private static int CliRasterizeRegion(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
-            const string usage = "Usage: KillerPDF.exe --rasterize-region <in.pdf> <page> <left,bottom,right,top> <out.pdf> [--dpi <n>]   (box in points on the unrotated page; default 300 dpi)";
+            const string usage = "Usage: JPDFs.exe --rasterize-region <in.pdf> <page> <left,bottom,right,top> <out.pdf> [--dpi <n>]   (box in points on the unrotated page; default 300 dpi)";
             if (pos.Count != 4 || !int.TryParse(pos[1], out int pageNumber))
             {
                 con.WriteLine(usage);

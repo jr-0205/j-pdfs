@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 public partial class PdfViewer
 {
@@ -60,24 +60,15 @@ public partial class PdfViewer
         RetroTabJoinLine.VerticalAlignment = bottom ? VerticalAlignment.Top : VerticalAlignment.Bottom;
         RetroTabInnerJoin.VerticalAlignment = bottom ? VerticalAlignment.Top : VerticalAlignment.Bottom;
 
-        // 98SE keeps Win98's single light source when the strip moves below the page, as
-        // KillerShell does: the page stays raised and each tab hangs from it with a white left
-        // edge and a dark right edge and foot. Flipping the top-strip chrome would flip the light,
-        // so RetroTabBorder draws the tabs' edges instead (the template hides their bevels), and
-        // the page foot is two lines, black against the tabs (the inner join) over #808080 (the
-        // foot shade), broken by the selected tab (PdfViewer.TabStrip.cs).
-        bool retroBottom = bottom && Services.ThemeManager.Current == Services.Theme.SE98;
-        if (retroBottom) TabStripBorder.Resources["TabRetroBottomEdges"] = true;
-        else TabStripBorder.Resources.Remove("TabRetroBottomEdges");
-        string joinBrush = retroBottom ? "BevelOuterDarkBrush" : "BevelLightBrush";
+        // The strip below the page keeps the modern tab chrome; the flat-theme light-source
+        // flipping is gone with the retired palettes.
+        TabStripBorder.Resources.Remove("TabRetroBottomEdges");
+        string joinBrush = "BevelLightBrush";
         RetroTabInnerJoinLeft.SetResourceReference(Border.BackgroundProperty, joinBrush);
         RetroTabInnerJoinRight.SetResourceReference(Border.BackgroundProperty, joinBrush);
-        RetroTabFootShade.Visibility = retroBottom ? Visibility.Visible : Visibility.Collapsed;
-        // The full-width gray perimeter belongs to a top strip; the foot lines replace it below.
-        if (retroBottom) RetroTabJoinLine.Visibility = Visibility.Collapsed;
-        else RetroTabJoinLine.SetResourceReference(VisibilityProperty, "RetroTabJoinVisibility");
-        RetroTabInnerJoin.Margin = retroBottom ? new Thickness(0, -1, 0, 0)
-            : bottom ? new Thickness(1, -1, 2, 0) : new Thickness(1, 0, 2, -1);
+        RetroTabFootShade.Visibility = Visibility.Collapsed;
+        RetroTabJoinLine.SetResourceReference(VisibilityProperty, "RetroTabJoinVisibility");
+        RetroTabInnerJoin.Margin = bottom ? new Thickness(1, -1, 2, 0) : new Thickness(1, 0, 2, -1);
         foreach (string key in TabPlacementMargins)
         {
             if (bottom && Application.Current.TryFindResource(key) is Thickness margin)
@@ -89,17 +80,6 @@ public partial class PdfViewer
         }
         if (!bottom) return;
         PaneBorder.BorderThickness = ReverseTabVertical(PaneBorder.BorderThickness);
-        if (retroBottom)
-        {
-            // Raised page: the outer gray rule and the white and #dfdfdf highlights run along the
-            // top as they do down the left; the shadow runs down the right only. The foot is the
-            // join lines in the strip.
-            PaneBevelOuterDark.BorderThickness = new Thickness(1, 1, 0, 0);
-            PaneBevelInnerDark.BorderThickness = new Thickness(1, 1, 0, 0);
-            PaneBevelOuterLight.BorderThickness = new Thickness(0, 0, 1, 0);
-            PaneBevelInnerLight.BorderThickness = new Thickness(0);
-            return;
-        }
         foreach (var bevel in new[] { PaneBevelOuterDark, PaneBevelOuterLight, PaneBevelInnerDark, PaneBevelInnerLight })
             bevel.BorderThickness = ReverseTabVertical(bevel.BorderThickness);
     }

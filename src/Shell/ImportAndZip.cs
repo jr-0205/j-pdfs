@@ -7,9 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Import images as a PDF, and compress the current PDF to a .zip. Kept in its own partial-class
     // file rather than the MainWindow monolith. User-facing strings go through Loc() (keys live in
@@ -47,7 +47,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -62,7 +62,7 @@ namespace KillerPDF.Shell
             return outPath;
         }
 
-        // IsPdfPath lives in Services/PdfImport.cs (KillerUI refactor).
+        // IsPdfPath lives in Services/PdfImport.cs (JpdfsUiKit refactor).
 
         // ----- Drag/drop of folders, archives, and multiple files ----------------------------
 
@@ -91,11 +91,11 @@ namespace KillerPDF.Shell
                 string message = ex.Failure is DropImportFailure.Link or DropImportFailure.UnsafePath
                     ? Loc("Str_Drop_Unsafe")
                     : string.Format(Loc("Str_Drop_Limits"), 10_000, 64, 1, 2);
-                KillerDialog.Show(this, message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
+                JpdfsDialog.Show(this, message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally { HideBusyOverlay(busy); EndCancellableOp(ct); }
@@ -114,12 +114,12 @@ namespace KillerPDF.Shell
                 const int MaxDropFiles = 50;
                 if (found.Count > MaxDropFiles)
                 {
-                    if (KillerDialog.Show(this, string.Format(Loc("Str_Drop_TooMany"), found.Count, MaxDropFiles),
+                    if (JpdfsDialog.Show(this, string.Format(Loc("Str_Drop_TooMany"), found.Count, MaxDropFiles),
                         "J-PDF's", MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
                     found = found.GetRange(0, MaxDropFiles);
                 }
                 if (!batch.Expanded && found.Count == 1) { OpenDropped(found[0].Path); return; }
-                int choice = KillerDialog.ShowChoices(this,
+                int choice = JpdfsDialog.ShowChoices(this,
                     string.Format(Loc("Str_Drop_Prompt"), found.Count),
                     [Loc("Str_Drop_Merge"), Loc("Str_Drop_Separate"), Loc("Str_Stamp_Cancel")], accentIndex: 0);
                 if (choice == 0)
@@ -142,7 +142,7 @@ namespace KillerPDF.Shell
         {
             if (found.Count > 30)
             {
-                var ok = KillerDialog.Show(this, string.Format(Loc("Str_Drop_ManyTabs"), found.Count),
+                var ok = JpdfsDialog.Show(this, string.Format(Loc("Str_Drop_ManyTabs"), found.Count),
                     "J-PDF's", MessageBoxButton.OKCancel);
                 if (ok != MessageBoxResult.OK) return;
             }
@@ -230,7 +230,7 @@ namespace KillerPDF.Shell
                 if (prev != null && !owner.Viewer.SessionsRef.Contains(prev))
                     prev = owner.Viewer.SessionsRef.FirstOrDefault(session => !ReferenceEquals(session, target));
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -260,7 +260,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -282,12 +282,12 @@ namespace KillerPDF.Shell
 
         private void CompressToZip_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
 
             // The zip wraps the PDF on disk, so make sure what's on screen is saved first.
             if (_isDirty || string.IsNullOrEmpty(_originalFile) || !File.Exists(_originalFile))
             {
-                var ask = KillerDialog.Show(this, Loc("Str_Dlg_SaveBeforeZip"),
+                var ask = JpdfsDialog.Show(this, Loc("Str_Dlg_SaveBeforeZip"),
                     "J-PDF's", MessageBoxButton.OKCancel);
                 if (ask != MessageBoxResult.OK) return;
                 SaveInPlace();
@@ -317,7 +317,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_ZipFailed") + "\n" + ex.Message,
+                JpdfsDialog.Show(this, Loc("Str_Err_ZipFailed") + "\n" + ex.Message,
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

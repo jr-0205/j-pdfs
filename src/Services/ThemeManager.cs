@@ -5,18 +5,16 @@ using System.Windows.Media.Effects;
 
 // The family theme engine. Identical in every app: an app sets its defaults and its own tokens
 // through SetDefaults, AppTokens and AppDerivedTokens at startup, and never edits this file.
-// Promoted from KillerShell, the family reference for theme colors, grain and geometry.
-namespace KillerPDF.Services
+// Promoted from JpdfsShell, the family reference for theme colors, grain and geometry.
+namespace JPDFs.Services
 {
-    // Thirteen palettes, in picker order. SE98 cannot be written "98SE" because an enum member
-    // may not start with a digit; ThemeFileName below maps it back to the real file and accent
-    // folder name. Order matches KillerNotes, which is the reference for the theme set.
+    // J-PDF's two palettes: the light reading room and the graphite alternative. The enum names
+    // are also the palette file stems, so Themes/AcrobatLight.xaml and Themes/AcrobatDark.xaml
+    // must stay in step with them.
     public enum Theme
     {
-        Dark, Light, Black, SE98, Blood, Greed, Cyanotic, Ectoplasm, Decay,
-        Mourning, Sepulchre, Delirium, Malaise,
-        // J-PDF's own palettes: Acrobat's graphite-and-steel look and the Word/Office light look.
-        Acrobat, Word
+        AcrobatLight,
+        AcrobatDark
     }
     public enum Accent { Green, Red, Blue, Purple, Orange, Teal, Yellow, Magenta }
 
@@ -35,11 +33,11 @@ namespace KillerPDF.Services
             return brush;
         }
 
-        /// <summary>Killer Sans UI (Killer Sans scaled to Segoe UI proportions) with the Segoe fallback stack.</summary>
+        /// <summary>Jpdfs Sans UI (Jpdfs Sans scaled to Segoe UI proportions) with the Segoe fallback stack.</summary>
         private static readonly string AssemblyName = typeof(ThemeManager).Assembly.GetName().Name!;
-        internal static readonly FontFamily KillerSansUiStack = new(new Uri($"pack://application:,,,/{AssemblyName};component/"), "./Fonts/#Killer Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI");
-        internal static readonly FontFamily KillerSansFont = new(new Uri("pack://application:,,,/"), "./Fonts/#Killer Sans");
-        internal static readonly FontFamily LacquerHeadingStack = new(new Uri("pack://application:,,,/"), "./Fonts/#Lacquer, ./Fonts/#Killer Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI");
+        internal static readonly FontFamily JpdfsSansUiStack = new(new Uri($"pack://application:,,,/{AssemblyName};component/"), "./Fonts/#Jpdfs Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI");
+        internal static readonly FontFamily JpdfsSansFont = new(new Uri("pack://application:,,,/"), "./Fonts/#Jpdfs Sans");
+        internal static readonly FontFamily LacquerHeadingStack = new(new Uri("pack://application:,,,/"), "./Fonts/#Lacquer, ./Fonts/#Jpdfs Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI");
         /// <summary>
         /// Read a corner radius out of the live theme. For code-built controls, which cannot use a
         /// DynamicResource and so had their radii as C# literals - the exact bug that kept the
@@ -93,35 +91,20 @@ namespace KillerPDF.Services
             if (!dictionary.Contains(key) && dictionary.Contains(source)) dictionary[key] = dictionary[source];
         }
 
-        // The theme and accents an app opens on before anything is saved. Each app picks the
-        // pair that matches its own branding through SetDefaults; each neutral family defines its
-        // own shade of an accent, so a borrowed default can open in a color the app never uses.
-        private static Theme _current = Theme.Dark;
-        private static Accent _darkAccent  = Accent.Blue;
-        private static Accent _lightAccent = Accent.Green;
-        private static Accent _blackAccent = Accent.Orange;
-        private static Accent _se98Accent  = Accent.Green;
+        // The theme an app opens on before anything has been saved. Each app picks its own
+        // through SetDefaults; both palettes are fixed, so there is no accent dimension.
+        private static Theme _current = Theme.AcrobatLight;
 
-        /// <summary>Call before <see cref="Initialize"/> to set the app's first-run theme and accents.</summary>
-        public static void SetDefaults(Theme theme, Accent dark, Accent light, Accent black, Accent se98)
-        {
-            _current = theme; _darkAccent = dark; _lightAccent = light; _blackAccent = black; _se98Accent = se98;
-        }
+        /// <summary>Call before <see cref="Initialize"/> to set the app's first-run theme.</summary>
+        public static void SetDefaults(Theme theme) => _current = theme;
 
         public static Theme Current => _current;
-        public static Accent AccentChoiceFor(Theme t) => AccentFor(t);
+        public static Accent AccentChoiceFor(Theme t) => Accent.Green;
 
-        private static Accent AccentFor(Theme t) =>
-            t == Theme.Light ? _lightAccent
-            : t == Theme.Black ? _blackAccent
-            : t == Theme.SE98 ? _se98Accent
-            : _darkAccent;
+        private static bool HasAccents(Theme t) => false;
 
-        private static bool HasAccents(Theme t) =>
-            t == Theme.Dark || t == Theme.Light || t == Theme.Black || t == Theme.SE98;
-
-        /// <summary>True for the themes that carry an Accents/ folder, so a picker can show or hide
-        /// its accent dots without repeating the list.</summary>
+        /// <summary>True for the themes that carry an Accents/ folder. Both J-PDF's palettes are
+        /// fixed, so the picker never shows accent dots.</summary>
         public static bool SupportsAccents(Theme t) => HasAccents(t);
 
         /// <summary>
@@ -159,22 +142,16 @@ namespace KillerPDF.Services
             return 0.2126 * Ch(c.R) + 0.7152 * Ch(c.G) + 0.0722 * Ch(c.B);
         }
 
-        /// <summary>File stem for a theme, and the name of its accent folder. Only SE98 differs,
-        /// because an enum member cannot start with a digit but both the palette file and the
-        /// accent folder are named "98SE".</summary>
-        private static string ThemeFileName(Theme theme) =>
-            theme == Theme.SE98 ? "98SE" : theme.ToString();
+        /// <summary>File stem for a theme; the enum member doubles as the palette file name.</summary>
+        private static string ThemeFileName(Theme theme) => theme.ToString();
 
         public static event Action? ThemeChanged;
 
         /// <summary>Set by App before <see cref="Initialize"/> when the process is running elevated.</summary>
         /// <remarks>
-        /// An admin window gets Blood, and keeps its own theme under its own key. Two reasons
-        /// for a separate key rather than just forcing the palette: switching theme inside an
-        /// admin window must not rewrite the theme every ordinary window uses, and an elevated
-        /// process shares the same HKCU as the unelevated one, so a single key would have them
-        /// fighting over it. Blood is the default rather than a lock - the point is that an
-        /// admin window never comes up looking like a user-level one.
+        /// An elevated window keeps its own theme under its own key, so switching theme inside an
+        /// admin window never rewrites the theme every ordinary window uses. Light remains the
+        /// default there too.
         /// </remarks>
         public static bool Elevated { get; set; }
 
@@ -182,62 +159,34 @@ namespace KillerPDF.Services
 
         public static void Initialize()
         {
-            // "98SE" is what the setting has always been written as by the other apps in the
-            // family, and it is what the file is called - but it does not parse as the enum
-            // member, so it is mapped by hand before TryParse gets a look at it.
             string? saved = GetSetting(ThemeKey);
-            _current = saved == "98SE" ? Theme.SE98
-                     : Enum.TryParse<Theme>(saved, out var t) && Enum.IsDefined(typeof(Theme), t) ? t
-                     : (Elevated ? Theme.Blood : _current);
-
-            // TryParse also accepts any number ("99"), which names no theme file; IsDefined keeps
-            // a damaged setting from failing startup.
-            _darkAccent  = Enum.TryParse<Accent>(GetSetting("DarkAccent"),  out var da) && Enum.IsDefined(typeof(Accent), da) ? da : _darkAccent;
-            _lightAccent = Enum.TryParse<Accent>(GetSetting("LightAccent"), out var la) && Enum.IsDefined(typeof(Accent), la) ? la : _lightAccent;
-            _blackAccent = Enum.TryParse<Accent>(GetSetting("BlackAccent"), out var ba) && Enum.IsDefined(typeof(Accent), ba) ? ba : _blackAccent;
-            // SE98Accent is the spelling some apps once wrote.
-            _se98Accent  = Enum.TryParse<Accent>(GetSetting("98SEAccent") ?? GetSetting("SE98Accent"), out var wa) && Enum.IsDefined(typeof(Accent), wa) ? wa : _se98Accent;
+            _current = Enum.TryParse<Theme>(saved, out var t) && Enum.IsDefined(typeof(Theme), t)
+                     ? t
+                     : _current;
             LoadDict(_current);
         }
 
         public static void Apply(Theme theme)
         {
             _current = theme;
-            // Persist the FILE name, not the enum name, so the stored value reads "98SE" the
-            // same way every other app in the family writes it.
             SetSetting(ThemeKey, ThemeFileName(theme));
             LoadDict(theme);
             ThemeChanged?.Invoke();
         }
 
-        public static void ApplyAccent(Theme family, Accent accent)
-        {
-            if      (family == Theme.Light) { _lightAccent = accent; SetSetting("LightAccent", accent.ToString()); }
-            else if (family == Theme.Black) { _blackAccent = accent; SetSetting("BlackAccent", accent.ToString()); }
-            else if (family == Theme.SE98)  { _se98Accent  = accent; SetSetting("98SEAccent",  accent.ToString()); }
-            else                            { _darkAccent  = accent; SetSetting("DarkAccent",  accent.ToString()); }
-
-            if (_current == family)
-            {
-                LoadDict(_current);
-                ThemeChanged?.Invoke();
-            }
-        }
-
-        /// <summary>Publishes a theme as MergedDictionaries[0]. The accent defaults to the one saved
-        /// for that family; a check or a standalone window can pass its own.</summary>
-        internal static void LoadDict(Theme theme, Accent? accentOverride = null)
+        /// <summary>Publishes a theme as MergedDictionaries[0].</summary>
+        internal static void LoadDict(Theme theme)
         {
             var app = Application.Current;
             if (app == null) return;
-            var combined = CreateDictionary(theme, accentOverride ?? AccentFor(theme));
+            var combined = CreateDictionary(theme, Accent.Green);
             var merged = app.Resources.MergedDictionaries;
             if (merged.Count > 0) merged[0] = combined;
             else merged.Add(combined);
         }
 
         /// <summary>The app's first-run theme, for a standalone installer window that saves nothing.</summary>
-        internal static ResourceDictionary CreateInstallerTheme() => CreateDictionary(_current, AccentFor(_current));
+        internal static ResourceDictionary CreateInstallerTheme() => CreateDictionary(_current, Accent.Green);
 
         /// <summary>Publishes the first-run theme for a standalone installer window, without reading
         /// or writing any saved preference. Call <see cref="SetDefaults"/> first.</summary>
@@ -245,19 +194,10 @@ namespace KillerPDF.Services
 
         private static ResourceDictionary CreateDictionary(Theme theme, Accent accent)
         {
-            // Build the combined dictionary (base theme + accent overlay) OFF the live tree
-            // first, then publish it in ONE assignment. Setting merged[0] to a brand-new
-            // ResourceDictionary fires exactly one resource-invalidation pass across the whole
-            // app; the old code instead did existing[key] = newDict[key] in a loop, which fires
-            // a SEPARATE invalidation pass per key. With ~150+ keys in a theme dictionary (this
-            // app has ANSI terminal colors, editor syntax colors, registry/event-viewer colors
-            // on top of the usual chrome brushes - a lot more than a page-viewer app's palette),
-            // that was 150+ passes over the whole visual tree on every single theme click - a
-            // huge lag on theme switch, nowhere near KillerPDF's instant swap. Confirmed as
-            // reproducing even with zero terminal/editor tabs open, which ruled out
-            // RefreshTerminalThemes/RefreshEditorThemes and pointed straight at this loop.
-            // ThemeFileName, never theme.ToString(): the 98SE palette and accent folder are both
-            // named for the digits, which the enum member cannot be.
+            // Build the combined dictionary OFF the live tree first, then publish it in ONE
+            // assignment. Setting merged[0] to a brand-new ResourceDictionary fires exactly one
+            // resource-invalidation pass across the whole app; assigning key by key fires a
+            // separate pass per key, which made theme switches visibly lag.
             string name = ThemeFileName(theme);
 
             var combined = new ResourceDictionary();
@@ -265,36 +205,13 @@ namespace KillerPDF.Services
             foreach (object key in newDict.Keys)
                 combined[key] = newDict[key];
 
-            bool accentOwnsMenuHover = false;
-            if (HasAccents(theme) && accent != Accent.Green)
-            {
-                string family = theme == Theme.Light ? "Light"
-                              : theme == Theme.Black ? "Black"
-                              : theme == Theme.SE98  ? "98SE"
-                              : "Dark";
-                try
-                {
-                    var accentDict = new ResourceDictionary
-                    {
-                        Source = new Uri($"pack://application:,,,/Themes/Accents/{family}/{accent}.xaml")
-                    };
-                    accentOwnsMenuHover = accentDict.Contains("MenuHoverBrush");
-                    foreach (object key in accentDict.Keys)
-                        combined[key] = accentDict[key];
-                }
-                catch { /* overlay not present - base theme stands */ }
-            }
-
-
             // The app's own values go in before the family contract, so they win over its defaults.
             AppTokens?.Invoke(combined, theme, accent);
 
-            // ── 98SE chrome contract ────────────────────────────────────────────────────
+            // ── Chrome contract ─────────────────────────────────────────────────────────
             //
-            // 98SE is the only FLAT theme: a hard 2px frame, raised bevels, a short Win98
-            // caption. It carries 126 keys no other palette declares, and controls that bind
-            // them have to resolve on all thirteen themes - so every one gets a neutral default
-            // here and 98SE's own value simply wins, with no branch on the theme name anywhere.
+            // Controls bind a few keys no palette is required to declare, so every palette gets a
+            // neutral default here and the palette's own value simply wins.
             //
             // SetIfAbsent, never a plain assignment: the palette is read FIRST and must not be
             // overwritten. Mirror() points a token at an existing brush so a default tracks the
@@ -451,7 +368,7 @@ namespace KillerPDF.Services
             }
             // The theme picker's ring, dot and label while HOVERED. Defaults to the accent so
             // nothing changes; a theme whose accent equals its hover fill (Sepulchre) overrides
-            // it, or the radio vanishes into its own highlight. KillerPDF's key.
+            // it, or the radio vanishes into its own highlight. JPDFs's key.
             if (!combined.Contains("RadioHoverFgBrush") && combined.Contains("PrimaryBrush"))
                 combined["RadioHoverFgBrush"] = combined["PrimaryBrush"];
             // TextBrush, not ChromeTextBrush: ChromeButton drew its glyphs in TextBrush before the
@@ -462,7 +379,7 @@ namespace KillerPDF.Services
             // The elevated caption follows the accent; 98SE supplies white for its accent bar.
             // Light keeps the accent hue while ensuring it reads on the gray title bar.
             Mirror("ElevatedTagBrush", "PrimaryBrush");
-            if (theme == Theme.Light
+            if (theme == Theme.AcrobatLight
                 && combined["ElevatedTagBrush"] is SolidColorBrush elevatedText
                 && combined["TitleBarBrush"] is SolidColorBrush elevatedBackground)
                 combined["ElevatedTagBrush"] = Frozen(ColorContrast.ReadableOn(
@@ -476,7 +393,7 @@ namespace KillerPDF.Services
             // have restyled every secondary button in the app.
             Mirror("ChipFaceBrush", "PaneBrush");
             Mirror("ChipHoverBrush", "RowHoverBrush");
-            SetIfAbsent("ChromeFontFamily", KillerSansUiStack);
+            SetIfAbsent("ChromeFontFamily", JpdfsSansUiStack);
             SetIfAbsent("DialogWordmarkVisibility", Visibility.Visible);
             SetIfAbsent("DialogPlainTitleVisibility", Visibility.Collapsed);
             SetIfAbsent("ContentPaneMargin", new Thickness(0));
@@ -505,7 +422,7 @@ namespace KillerPDF.Services
             SetIfAbsent("DialogStatusBarHeight", 0.0);
             SetIfAbsent("DialogStatusBarVisibility", Visibility.Collapsed);
             // 36, the caption row height every dialog already used. 98SE states its own short
-            // band. Defaulting to KillerNotes' 28 would have shortened every dialog's title bar.
+            // band. Defaulting to JpdfsNotes' 28 would have shortened every dialog's title bar.
             //
             // This stays a DOUBLE: 98SE declares it as <sys:Double> and AboutCaptionHeight below
             // derives from it numerically, and both are assigned to FrameworkElement.Height, which
@@ -565,7 +482,7 @@ namespace KillerPDF.Services
             // #303638.
             Mirror("ListPaneBrush", "PaneBrush");
 
-            // Two KillerShell-only surfaces a RETRO theme wants BLACK even when the rest of its
+            // Two JpdfsShell-only surfaces a RETRO theme wants BLACK even when the rest of its
             // palette is light gray: the terminal screen and the Performance tab's metric tiles.
             // Both default to the surface they already used, so the other twelve are untouched;
             // 98SE states #000000 for each in its app layer (Themes/98SE.xaml).
@@ -679,7 +596,7 @@ namespace KillerPDF.Services
             SetIfAbsent("TabFocusLastThickness",  new Thickness(1, 3, 0, 0));
             SetIfAbsent("TabFocusOnlyThickness",  new Thickness(0, 3, 0, 0));
             // Every tab padding below carries 2px more on top and 2px less below than the band
-            // needs, so the icon and title sit level in the tab: the art and Killer Sans both
+            // needs, so the icon and title sit level in the tab: the art and Jpdfs Sans both
             // ride high in their boxes. Same total height, and the same top in every state, so
             // nothing jumps when a tab becomes active.
             SetIfAbsent("TabFocusPadding",      new Thickness(1, 3, 4, 3));
@@ -722,11 +639,11 @@ namespace KillerPDF.Services
             Mirror("OutlinePressedBrush", "RowSelectedBrush");     // pressed FILL
 
             // Filled buttons and the outline button's hover fill carry the family's soft vertical
-            // gradient (the KillerNotes treatment): the outline color itself at the top, 16% darker
+            // gradient (the JpdfsNotes treatment): the outline color itself at the top, 16% darker
             // at the bottom. 98SE and any palette that already states a gradient stay as they are.
             object ButtonFill(object brush)
             {
-                if (theme == Theme.SE98 || brush is not SolidColorBrush solid) return brush;
+                if (brush is not SolidColorBrush solid) return brush;
                 var c = solid.Color;
                 var top = c;
                 var bottom = Color.FromArgb(c.A, (byte)(c.R * 0.84), (byte)(c.G * 0.84), (byte)(c.B * 0.84));
@@ -944,7 +861,7 @@ namespace KillerPDF.Services
             // and the wordmark on all twelve non-flat themes the moment the markup started
             // binding them; 98SE states its own and is the only theme that changes.
             SetIfAbsent("TitleBarPadding", new Thickness(14, 0, 14, 0));
-            // The main window logo (icon + wordmark) sits 5px off the top-left corner, as in KillerPDF.
+            // The main window logo (icon + wordmark) sits 5px off the top-left corner, as in JPDFs.
             // The file picker's caption close (Controls/FileDialog.xaml): the caption button's size on a
             // theme that draws a dialog caption, a compact 28x26 everywhere else, flush with the
             // caption buttons' right inset.
@@ -957,13 +874,13 @@ namespace KillerPDF.Services
                 ? combined["TitleBarPadding"] : new Thickness(4, 3, 0, 0));
             // The UI face for everything that is not the app (mono) slot; a flat theme keeps its caption font.
             SetIfAbsent("UiFont", combined.Contains("UseDialogCaption") && combined["UseDialogCaption"] is bool fu && fu
-                ? combined["ChromeFontFamily"] : KillerSansUiStack);
+                ? combined["ChromeFontFamily"] : JpdfsSansUiStack);
             // Primary headings (dialog headings, page and period titles): Lacquer, the app-name face of
-            // the wordmark, falling back to Killer Sans UI for scripts Lacquer does not cover. 98SE keeps
-            // Killer Sans. Secondary headings, the footer and the interface stay Killer Sans.
+            // the wordmark, falling back to Jpdfs Sans UI for scripts Lacquer does not cover. 98SE keeps
+            // Jpdfs Sans. Secondary headings, the footer and the interface stay Jpdfs Sans.
             SetIfAbsent("HeadingFont", combined.Contains("UseDialogCaption") && combined["UseDialogCaption"] is bool fh && fh
-                ? new FontFamily(new Uri("pack://application:,,,/"), "./Fonts/#Killer Sans") : LacquerHeadingStack);
-            // KillerSearch is a product name, so it keeps Lacquer even on 98SE. The search box's own
+                ? new FontFamily(new Uri("pack://application:,,,/"), "./Fonts/#Jpdfs Sans") : LacquerHeadingStack);
+            // JpdfsSearch is a product name, so it keeps Lacquer even on 98SE. The search box's own
             // section labels follow HeadingFont, except where 98SE sets them to its interface face.
             SetIfAbsent("SearchTitleFont", LacquerHeadingStack);
             SetIfAbsent("SearchSectionFont", combined["HeadingFont"]);
@@ -971,11 +888,11 @@ namespace KillerPDF.Services
             SetIfAbsent("SearchSectionFontWeight", FontWeights.Normal);
             SetIfAbsent("ModeButtonFontWeight", FontWeights.SemiBold);
             // The titlebar text beside the wordmark (the elevated caption) sits on the wordmark
-            // baseline in Killer Sans, as KillerPDF's filename and KillerScan's subtitle do. A flat
+            // baseline in Jpdfs Sans, as JPDFs's filename and JpdfsScan's subtitle do. A flat
             // theme keeps its caption font beside its plain title.
             bool flatTitle = combined.Contains("UseDialogCaption") && combined["UseDialogCaption"] is bool ft && ft;
             SetIfAbsent("FileNameFont", flatTitle ? combined["ChromeFontFamily"]
-                : new FontFamily(new Uri("pack://application:,,,/"), "./Fonts/#Killer Sans"));
+                : new FontFamily(new Uri("pack://application:,,,/"), "./Fonts/#Jpdfs Sans"));
             SetIfAbsent("FileNameFontSize", flatTitle ? 11.0 : 18.0);
             if (!combined.Contains("FileNameTransform"))
             {
@@ -983,18 +900,18 @@ namespace KillerPDF.Services
                 fileNameShift.Freeze();
                 combined["FileNameTransform"] = fileNameShift;
             }
-            // The app (mono) slot: Killer Sans UI, the family UI face, over the Segoe stack. It is
+            // The app (mono) slot: Jpdfs Sans UI, the family UI face, over the Segoe stack. It is
             // completed here rather than in AppStyles.xaml so 98SE can state its own face; a font
             // picked in Fonts still overrides it from the top-level application dictionary.
             SetIfAbsent("MonoFont", new FontFamily(new Uri("pack://application:,,,/"),
-                $"/{AssemblyName};component/Fonts/#Killer Sans UI, Segoe UI"));
+                $"/{AssemblyName};component/Fonts/#Jpdfs Sans UI, Segoe UI"));
             SetIfAbsent("TitleIconMargin", new Thickness(0, 0, 7, 0));
             SetIfAbsent("TitleIconSize", 27.0);
             SetIfAbsent("TitleTextMargin", new Thickness(0));
             SetIfAbsent("TitleWordmarkBoldSize", 22.52);
             SetIfAbsent("TitleWordmarkSize", 15.0);
             SetIfAbsent("UseDialogCaption", false);
-            // The family's 1px app border (KillerUI: WindowEdgeThickness 1). 98SE states 0 and
+            // The family's 1px app border (JpdfsUiKit: WindowEdgeThickness 1). 98SE states 0 and
             // draws its own frame. At 0 the window had no visible edge on a dark desktop.
             Mirror("WindowEdgeBrush", "AppBorderBrush");
             SetIfAbsent("WindowEdgeThickness", new Thickness(1));
@@ -1046,7 +963,7 @@ namespace KillerPDF.Services
                 // The About card's close X, the shared OverlayCloseButton style: on a flat
                 // theme a small Win98 caption button sitting inside the 20px band (16x14 with a
                 // 3px gap, next to the band's 2,2,2 inset), elsewhere the 28x26 corner slot the
-                // bare glyph always occupied (matching KillerNotes' card).
+                // bare glyph always occupied (matching JpdfsNotes' card).
                 combined["AboutCloseWidth"]  = flat ? 16.0 : 28.0;
                 combined["AboutCloseHeight"] = flat ? 14.0 : 26.0;
                 combined["AboutCloseMargin"] = flat ? new Thickness(0, 5, 5, 0) : new Thickness(0, 6, 6, 0);
@@ -1088,7 +1005,7 @@ namespace KillerPDF.Services
                 // template's 12px blur at FlyoutShadowOpacity, and the flyout cards' shared
                 // CardShadowEffect.
                 combined["MenuShadowOpacity"] = flat ? 1.0 : combined["FlyoutShadowOpacity"];
-                if (!combined.Contains("MenuFontFamily")) combined["MenuFontFamily"] = flat ? new FontFamily("Microsoft Sans Serif") : KillerSansUiStack;
+                if (!combined.Contains("MenuFontFamily")) combined["MenuFontFamily"] = flat ? new FontFamily("Microsoft Sans Serif") : JpdfsSansUiStack;
                 if (!combined.Contains("MenuFontSize")) combined["MenuFontSize"] = flat ? 11.0 : 12.0;
                 if (!combined.Contains("MenuItemPadding")) combined["MenuItemPadding"] = new Thickness(8, 6, 10, 6);
                 if (flat)
@@ -1100,7 +1017,7 @@ namespace KillerPDF.Services
                     { Color = Colors.Black, BlurRadius = 5, ShadowDepth = 5, Direction = 315, Opacity = 0.35 };
                     hard.Freeze();
                     combined["MenuShadowEffect"] = hard;
-                    // Rail flyouts follow KillerNotes/KillerPDF: the 98SE card is a raised,
+                    // Rail flyouts follow JpdfsNotes/JPDFs: the 98SE card is a raised,
                     // shadowless menu. Context menus and combo dropdowns keep their hard shadow.
                     combined["FlyoutCardEffect"] = null;
                     combined["ComboPopupShadow"] = hard;
@@ -1139,7 +1056,7 @@ namespace KillerPDF.Services
                 combined["ElevationEdgeBrush"] = flat ? lightEdge : combined["WindowEdgeBrush"];
                 combined["ElevationEdgeThickness"] = flat ? new Thickness(2) : combined["WindowEdgeThickness"];
 
-                // KillerScan is the family reference for overlay-card padding. The flat theme's
+                // JpdfsScan is the family reference for overlay-card padding. The flat theme's
                 // extra 12px clears its 20px caption band; ordinary themes use the bare-card inset.
                 // The bottom inset is tighter: only the one-line hint sits there.
                 combined["ShortcutsContentMargin"] = flat ? new Thickness(24, 30, 24, 12)
@@ -1175,7 +1092,7 @@ namespace KillerPDF.Services
                 // A ready-made pane shadow at this theme's opacity, or NULL on a flat theme.
                 // Built per load and FROZEN: a DynamicResource inside a shared keyed Freezable's
                 // Opacity does not reliably resolve, which is how a flat theme ended up casting a
-                // full-strength shadow in KillerNotes.
+                // full-strength shadow in JpdfsNotes.
                 if (combined["PaneShadowOpacity"] is double pso && pso > 0)
                 {
                     var paneShadow = new DropShadowEffect
@@ -1312,8 +1229,6 @@ namespace KillerPDF.Services
             // set, white on 98SE where the highlight bar is the solid navy MenuHoverBrush.
             if (!combined.Contains("ComboHighlightTextBrush"))
                 combined["ComboHighlightTextBrush"] = combined["PrimaryBrush"];
-            if (theme == Theme.SE98 && !accentOwnsMenuHover)
-                combined["MenuHoverBrush"] = combined["PrimaryBrush"];
 
             // A hovered menu or list item takes the accent for its text, nudged lighter or darker
             // only as far as it takes to read at 4.5:1 on that theme's hover fill. 98SE keeps its
@@ -1370,7 +1285,7 @@ namespace KillerPDF.Services
         }
 
         /// <summary>
-        /// Family tokens from the other apps that KillerShell's own views never needed: dialog
+        /// Family tokens from the other apps that JpdfsShell's own views never needed: dialog
         /// frames, the About panel bevel, combo button metrics, the shortcut map colors and the
         /// picker's title tokens. Every default is what the flat themes already drew; 98SE states
         /// its own in its palette.

@@ -2,10 +2,10 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class MacroDialog : Window
 {
@@ -186,7 +186,7 @@ internal sealed class MacroDialog : Window
         }
         catch (Exception ex) when (Recoverable(ex))
         {
-            KillerDialog.Show(this, L("Str_Macro_LoadFailed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, L("Str_Macro_LoadFailed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -283,7 +283,7 @@ internal sealed class MacroDialog : Window
         }
         catch (Exception ex) when (Recoverable(ex))
         {
-            KillerDialog.Show(this, L("Str_Macro_SaveFailed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, L("Str_Macro_SaveFailed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             return false;
         }
@@ -292,7 +292,7 @@ internal sealed class MacroDialog : Window
     private void Delete()
     {
         if (_saved.SelectedItem is not PdfMacro macro) return;
-        if (KillerDialog.Show(this,
+        if (JpdfsDialog.Show(this,
                 string.Format(L("Str_Macro_DeleteConfirm"), macro.Name), "J-PDF's",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
@@ -317,7 +317,7 @@ internal sealed class MacroDialog : Window
         }
         catch (Exception ex) when (Recoverable(ex))
         {
-            KillerDialog.Show(this, L("Str_Macro_ImportFailed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, L("Str_Macro_ImportFailed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -341,7 +341,7 @@ internal sealed class MacroDialog : Window
         }
         catch (Exception ex) when (Recoverable(ex))
         {
-            KillerDialog.Show(this, L("Str_Macro_ExportFailed") + "\n" + ex.Message,
+            JpdfsDialog.Show(this, L("Str_Macro_ExportFailed") + "\n" + ex.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -360,7 +360,7 @@ internal sealed class MacroDialog : Window
         string name = _name.Text.Trim();
         if (name.Length == 0 || _currentSteps.Count == 0)
         {
-            KillerDialog.Show(this, L("Str_Macro_Invalid"), "J-PDF's",
+            JpdfsDialog.Show(this, L("Str_Macro_Invalid"), "J-PDF's",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             macro = null!;
             return false;

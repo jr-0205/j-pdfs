@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class LayerEditorDialog : Window
 {
@@ -79,7 +79,7 @@ internal sealed class LayerEditorDialog : Window
         if (names.Any(string.IsNullOrWhiteSpace)
             || names.Distinct(System.StringComparer.Ordinal).Count() != names.Length)
         {
-            KillerDialog.Show(this, L("Str_DocumentTools_LayerInvalid"),
+            JpdfsDialog.Show(this, L("Str_DocumentTools_LayerInvalid"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

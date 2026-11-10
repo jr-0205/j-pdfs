@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using WpfPath = System.Windows.Shapes.Path;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Draws a vector signature (#398) on screen from the same outlines the PDF gets.</summary>
 internal static class SignatureVectorGeometry

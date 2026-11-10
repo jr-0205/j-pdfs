@@ -13,7 +13,7 @@ independent production tool for policy enforcement and press-ready approval.
 Authenticate the document if needed, then inspect it:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 PdfDocument document = PdfDocument.Open(sourceBytes);
 PdfPrintProductionReport report = PdfPrintProductionReport.Inspect(document);
@@ -91,7 +91,7 @@ Run the built-in print-production profile separately when the host needs
 findings and severities:
 
 ```csharp
-using KillerPdf.Engine.Diagnostics;
+using JPDFs.Engine.Diagnostics;
 
 PdfPreflightReport preflight = PdfPreflightRunner.Run(
     sourceBytes,

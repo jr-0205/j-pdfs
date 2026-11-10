@@ -5,8 +5,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Navigation;
-using KillerFamily.Windowing;
-using KillerPDF.Controls;
+using JpdfsUi.Windowing;
+using JPDFs.Controls;
 
 // Window-message plumbing for a WindowStyle="None" window, and the caption buttons. This stays a
 // partial of MainWindow on purpose: every method here needs the window's own HWND, its WindowState
@@ -21,7 +21,7 @@ using KillerPDF.Controls;
 //
 // MainWindow.xaml is expected to name: RootGrid (Opacity="0" so FadeInContent can reveal it),
 // MinimizeBtn / MaximizeBtn / CloseBtn, ResizeGrip, and any *GrainBrush layers.
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -151,7 +151,7 @@ namespace KillerPDF.Shell
                 // WPF paints the whole client area itself, so nothing should erase the background to
                 // a flat fill during a live resize - that erase IS the white flash. Outside that loop
                 // Windows keeps its normal repaint path, or a restored or reactivated window can keep
-                // a black surface (KillerPDF).
+                // a black surface (JPDFs).
                 handled = true;
                 return new IntPtr(1);
             }
@@ -200,8 +200,8 @@ namespace KillerPDF.Shell
             // takes WM_GETMINMAXINFO away from WPF - and that message is exactly how WPF enforces
             // MinWidth/MinHeight during a drag-resize. Leave these at the OS default and the window
             // can be dragged far below its minimum, at which point fixed chrome no longer fits and
-            // the content is CLIPPED rather than resized. (2026-07-30) KillerShell always had
-            // this; the kit did not, so KillerNotes, KillerScan, KillerPDF and Killendar all
+            // the content is CLIPPED rather than resized. (2026-07-30) JpdfsShell always had
+            // this; the kit did not, so JpdfsNotes, JpdfsScan, JPDFs and Killendar all
             // inherited the bug.
             //
             // MINMAXINFO is in DEVICE pixels and MinWidth/MinHeight are DIPs, so go through the

@@ -3,28 +3,28 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // ============================================================
     // Headless CLI batch mode
     // ============================================================
     //
-    // KillerPDF.exe --batch-resave <input.pdf|inputDir> <output.pdf|outputDir> [--log <file.csv>] [--quiet]
+    // JPDFs.exe --batch-resave <input.pdf|inputDir> <output.pdf|outputDir> [--log <file.csv>] [--quiet]
     //
     // Resaves one PDF (or every *.pdf under a folder tree, mirroring the
     // relative structure into the output folder) through the same pipeline a
-    // Resaves through The KillerPDF.Engine's deterministic full-document writer. No window,
+    // Resaves through The JPDFs.Engine's deterministic full-document writer. No window,
     // no dialogs, no repair fallbacks, no encryption stripping. Files that
     // cannot go through the plain engine pipeline are reported as SKIP with a
     // reason instead of silently faking a result.
     //
     // Built for the veraPDF validation harness (validation/): baseline the
     // corpus, --batch-resave it, validate the output tree, then diff with
-    // tools/validation/Compare-VeraPDF.ps1. The claim being tested is "a KillerPDF
+    // tools/validation/Compare-VeraPDF.ps1. The claim being tested is "a JPDFs
     // save does not degrade standards conformance".
     //
     // Exit codes: 0 = every file OK or SKIP, 1 = at least one FAIL
@@ -34,7 +34,7 @@ namespace KillerPDF.Features
     // Invoked from App.OnStartup BEFORE the single-instance mutex, so a batch
     // run works even while a GUI instance is open and never forwards to it.
     //
-    // KillerPDF builds as a GUI-subsystem exe, so it has no console of its
+    // JPDFs builds as a GUI-subsystem exe, so it has no console of its
     // own; AttachConsole(-1) latches onto the parent terminal when launched
     // from one. Output interleaves with the prompt (standard GUI-app quirk) -
     // the authoritative record is the --log CSV and the exit code.
@@ -84,7 +84,7 @@ namespace KillerPDF.Features
 
             if (badUsage || string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(output))
             {
-                con.WriteLine("Usage: KillerPDF.exe --batch-resave <input.pdf|inputDir> <output.pdf|outputDir> [--log <file.csv>] [--quiet]");
+                con.WriteLine("Usage: JPDFs.exe --batch-resave <input.pdf|inputDir> <output.pdf|outputDir> [--log <file.csv>] [--quiet]");
                 exitCode = 2;
                 return true;
             }
@@ -256,9 +256,9 @@ namespace KillerPDF.Features
             // CSV quoting preserves syntax but does not prevent spreadsheet formula evaluation. The
             // shared guard covers fullwidth signs and invisible prefixes; a leading tab or line break
             // is neutralized here as well.
-            if (!KillerPdf.Engine.Documents.PdfCsv.StartsFormula(s) && !s.AsSpan().IsEmpty && s[0] is '\t' or '\r' or '\n')
+            if (!JPDFs.Engine.Documents.PdfCsv.StartsFormula(s) && !s.AsSpan().IsEmpty && s[0] is '\t' or '\r' or '\n')
                 s = "'" + s;
-            return KillerPdf.Engine.Documents.PdfCsv.Field(s, alwaysQuote: false);
+            return JPDFs.Engine.Documents.PdfCsv.Field(s, alwaysQuote: false);
         }
     }
 }

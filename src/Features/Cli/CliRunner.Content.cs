@@ -6,12 +6,12 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
-using KillerPdf.Engine.Security;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
+using JPDFs.Engine.Security;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Document conversion and content commands: Protect Document, export to Office and text
     // formats, Office files to PDF, data merge, Find and Replace, and form data and fields.
@@ -27,7 +27,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --protect <in.pdf> <out.pdf> [--user-password <password>] [--owner-password <password>]");
+                con.WriteLine("Usage: JPDFs.exe --protect <in.pdf> <out.pdf> [--user-password <password>] [--owner-password <password>]");
                 con.WriteLine("       [--allow print,copy,edit] [--recipients <cert.cer>[,<cert.cer>...]] [--invalidate-signatures]");
                 return 2;
             }
@@ -104,7 +104,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --export <in.pdf> <out.docx|.xlsx|.pptx|.html|.md|.txt|.json> [--pages <range>]");
+                con.WriteLine("Usage: JPDFs.exe --export <in.pdf> <out.docx|.xlsx|.pptx|.html|.md|.txt|.json> [--pages <range>]");
                 con.WriteLine("       [--format word|excel|powerpoint|html|markdown|text|json]   (default: from the output extension)");
                 con.WriteLine("       [--layout editable|images]   (Word and PowerPoint; default: editable)");
                 con.WriteLine("       [--password <p>]   (a PDF that forbids copying or editing exports only with the owner password)");
@@ -160,12 +160,12 @@ namespace KillerPDF.Features
         // ============================================================
         // --convert-office <in.docx|.xlsx|.doc|.xls> <out.pdf>
         // ============================================================
-        // KillerPDF lays out .docx and .xlsx itself; .doc and .xls go through Word or Excel.
+        // JPDFs lays out .docx and .xlsx itself; .doc and .xls go through Word or Excel.
         private static int CliConvertOffice(List<string> pos, TextWriter con)
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --convert-office <in.docx|.xlsx|.doc|.xls> <out.pdf>");
+                con.WriteLine("Usage: JPDFs.exe --convert-office <in.docx|.xlsx|.doc|.xls> <out.pdf>");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outPath = Path.GetFullPath(pos[1]);
@@ -196,7 +196,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --data-merge <template.pdf> <data.csv|.json|.xlsx> <outputFolder> [--name <file name>] [--flatten] [--overwrite]");
+                con.WriteLine("Usage: JPDFs.exe --data-merge <template.pdf> <data.csv|.json|.xlsx> <outputFolder> [--name <file name>] [--flatten] [--overwrite]");
                 return 2;
             }
             string template = Path.GetFullPath(pos[0]), data = Path.GetFullPath(pos[1]), outDir = Path.GetFullPath(pos[2]);
@@ -248,7 +248,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 4 || pos[2].Length == 0)
             {
-                con.WriteLine("Usage: KillerPDF.exe --replace-text <in.pdf> <out.pdf> <find> <replace> [--match-case] [--whole-word]");
+                con.WriteLine("Usage: JPDFs.exe --replace-text <in.pdf> <out.pdf> <find> <replace> [--match-case] [--whole-word]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
@@ -329,7 +329,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --export-form-data <in.pdf> <out.fdf|.xfdf|.json> [--no-comments]");
+                con.WriteLine("Usage: JPDFs.exe --export-form-data <in.pdf> <out.fdf|.xfdf|.json> [--no-comments]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outPath = Path.GetFullPath(pos[1]);
@@ -354,7 +354,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --import-form-data <in.pdf> <data.fdf|.xfdf> <out.pdf> [--flatten]");
+                con.WriteLine("Usage: JPDFs.exe --import-form-data <in.pdf> <data.fdf|.xfdf> <out.pdf> [--flatten]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[2], out string source, out string output, out _, con)) return 2;
@@ -393,7 +393,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count is < 1 or > 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --recognize-fields <in.pdf> [<out.pdf>] [--json] [--password <password>]");
+                con.WriteLine("Usage: JPDFs.exe --recognize-fields <in.pdf> [<out.pdf>] [--json] [--password <password>]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]);
@@ -461,7 +461,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --xfa-to-acroform <in.pdf> <out.pdf> [--flatten]");
+                con.WriteLine("Usage: JPDFs.exe --xfa-to-acroform <in.pdf> <out.pdf> [--flatten]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
@@ -485,7 +485,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --flatten-forms <in.pdf> <out.pdf>   (fields become page content; the rest stays text and vectors)");
+                con.WriteLine("Usage: JPDFs.exe --flatten-forms <in.pdf> <out.pdf>   (fields become page content; the rest stays text and vectors)");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;

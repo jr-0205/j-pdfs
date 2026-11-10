@@ -1,7 +1,7 @@
 using System.Windows;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {

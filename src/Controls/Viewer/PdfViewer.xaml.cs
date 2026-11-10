@@ -1,15 +1,15 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using KillerPDF.Features;
+using JPDFs.Features;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// One document view: its tab strip, its card and everything inside. Two instances make the
     /// split.
     ///
-    /// The handlers here are one-line forwards to the host, following KillerShell's FilePane idiom -
+    /// The handlers here are one-line forwards to the host, following JpdfsShell's FilePane idiom -
     /// chrome that belongs to the window stays on the window.
     /// </summary>
     public partial class PdfViewer : UserControl
@@ -92,8 +92,7 @@ namespace KillerPDF.Controls
         internal void SetFocusHalo(bool focused)
         {
             PaneHasFocus = focused;
-            bool retro = Services.ThemeManager.Current == Services.Theme.SE98;
-            string key = focused && !retro ? "TabActiveRingBrush" : "PaneBorderBrush";
+            string key = focused ? "TabActiveRingBrush" : "PaneBorderBrush";
             PaneBorder.SetResourceReference(Border.BorderBrushProperty, key);
             UpdatePaneFocusRing();
         }

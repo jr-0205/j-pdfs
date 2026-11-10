@@ -4,10 +4,10 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // One-click page arrangement (#436): reverse the page order, turn every page upright, and
     // straighten tilted scans. Each acts on the selected pages when two or more are selected,
@@ -47,7 +47,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message), "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -171,7 +171,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message), "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -298,7 +298,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message), "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Pages_Failed"), ex.Message), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

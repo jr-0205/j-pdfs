@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerFamily.Accessibility;
+using JpdfsUi.Accessibility;
 
 // ============================================================
 // TOOLBAR APPEARANCE - two independent settings
 //
-// The family engine. It IS KillerPDF's engine (SettingsPanel.cs SetToolbarButton and
+// The family engine. It IS JPDFs's engine (SettingsPanel.cs SetToolbarButton and
 // BuildToolbarMenu, promoted 2026-10-27): every app runs the same sizes, captions, picker and
 // caption shedding, and supplies only what is its own through the app methods and hooks below.
 //
@@ -39,7 +39,7 @@ using KillerFamily.Accessibility;
 // decides layout.
 //
 // ------------------------------------------------------------
-// THE NUMBERS. KillerPDF's, and not to be retuned per app - an app that picks its own comes out
+// THE NUMBERS. JPDFs's, and not to be retuned per app - an app that picks its own comes out
 // visibly smaller or tighter than the rest of the family.
 //
 //   glyph     small 14, large 20
@@ -55,7 +55,7 @@ using KillerFamily.Accessibility;
 // puts every caption back, so widening the window restores them.
 //
 // THE PICKER stays open on click, so modes can be compared without reopening it, and shows each
-// row's shortcut when the app has one (ToolbarMenuGesture). Apps add their own rows (KillerPDF's
+// row's shortcut when the app has one (ToolbarMenuGesture). Apps add their own rows (JPDFs's
 // Customize and Hide toolbar) through AddToolbarMenuRows.
 //
 // GROUP SEPARATORS are a 1px Rectangle, not a wider margin:
@@ -69,7 +69,7 @@ using KillerFamily.Accessibility;
 //   * If buttons carry state in Tag (Killendar's view buttons hold their view name), never write
 //     to Tag from here.
 // ============================================================
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -133,7 +133,7 @@ namespace KillerPDF.Shell
         partial void ToolbarCaptionShedRank(string labelKey, ref int rank);
 
         /// <summary>App hook: runs after the saved settings are read, for the app's own toolbar
-        /// settings (KillerPDF's hidden toolbar).</summary>
+        /// settings (JPDFs's hidden toolbar).</summary>
         partial void OnToolbarStyleRestored();
 
         /// <summary>App hook: runs after every restyle, for button sizes tied to other controls,

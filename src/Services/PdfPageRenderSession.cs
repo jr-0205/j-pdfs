@@ -1,10 +1,10 @@
 using System.IO;
-using EngineDocument = KillerPdf.Engine.Documents.PdfDocument;
-using EnginePageInformation = KillerPdf.Engine.Documents.PdfPageInformation;
-using EngineRenderOptions = KillerPdf.Engine.Rendering.PdfRenderOptions;
-using EngineRenderer = KillerPdf.Engine.Rendering.PdfPageRenderer;
+using EngineDocument = JPDFs.Engine.Documents.PdfDocument;
+using EnginePageInformation = JPDFs.Engine.Documents.PdfPageInformation;
+using EngineRenderOptions = JPDFs.Engine.Rendering.PdfRenderOptions;
+using EngineRenderer = JPDFs.Engine.Rendering.PdfPageRenderer;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// Owns one engine render session and its output buffers so application features share the
@@ -39,7 +39,7 @@ internal sealed class PdfPageRenderSession : IDisposable
     {
         _engineRenderer = new EngineRenderer(document, InstalledPdfFontResolver.Instance,
             SharedCacheFor(document), WicJpegDecoder.Instance);
-        var boxes = KillerPdf.Engine.Documents.PdfPageBoxInformation.Read(document);
+        var boxes = JPDFs.Engine.Documents.PdfPageBoxInformation.Read(document);
         _enginePages = [.. pages.Select((page, index) => PdfLegacyPageGeometry.Size(page, boxes[index]))];
         _maximumWidth = maximumWidth;
         _maximumHeight = maximumHeight;
@@ -463,7 +463,7 @@ internal static class PdfLegacyPageGeometry
     }
 
     internal static EnginePageInformation Size(EnginePageInformation page,
-        KillerPdf.Engine.Documents.PdfPageBoxInformation boxes)
+        JPDFs.Engine.Documents.PdfPageBoxInformation boxes)
     {
         var crop = boxes.CropBox;
         var media = boxes.MediaBox;

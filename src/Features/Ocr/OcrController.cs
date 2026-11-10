@@ -2,17 +2,17 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     /// <summary>
     /// The four OCR operations that work on the open document: page to clipboard, region to
     /// clipboard, searchable PDF, and extract-all-text. Moved out of Ocr.cs (MainWindow) in the
-    /// KillerUI refactor.
+    /// JpdfsUiKit refactor.
     ///
     /// Holds no controls. Talks to the window only through <see cref="IOcrHost"/>, so the whole
     /// of this file is testable against a stub host. The pure language/download helpers live in
@@ -37,7 +37,7 @@ namespace KillerPDF.Features
         // their combined text. The same OCR engine and document reader are reused for the whole batch.
         internal async void OcrPagesToClipboard(IReadOnlyList<int> pageIndices)
         {
-            if (!_host.HasDocument) { KillerDialog.Show(_host.Window, _host.Loc("Str_Msg_OpenFirst")); return; }
+            if (!_host.HasDocument) { JpdfsDialog.Show(_host.Window, _host.Loc("Str_Msg_OpenFirst")); return; }
             int[] pages = [.. pageIndices.Distinct().Where(page => page >= 0 && page < _host.PageCount).OrderBy(page => page)];
             if (pages.Length == 0) return;
             var isSourceCurrent = _host.CaptureDocumentOrigin();
@@ -115,7 +115,7 @@ namespace KillerPDF.Features
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_OcrFailed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(_host.Window, _host.Loc("Str_Err_OcrFailed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -187,7 +187,7 @@ namespace KillerPDF.Features
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_OcrFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(_host.Window, _host.Loc("Str_Err_OcrFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -203,13 +203,13 @@ namespace KillerPDF.Features
 
         internal async void MakeSearchablePdf()
         {
-            if (!_host.HasDocument) { KillerDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
+            if (!_host.HasDocument) { JpdfsDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
             if (!OcrCommandGate.MayStart(OcrCommand.SearchablePdf, output => _host.EnsureDocumentMayWrite(output))) return;
             var isSourceCurrent = _host.CaptureDocumentOrigin();
             if (!await _host.EnsureOcrModelsReadyAsync() || !isSourceCurrent()) return;
             _host.CommitActiveTextBox();
 
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Save)
+            var dlg = new JPDFs.Controls.FileDialog(JPDFs.Controls.FileDialogMode.Save)
             {
                 Filter = _host.Loc("Str_Filter_Pdf") + "|*.pdf",
                 Title = _host.Loc("Str_Ocr_SaveSearchable"),
@@ -226,7 +226,7 @@ namespace KillerPDF.Features
             try { _host.SaveDocumentTo(src); }
             catch (Exception ex)
             {
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -244,7 +244,7 @@ namespace KillerPDF.Features
                 _host.HideBusy();
                 if (ct.IsCancellationRequested) { _host.SetStatus(_host.Loc("Str_St_SearchablePdfCanceled")); return; }
                 _host.SetStatus(string.Format(_host.Loc("Str_St_SearchableSaved"), pages, words));
-                KillerDialog.Show(_host.Window,
+                JpdfsDialog.Show(_host.Window,
                     string.Format(_host.Loc("Str_Dlg_SearchableSaved"), outPath, pages, words),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -256,7 +256,7 @@ namespace KillerPDF.Features
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_SearchableFailed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(_host.Window, _host.Loc("Str_Err_SearchableFailed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -285,11 +285,11 @@ namespace KillerPDF.Features
                 src, OcrRenderMax, OcrRenderMax, null);
             using var ocr = new OcrService(language: language);   // one engine reused across the whole document (single-threaded here)
             int pages = PdfEngineIntegration.ReadPageInformation(src, null).Count;
-            IReadOnlyList<IReadOnlyList<KillerPdf.Engine.Documents.PdfFormWidgetInfo>> formPages =
+            IReadOnlyList<IReadOnlyList<JPDFs.Engine.Documents.PdfFormWidgetInfo>> formPages =
                 formAware ? ReadAllFormHints(src, pages) :
                 [
                     .. Enumerable.Range(0, pages).Select(_ =>
-                        (IReadOnlyList<KillerPdf.Engine.Documents.PdfFormWidgetInfo>)
+                        (IReadOnlyList<JPDFs.Engine.Documents.PdfFormWidgetInfo>)
                         [])
                 ];
             var layers = new List<PdfOcrPixelPage>(pages);
@@ -329,13 +329,13 @@ namespace KillerPDF.Features
 
         internal async void ConvertScanToText()
         {
-            if (!_host.HasDocument) { KillerDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
+            if (!_host.HasDocument) { JpdfsDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
             if (!OcrCommandGate.MayStart(OcrCommand.ScanToText, output => _host.EnsureDocumentMayWrite(output))) return;
             var isSourceCurrent = _host.CaptureDocumentOrigin();
             if (!await _host.EnsureOcrModelsReadyAsync() || !isSourceCurrent()) return;
             _host.CommitActiveTextBox();
 
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Save)
+            var dlg = new JPDFs.Controls.FileDialog(JPDFs.Controls.FileDialogMode.Save)
             {
                 Filter = _host.Loc("Str_Filter_Pdf") + "|*.pdf",
                 Title = _host.Loc("Str_Ocr_SaveScanText"),
@@ -350,7 +350,7 @@ namespace KillerPDF.Features
             try { _host.SaveDocumentTo(src); }
             catch (Exception ex)
             {
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -364,19 +364,19 @@ namespace KillerPDF.Features
             {
                 // Every converted word is shown beside its scan before anything is written.
                 bool Review(IReadOnlyList<ScanTextReviewWord> words) => _host.Window.Dispatcher.Invoke(() =>
-                    new KillerPDF.Controls.ScanTextReviewDialog(_host.Window, words).ShowDialog() == true);
+                    new JPDFs.Controls.ScanTextReviewDialog(_host.Window, words).ShowDialog() == true);
                 ScanTextSummary summary = await Task.Run(() => BuildScanTextPdf(src, outPath, report, lang, ct, review: Review));
                 _host.HideBusy();
                 if (ct.IsCancellationRequested || summary.Canceled) { _host.SetStatus(_host.Loc("Str_St_ScanTextCanceled")); return; }
                 if (summary.ScannedPages == 0)
                 {
-                    KillerDialog.Show(_host.Window, _host.Loc("Str_Dlg_ScanTextNone"), "J-PDF's",
+                    JpdfsDialog.Show(_host.Window, _host.Loc("Str_Dlg_ScanTextNone"), "J-PDF's",
                         MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
                 _host.SetStatus(string.Format(_host.Loc("Str_St_ScanTextSaved"),
                     summary.ScannedPages, summary.ConvertedWords));
-                KillerDialog.Show(_host.Window,
+                JpdfsDialog.Show(_host.Window,
                     string.Format(_host.Loc("Str_Dlg_ScanTextSaved"), outPath,
                         summary.ScannedPages, summary.ConvertedWords, summary.KeptWords),
                     "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -389,7 +389,7 @@ namespace KillerPDF.Features
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_ScanTextFailed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(_host.Window, _host.Loc("Str_Err_ScanTextFailed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -621,13 +621,13 @@ namespace KillerPDF.Features
 
         internal async void ExtractAllText()
         {
-            if (!_host.HasDocument) { KillerDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
+            if (!_host.HasDocument) { JpdfsDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
             if (!OcrCommandGate.MayStart(OcrCommand.ExtractAllText, output => _host.EnsureDocumentMayWrite(output))) return;
             var isSourceCurrent = _host.CaptureDocumentOrigin();
             if (!await _host.EnsureOcrModelsReadyAsync() || !isSourceCurrent()) return;
             _host.CommitActiveTextBox();
 
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Save)
+            var dlg = new JPDFs.Controls.FileDialog(JPDFs.Controls.FileDialogMode.Save)
             {
                 Filter = _host.Loc("Str_Filter_Text") + "|*.txt|Markdown|*.md",
                 Title = _host.Loc("Str_Ocr_ExtractAllText"),
@@ -644,7 +644,7 @@ namespace KillerPDF.Features
             try { _host.SaveDocumentTo(src); pageCount = _host.PageCount; }
             catch (Exception ex)
             {
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -671,7 +671,7 @@ namespace KillerPDF.Features
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_ExtractFailed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(_host.Window, _host.Loc("Str_Err_ExtractFailed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -690,11 +690,11 @@ namespace KillerPDF.Features
             using var renderSession = PdfPageRenderSession.OpenEngineFirst(
                 src, OcrRenderMax, OcrRenderMax, null);
             using var ocr = new OcrService(language: language);
-            IReadOnlyList<IReadOnlyList<KillerPdf.Engine.Documents.PdfFormWidgetInfo>> formPages =
+            IReadOnlyList<IReadOnlyList<JPDFs.Engine.Documents.PdfFormWidgetInfo>> formPages =
                 formAware ? ReadAllFormHints(src, pageCount) :
                 [
                     .. Enumerable.Range(0, pageCount).Select(_ =>
-                        (IReadOnlyList<KillerPdf.Engine.Documents.PdfFormWidgetInfo>)
+                        (IReadOnlyList<JPDFs.Engine.Documents.PdfFormWidgetInfo>)
                         [])
                 ];
 
@@ -724,14 +724,14 @@ namespace KillerPDF.Features
             return pageCount;
         }
 
-        private static IReadOnlyList<KillerPdf.Engine.Documents.PdfFormWidgetInfo> ReadFormHints(
+        private static IReadOnlyList<JPDFs.Engine.Documents.PdfFormWidgetInfo> ReadFormHints(
             string path, int pageIndex, OpenedProtection? protection)
         {
             try { return PdfEngineIntegration.ReadPageFormWidgets(path, pageIndex, protection); }
             catch { return []; }
         }
 
-        private static IReadOnlyList<IReadOnlyList<KillerPdf.Engine.Documents.PdfFormWidgetInfo>> ReadAllFormHints(
+        private static IReadOnlyList<IReadOnlyList<JPDFs.Engine.Documents.PdfFormWidgetInfo>> ReadAllFormHints(
             string path, int pageCount)
         {
             try { return PdfEngineIntegration.ReadAllPageFormWidgets(path, null); }   // a plain saved copy
@@ -740,7 +740,7 @@ namespace KillerPDF.Features
                 return
                 [
                     .. Enumerable.Range(0, pageCount).Select(_ =>
-                        (IReadOnlyList<KillerPdf.Engine.Documents.PdfFormWidgetInfo>)
+                        (IReadOnlyList<JPDFs.Engine.Documents.PdfFormWidgetInfo>)
                         [])
                 ];
             }

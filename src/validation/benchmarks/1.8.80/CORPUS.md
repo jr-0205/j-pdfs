@@ -1,8 +1,8 @@
-# KillerPDF 1.8.80 corpus benchmark
+# JPDFs 1.8.80 corpus benchmark
 
 Test date: 2026-10-04
 
-KillerPDF 1.8.80 reproduced every 1.8.71 file outcome and diagnostic detail. Each version received one warmup and five measured passes in alternating order. Every paired pass agreed on every file's path, status, diagnostic detail, and exit code. The damaged-file gate had zero crashes and zero timeouts.
+JPDFs 1.8.80 reproduced every 1.8.71 file outcome and diagnostic detail. Each version received one warmup and five measured passes in alternating order. Every paired pass agreed on every file's path, status, diagnostic detail, and exit code. The damaged-file gate had zero crashes and zero timeouts.
 
 ## Results
 
@@ -31,15 +31,15 @@ All timing changes are below the 10% investigation threshold. Every path, status
 
 - Baseline source commit: `25244f0ed8300caefd63b0af68416855bf8ca93e`.
 - Candidate source commit: `a3f18871d4f9bbaa6ab694d3f2cba9b28fadee97`.
-- Baseline: KillerPDF 1.8.71 Release, win-x64.
+- Baseline: JPDFs 1.8.71 Release, win-x64.
 - Baseline executable SHA-256: `32AB58753963B4EBEA01EC26558196C53E5E2416246F59B422A6D82013A41424`.
-- Candidate: KillerPDF 1.8.80 Release, win-x64.
+- Candidate: JPDFs 1.8.80 Release, win-x64.
 - Candidate executable SHA-256: `99F783290FEC96900C6EFCA931DE1A8C67577E6C6CCF3332E22840B3F6A4226C`.
 - Runner: `validation/Benchmark-Versions.ps1`, using the existing local collections with downloads disabled.
 - One warmup and five measured passes per version and normal collection, with run order alternated.
 - All 80 damaged inputs tested individually with a 30-second timeout.
 - Full per-file logs remain outside the application repository at `C:\Users\steve\scratch\kp-bench-render\release-1.8.80-vs-1.8.71-alternating-20261004`.
 
-The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the release-level measurements. The previous published corpus record is [KillerPDF 1.8.70](../1.8.70/CORPUS.md).
+The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the release-level measurements. The previous published corpus record is [JPDFs 1.8.70](../1.8.70/CORPUS.md).
 
 This run tests batch opening and saving plus malformed-input process safety. It does not replace interactive rendering checks or a separate qpdf/veraPDF before-and-after conformance sweep.

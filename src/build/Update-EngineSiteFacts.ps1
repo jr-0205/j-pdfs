@@ -5,11 +5,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
-[xml]$project = Get-Content -LiteralPath (Join-Path $repo 'KillerPDF.csproj') -Raw
+[xml]$project = Get-Content -LiteralPath (Join-Path $repo 'JPDFs.csproj') -Raw
 $version = [string]$project.Project.PropertyGroup[0].Version
 [xml]$trx = Get-Content -LiteralPath $TrxPath -Raw
 $definitions = @($trx.SelectNodes("//*[local-name()='UnitTest']"))
-if (!$definitions.Count -or @($definitions | Where-Object { $_.storage -notmatch '(?i)[\\/]KillerPdf\.Engine\.Tests\.dll$' }).Count) {
+if (!$definitions.Count -or @($definitions | Where-Object { $_.storage -notmatch '(?i)[\\/]JPDFs\.Engine\.Tests\.dll$' }).Count) {
     throw 'Site facts require the engine suite, not another test project.'
 }
 $results = @($trx.SelectNodes("//*[local-name()='UnitTestResult']"))
@@ -18,7 +18,7 @@ if (!$counters -or !$results.Count -or @($results | Where-Object { $_.outcome -n
     [int]$counters.total -ne $results.Count -or [int]$counters.passed -ne $results.Count) {
     throw 'Engine site facts require complete passing engine test results.'
 }
-$sourceFiles = @(& git -C $repo ls-files -- 'engine/KillerPdf.Engine/*.cs')
+$sourceFiles = @(& git -C $repo ls-files -- 'engine/JPDFs.Engine/*.cs')
 if ($LASTEXITCODE -ne 0 -or !$sourceFiles.Count) { throw 'Could not inventory tracked engine sources.' }
 $sourceLines = 0
 foreach ($file in $sourceFiles) {

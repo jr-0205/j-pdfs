@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The recent files list's ordering rule, kept apart from settings storage so it can be tested.</summary>
 internal static class RecentFilesList

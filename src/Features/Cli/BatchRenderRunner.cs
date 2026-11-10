@@ -6,15 +6,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // ============================================================
     // Headless CLI render benchmark
     // ============================================================
     //
-    // KillerPDF.exe --batch-render <input.pdf|inputDir> <outputDir> [--size <px>] [--pages <n>] [--parallel <n>] [--log <file.csv>] [--quiet] [--allow-incomplete] [--password <p>]
+    // JPDFs.exe --batch-render <input.pdf|inputDir> <outputDir> [--size <px>] [--pages <n>] [--parallel <n>] [--log <file.csv>] [--quiet] [--allow-incomplete] [--password <p>]
     //
     // Renders the first N pages of one PDF (or every *.pdf under a folder tree)
     // through the same page-render path the viewer, print, flatten, and image
@@ -106,7 +106,7 @@ namespace KillerPDF.Features
 
             if (badUsage || string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(output))
             {
-                con.WriteLine("Usage: KillerPDF.exe --batch-render <input.pdf|inputDir> <outputDir> [--size <px>] [--pages <n>] [--parallel <n>] [--log <file.csv>] [--quiet] [--allow-incomplete] [--password <p>]");
+                con.WriteLine("Usage: JPDFs.exe --batch-render <input.pdf|inputDir> <outputDir> [--size <px>] [--pages <n>] [--parallel <n>] [--log <file.csv>] [--quiet] [--allow-incomplete] [--password <p>]");
                 exitCode = 2;
                 return true;
             }
@@ -325,6 +325,6 @@ namespace KillerPDF.Features
         }
 
         // File names and renderer details can carry text a spreadsheet would run as a formula.
-        private static string Csv(string s) => KillerPdf.Engine.Documents.PdfCsv.Field(s, alwaysQuote: false);
+        private static string Csv(string s) => JPDFs.Engine.Documents.PdfCsv.Field(s, alwaysQuote: false);
     }
 }

@@ -1,9 +1,9 @@
 using System.IO;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
-/// Names what a KillerPDF payload folder owns, so uninstall and conflict repair remove those
+/// Names what a JPDFs payload folder owns, so uninstall and conflict repair remove those
 /// files and nothing else. Ownership comes from the payload manifest the installer wrote, plus
 /// the two files registration adds beside it. A folder without a manifest owns nothing, and no
 /// caller removes it.

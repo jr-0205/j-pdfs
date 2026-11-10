@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace KillerPDF.PreviewHandler;
+namespace JPDFs.PreviewHandler;
 
 /// <summary>
 /// The pane's few words in the app's languages, picked from the Windows display language

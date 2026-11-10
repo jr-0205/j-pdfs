@@ -1,4 +1,4 @@
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>The copy a print job is made from. It is written to the app's temp folder, handed to the
 /// print preview, and deleted when the preview closes, so it never stands in for the document.</summary>

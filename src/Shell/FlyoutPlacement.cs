@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using KillerPDF.Shell;
+using JPDFs.Shell;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// Where every flyout opens: in the content pane, against the edge beside the icon rail, at
@@ -26,7 +26,7 @@ namespace KillerPDF.Controls
     /// Placement is computed against an UNSCALED root, not the zoomed pane. With the pane as
     /// PlacementTarget, WPF multiplied a Popup's coordinates by the app size while a ContextMenu
     /// took a different path, so the two kinds of flyout landed in different places at any size
-    /// but 100% (KillerScan).
+    /// but 100% (JpdfsScan).
     ///
     /// WIRING (at startup, and again when the sidebar moves to another edge):
     ///     FlyoutPlacement.UsePane(ContentPane, side);           // or UsePane(pane, root, side)
@@ -60,7 +60,7 @@ namespace KillerPDF.Controls
         private static readonly Thickness DefaultCardHalo = new(22, 18, 22, 26);
 
         // Held weakly: every window points these at itself, and a strong static reference kept the
-        // last window that did so alive after it closed (KillerPDF's window collection check).
+        // last window that did so alive after it closed (JPDFs's window collection check).
         private static WeakReference<FrameworkElement>? _paneRef, _rootRef;
         private static FrameworkElement? _pane
         {
@@ -214,7 +214,7 @@ namespace KillerPDF.Controls
         }
 
         /// <summary>In from the rail like the corner menus, but centered on its button vertically
-        /// and kept inside the pane (KillerNotes' dictation menu).</summary>
+        /// and kept inside the pane (JpdfsNotes' dictation menu).</summary>
         internal static void AttachBesideButton(ContextMenu menu, FrameworkElement button)
         {
             var pane = _pane;

@@ -1,10 +1,10 @@
-# Contributing to KillerPDF
+# Contributing to JPDFs
 
-KillerPDF welcomes features, fixes, experiments, tests, translations, documentation, and interface improvements.
+JPDFs welcomes features, fixes, experiments, tests, translations, documentation, and interface improvements.
 
 ## 1.9 development
 
-KillerPDF 1.9 lives on `main`. The branch is open to pull requests across just about every part of KillerPDF, including the engine. New tools, larger features, workflow improvements, performance work, and experimental ideas are welcome alongside smaller fixes.
+JPDFs 1.9 lives on `main`. The branch is open to pull requests across just about every part of JPDFs, including the engine. New tools, larger features, workflow improvements, performance work, and experimental ideas are welcome alongside smaller fixes.
 
 Base your work on `main` and target `main` when opening the pull request.
 You do not need an assigned issue or advance permission to open a PR. Early draft PRs are welcome, especially when you want feedback on an approach before finishing it. For architectural changes, new dependencies, or work that could take weeks, start a discussion early so we can coordinate. That is an invitation to collaborate, not a prerequisite for submitting work.
@@ -15,7 +15,7 @@ The project moves quickly. Small, reviewable contributions are much easier to in
 
 ## Before you start
 
-Check the existing [issues](https://github.com/SteveTheKiller/KillerPDF/issues) and [discussions](https://github.com/SteveTheKiller/KillerPDF/discussions) first.
+Check the existing [issues](https://github.com/JPDFs/JPDFs/issues) and [discussions](https://github.com/JPDFs/JPDFs/discussions) first.
 
 You do not need permission to submit:
 
@@ -49,15 +49,15 @@ Do not bump the application version, edit release dates, prepare packages, or re
 
 ## Repository structure
 
-KillerPDF contains two major parts:
+JPDFs contains two major parts:
 
 - The Windows desktop application targets `net10.0-windows` and uses WPF.
-- [`KillerPdf.Engine`](engine/) is an independent, UI-free .NET 10 library for reading, validating, editing, authoring, signing, encrypting, and writing PDFs.
+- [`JPDFs.Engine`](engine/) is an independent, UI-free .NET 10 library for reading, validating, editing, authoring, signing, encrypting, and writing PDFs.
 
-The engine boundary is deliberate. `KillerPdf.Engine` must not reference:
+The engine boundary is deliberate. `JPDFs.Engine` must not reference:
 
 - WPF
-- KillerPDF application code
+- JPDFs application code
 - PDFium
 - PdfPig
 - Tesseract
@@ -69,13 +69,13 @@ Read the [architecture decision records](engine/docs/architecture/) before chang
 
 ## Development setup
 
-KillerPDF requires the .NET 10 SDK version selected by [`global.json`](global.json).
+JPDFs requires the .NET 10 SDK version selected by [`global.json`](global.json).
 
 Clone and publish the Windows application:
 
 ```powershell
-git clone https://github.com/SteveTheKiller/KillerPDF.git
-cd KillerPDF
+git clone https://github.com/JPDFs/JPDFs.git
+cd JPDFs
 dotnet publish -c Release
 ```
 
@@ -90,14 +90,14 @@ The WPF application must be built and tested on Windows. Additional build inform
 Build and test the engine from the repository root:
 
 ```powershell
-dotnet build engine\KillerPdf.Engine\KillerPdf.Engine.csproj -c Release
-dotnet test engine\KillerPdf.Engine.Tests\KillerPdf.Engine.Tests.csproj -c Release
+dotnet build engine\JPDFs.Engine\JPDFs.Engine.csproj -c Release
+dotnet test engine\JPDFs.Engine.Tests\JPDFs.Engine.Tests.csproj -c Release
 ```
 
 Run the application tests with:
 
 ```powershell
-dotnet test KillerPDF.Tests\KillerPDF.Tests.csproj -c Release
+dotnet test JPDFs.Tests\JPDFs.Tests.csproj -c Release
 ```
 
 Compiler warnings are treated as errors. A pull request should build cleanly.
@@ -108,7 +108,7 @@ Add a focused regression test when fixing a reproducible bug.
 
 Engine changes should test the smallest PDF structure that demonstrates the behavior. Tests should verify both the intended result and the important failure boundaries.
 
-Changes affecting opening, saving, importing, page structure, forms, annotations, signatures, encryption, or preservation may also need corpus validation. The [KillerPDF Corpus](https://github.com/SteveTheKiller/KillerPDF-Corpus) provides versioned, provenance-checked inputs, reproducible benchmarks, adapter examples, and machine-readable baselines. The [corpus guide](https://killerpdf.net/corpus.html) explains its collections and workflow, while the [published results](https://killerpdf.net/corpus-results.html) show the current release baselines.
+Changes affecting opening, saving, importing, page structure, forms, annotations, signatures, encryption, or preservation may also need corpus validation. The [JPDFs Corpus](https://github.com/JPDFs/JPDFs-Corpus) provides versioned, provenance-checked inputs, reproducible benchmarks, adapter examples, and machine-readable baselines. The [corpus guide](https://jpdfs.net/corpus.html) explains its collections and workflow, while the [published results](https://jpdfs.net/corpus-results.html) show the current release baselines.
 
 Maintainers can run restricted or release-scale collections that are not part of an ordinary contributor checkout. Contributors should still add the smallest useful regression fixture to the normal test suite whenever licensing permits it.
 
@@ -129,7 +129,7 @@ State what you tested in the pull request. If you could not test something, say 
 
 ## Dependencies
 
-KillerPDF is cautious about new dependencies, especially native libraries.
+JPDFs is cautious about new dependencies, especially native libraries.
 
 A pull request adding or replacing a dependency must explain:
 
@@ -140,7 +140,7 @@ A pull request adding or replacing a dependency must explain:
 - Native binary requirements
 - Download and installed-size impact
 - Security and update implications
-- Whether KillerPDF would need to maintain private builds or patches
+- Whether JPDFs would need to maintain private builds or patches
 
 Do not suppress vulnerability warnings. Fix the affected dependency or describe the unresolved problem for review.
 
@@ -148,7 +148,7 @@ Do not suppress vulnerability warnings. Fix the affected dependency or describe 
 
 PDF changes must fail safely.
 
-KillerPDF handles malformed, hostile, signed, encrypted, standards-oriented, and preservation-sensitive files. A document opening successfully is not enough evidence that it can be rewritten safely.
+JPDFs handles malformed, hostile, signed, encrypted, standards-oriented, and preservation-sensitive files. A document opening successfully is not enough evidence that it can be rewritten safely.
 
 Preserve existing bytes when an operation can use an incremental update. Reject structures that cannot be interpreted or preserved within defined limits. Keep output deterministic where possible so regressions can be reproduced.
 
@@ -164,7 +164,7 @@ Match the established interface instead of introducing a separate visual system.
 
 A UI pull request should include before-and-after screenshots when the visual difference matters. Mention the theme, scaling level, window size, and page mode shown.
 
-KillerPDF 2.0 is planned as a cross-platform release. The UI framework, rendering backend, OCR strategy, and native dependency approach are being evaluated in the [KillerPDF 2.0 architecture discussion](https://github.com/SteveTheKiller/KillerPDF/discussions/320). Please coordinate large platform or framework work there before building it.
+JPDFs 2.0 is planned as a cross-platform release. The UI framework, rendering backend, OCR strategy, and native dependency approach are being evaluated in the [JPDFs 2.0 architecture discussion](https://github.com/JPDFs/JPDFs/discussions/320). Please coordinate large platform or framework work there before building it.
 
 ## Translations
 
@@ -174,7 +174,7 @@ Follow [`TRANSLATING.md`](TRANSLATING.md) for file formats, locale names, placeh
 
 Do not change resource keys or remove format placeholders. Partial translations are useful because missing values fall back to English.
 
-Translation-only pull requests do not need a full application build. The translation guide explains how to load a language file into a normal KillerPDF installation and see saved changes immediately.
+Translation-only pull requests do not need a full application build. The translation guide explains how to load a language file into a normal JPDFs installation and see saved changes immediately.
 
 ## Pull requests
 
@@ -191,6 +191,6 @@ Do not use automatic closing keywords such as `Fixes`, `Closes`, or `Resolves`. 
 
 Be ready to adjust the change after review. Review questions are about protecting behavior and keeping the project coherent, not discouraging contributions.
 
-KillerPDF is licensed under [GPLv3](LICENSE). Contributions become part of the GPLv3 project and must be compatible with that license.
+JPDFs is licensed under [GPLv3](LICENSE). Contributions become part of the GPLv3 project and must be compatible with that license.
 
-Thank you for helping make KillerPDF more capable and more reliable.
+Thank you for helping make JPDFs more capable and more reliable.

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal static class ProtocolRegistrar
     {
@@ -31,7 +31,7 @@ namespace KillerPDF.Services
                 using var command = protocol.CreateSubKey(@"shell\open\command");
                 command?.SetValue("", $"\"{appPath}\" \"%1\"");
             }
-            catch (Exception ex) { Debug.WriteLine($"Failed to register KillerPDF protocol: {ex.Message}"); }
+            catch (Exception ex) { Debug.WriteLine($"Failed to register JPDFs protocol: {ex.Message}"); }
         }
 
         /// <summary>The executable a registration points at, or null when there is none to read.</summary>

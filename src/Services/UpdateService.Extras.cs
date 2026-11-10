@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using Microsoft.Win32;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
-    /// APP-OWNED: how KillerPDF updates on the shared update stack (Services/UpdateService.cs). The
+    /// APP-OWNED: how JPDFs updates on the shared update stack (Services/UpdateService.cs). The
     /// choice itself is in UpdateTargetChoice.cs. An installed copy uses the kit's direct installer
     /// mode, so elevation is requested on the signed installer and the UAC prompt names the
     /// publisher; the launcher is named by JPDFS_LAUNCHER_PATH and JPDFS_LAUNCHER_PID.

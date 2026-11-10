@@ -9,7 +9,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Release checking and one-click self-update against the GitHub releases of
@@ -23,7 +23,7 @@ namespace KillerPDF.Services
     {
         /// <summary>How this copy updates. The default swaps this exe for the released one. An app
         /// that installs through its own installer, or runs behind a portable launcher, describes
-        /// that in <see cref="ChooseUpdateTarget"/> (KillerBench's installer and launcher modes).</summary>
+        /// that in <see cref="ChooseUpdateTarget"/> (JpdfsBench's installer and launcher modes).</summary>
         internal sealed class UpdateTarget
         {
             /// <summary>Release asset to download and verify.</summary>
@@ -42,7 +42,7 @@ namespace KillerPDF.Services
             /// "runas" when it needs elevation, so the UAC prompt names the signed publisher, instead
             /// of the PowerShell staging helper. Its hash and publisher signature are checked again
             /// under a handle that keeps the file from changing until it has started. The installer
-            /// closes this process itself (KillerPDF).</summary>
+            /// closes this process itself (JPDFs).</summary>
             internal bool DirectInstaller { get; set; }
 
             internal bool IsPackage => InstallerArguments is not null || Replace is not null;
@@ -96,7 +96,7 @@ namespace KillerPDF.Services
 
         /// <summary>The release in GitHub's latest-release <paramref name="json"/>, as "v1.2.3",
         /// when it is a published, stable vX.Y.Z release newer than <paramref name="current"/>
-        /// (KillerBench's release check). Null for anything else.</summary>
+        /// (JpdfsBench's release check). Null for anything else.</summary>
         internal static string? NewerReleaseTag(string json, Version current)
         {
             // The fields are read from the document's top level, not matched in its text: the release
@@ -204,8 +204,8 @@ namespace KillerPDF.Services
         }
 
         /// <summary>The hash SHA256SUMS.txt publishes for <paramref name="asset"/>: the first line that is
-        /// exactly "&lt;asset&gt; &lt;hash&gt;" for exactly this asset name (KillerBench's checksum rule), so
-        /// "KillerApp.exe" never takes the line of "KillerApp-Portable.exe". Null when there is none.</summary>
+        /// exactly "&lt;asset&gt; &lt;hash&gt;" for exactly this asset name (JpdfsBench's checksum rule), so
+        /// "JpdfsApp.exe" never takes the line of "JpdfsApp-Portable.exe". Null when there is none.</summary>
         internal static string? ChecksumFor(string sums, string asset)
         {
             foreach (var line in sums.Replace("\r", "").Split('\n'))
@@ -229,7 +229,7 @@ namespace KillerPDF.Services
         internal sealed class Platform
         {
             internal Func<string, bool> CanWrite = CanWriteTo;
-            internal Func<bool> IsElevated = KillerFamily.Deployment.InstallerExitCodes.IsElevated;
+            internal Func<bool> IsElevated = JpdfsUi.Deployment.InstallerExitCodes.IsElevated;
             internal Func<ProcessStartInfo, Process?> Start = Process.Start;
         }
 
@@ -277,7 +277,7 @@ namespace KillerPDF.Services
         private static string NotClosed(string report)
         {
             string quoted = "'" + report.Replace("'", "''") + "'";
-            return "try{[IO.File]::AppendAllText(" + quoted + ",[Environment]::NewLine+'KillerTools: the app did not close within a minute, so this update was not applied.');"
+            return "try{[IO.File]::AppendAllText(" + quoted + ",[Environment]::NewLine+'JpdfsTools: the app did not close within a minute, so this update was not applied.');"
                 + "[void][Diagnostics.Process]::Start([IO.Path]::Combine([Environment]::SystemDirectory,'notepad.exe'),'\"'+" + quoted + "+'\"')}catch{};exit 1618";
         }
 

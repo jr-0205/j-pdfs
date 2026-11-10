@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Media;
 
-namespace KillerPDF
+namespace JPDFs
 {
     public enum EditTool { Select, Text, FormField, Highlight, Strikethrough, Underline, Draw, Signature, Image, Crop, Line, Rotate, Shape, Measure, Redact }
 
@@ -187,7 +187,7 @@ namespace KillerPDF
     /// A measurement drawn with the Measure tool. Unlike the other overlay annotations it is not
     /// burned into the page on save: it is written as a real PDF measurement annotation (a
     /// dimension line, polyline or polygon with its scale), so Acrobat and other viewers can read
-    /// it and KillerPDF can open it for editing again. Geometry is in canvas units like every
+    /// it and JPDFs can open it for editing again. Geometry is in canvas units like every
     /// other annotation. Each measurement keeps the scale it was made with, as the PDF does.
     /// </summary>
     public class MeasurementAnnotation : PageAnnotation

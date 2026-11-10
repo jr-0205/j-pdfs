@@ -2,17 +2,17 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 
-namespace KillerPDF.PreviewHandler;
+namespace JPDFs.PreviewHandler;
 
 /// <summary>
 /// PDF previews for File Explorer and Outlook (#410). The shell hands the file over as a stream,
-/// so attachments preview the same as files on disk, and the pane renders it with the KillerPDF
+/// so attachments preview the same as files on disk, and the pane renders it with the JPDFs
 /// engine. It runs in its own prevhost.exe surrogate, registered by the installed edition.
 /// </summary>
 [ComVisible(true)]
 [Guid(ClassId)]
 [ClassInterface(ClassInterfaceType.None)]
-[ProgId("KillerPDF.PreviewHandler")]
+[ProgId("JPDFs.PreviewHandler")]
 public sealed partial class PdfPreviewHandler : IPreviewHandler, IPreviewHandlerVisuals, IInitializeWithStream,
     IObjectWithSite, IOleWindow
 {

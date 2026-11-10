@@ -11,7 +11,7 @@ space, 72 points equal one inch; the origin is at the bottom left. A US Letter
 page is 612 by 792 points. Colors below use normalized components from zero to one.
 
 ```csharp
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
 var content = new PdfContentStreamBuilder()
     .SaveState()
@@ -78,8 +78,8 @@ whose glyphs cover the required text. Place it at `fonts/Example.ttf` for this
 example, then load it through `TrueTypeFont.Load`:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Fonts;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Fonts;
 
 TrueTypeFont font = TrueTypeFont.Load(File.ReadAllBytes("fonts/Example.ttf"));
 var content = new PdfContentStreamBuilder()
@@ -111,7 +111,7 @@ place it with `DrawImage`. Image pixel dimensions and placement dimensions are
 different: the former describes samples, while the latter uses PDF points.
 
 ```csharp
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
 byte[] rgba =
 [
@@ -149,7 +149,7 @@ Create the target page first. The builder can then add interactive document
 objects with page-relative coordinates and generate their appearances:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 using System.Text;
 
 byte[] pdf = new PdfDocumentBuilder()
@@ -196,8 +196,8 @@ Full rewrites and incremental editing of existing documents use the separate
 writing and editing APIs.
 
 Source entry points:
-[PdfDocumentBuilder](../KillerPdf.Engine/Authoring/PdfDocumentBuilder.cs),
-[PdfContentStreamBuilder](../KillerPdf.Engine/Authoring/PdfContentStreamBuilder.cs),
-[PdfImage](../KillerPdf.Engine/Authoring/PdfImage.cs), and
-[TrueTypeFont](../KillerPdf.Engine/Fonts/TrueTypeFont.cs).
+[PdfDocumentBuilder](../JPDFs.Engine/Authoring/PdfDocumentBuilder.cs),
+[PdfContentStreamBuilder](../JPDFs.Engine/Authoring/PdfContentStreamBuilder.cs),
+[PdfImage](../JPDFs.Engine/Authoring/PdfImage.cs), and
+[TrueTypeFont](../JPDFs.Engine/Fonts/TrueTypeFont.cs).
 See [reading](reading.md) and [rendering](rendering.md) for inspecting the result.

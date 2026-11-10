@@ -11,12 +11,12 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // ═══════════════════════════════════════════════════════════
     //  FOLDER TREE  -  the file dialog's left pane, above places
     // ═══════════════════════════════════════════════════════════
-    // Ported from KillerShell's FolderTree.cs (the family reference), minus what a modal file
+    // Ported from JpdfsShell's FolderTree.cs (the family reference), minus what a modal file
     // dialog does not need: no demo mode, no expansion persistence (the dialog reveals the
     // current folder on open instead), no shell context menu suite.
     //

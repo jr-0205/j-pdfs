@@ -6,7 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace KillerFamily.Accessibility
+namespace JpdfsUi.Accessibility
 {
     /// <summary>
     /// Keeps keyboard focus inside a modal in-window overlay (the F1 shortcuts card, the About

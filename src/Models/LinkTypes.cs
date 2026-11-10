@@ -1,4 +1,4 @@
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
     /// One link rectangle on a page, in render-dim coordinates.

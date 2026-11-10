@@ -3,17 +3,17 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Navigation;
-using KillerPDF.Controls;
-using KillerPDF.Features.About;
-using KillerPDF.Services;
+using JPDFs.Controls;
+using JPDFs.Features.About;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
     /// The About overlay's window half: the fade, the click handling, and the IAboutHost
     /// implementation that maps the controller's values onto the named XAML elements.
     /// Everything the card SAYS is decided in Features/About/AboutController.cs. Rows only this
-    /// app's card has (Start with Windows, Close to tray, KillerScan's vendor database) are mapped
+    /// app's card has (Start with Windows, Close to tray, JpdfsScan's vendor database) are mapped
     /// in the app's own Shell/About.Extras.cs.
     /// </summary>
     public partial class MainWindow : IAboutHost
@@ -27,15 +27,9 @@ namespace KillerPDF.Shell
         string IAboutHost.Version     { set => AboutVersionBlock.Text = value; }
         string IAboutHost.ReleaseDate { set => AboutReleaseDateBlock.Text = value; }
         string IAboutHost.Publisher   { set => AboutPublisherBlock.Text = value; }
-        string IAboutHost.Alias       { set => AboutAkaRun.Text = value; }
         string IAboutHost.Thumbprint  { set => AboutThumbprintBlock.Text = value; }
         string IAboutHost.Sha256      { set => AboutSha256Block.Text = value; }
         string IAboutHost.UpdateText  { set => AboutUpdateText.Text = value; }
-
-        bool IAboutHost.AliasVisible
-        {
-            set => AboutAkaBlock.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
-        }
 
         bool IAboutHost.UpdateVisible
         {
@@ -53,11 +47,11 @@ namespace KillerPDF.Shell
             if (!handled) FadeOverlayIn(AboutOverlay);
         }
 
-        /// <summary>App hook: show the card yourself and set <paramref name="handled"/> (KillerNotes
+        /// <summary>App hook: show the card yourself and set <paramref name="handled"/> (JpdfsNotes
         /// opens a keyboard focus scope around the fade and focuses the card after it).</summary>
         partial void ShowingCard(ref bool handled);
 
-        /// <summary>App hook: hide an overlay yourself and set <paramref name="handled"/> (KillerNotes
+        /// <summary>App hook: hide an overlay yourself and set <paramref name="handled"/> (JpdfsNotes
         /// hands its keyboard-managed overlays to their own close path).</summary>
         partial void OverlayFadingOut(UIElement overlay, ref bool handled);
 
@@ -67,7 +61,7 @@ namespace KillerPDF.Shell
 
         // ---- Overlay fade (shared with the shortcuts overlay, ShortcutsOverlay.cs) ----
 
-        /// <summary>App hook: an overlay is about to show (KillerScan dims the frame behind it).</summary>
+        /// <summary>App hook: an overlay is about to show (JpdfsScan dims the frame behind it).</summary>
         partial void OnOverlayShowing(UIElement overlay);
 
         /// <summary>App hook: an overlay finished hiding.</summary>

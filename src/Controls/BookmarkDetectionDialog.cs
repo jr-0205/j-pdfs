@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class BookmarkDetectionDialog : Window
 {
@@ -60,7 +60,7 @@ internal sealed class BookmarkDetectionDialog : Window
                 CultureInfo.CurrentCulture, out int maximumDepth)
             || maximumDepth is < 1 or > 256)
         {
-            KillerDialog.Show(this, L("Str_AutoBookmarks_Invalid"),
+            JpdfsDialog.Show(this, L("Str_AutoBookmarks_Invalid"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -85,7 +85,7 @@ internal sealed class BookmarkDetectionDialog : Window
         }
         catch (ArgumentException)
         {
-            KillerDialog.Show(this, L("Str_AutoBookmarks_InvalidPattern"),
+            JpdfsDialog.Show(this, L("Str_AutoBookmarks_InvalidPattern"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

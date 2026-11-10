@@ -1,10 +1,10 @@
-# KillerPDF 1.9.0 corpus benchmark
+# JPDFs 1.9.0 corpus benchmark
 
 Test dates: 2026-10-13, 2026-10-15 and 2026-10-28
 
 The [release candidate run on 2026-10-28](#release-candidate-run-on-2026-10-28) is the current result. Against the released 1.8.91, the frozen 1.9.0 candidate saves 401 more PDFs and loses none, finishes standards and stress about 12% sooner and regression 3.4% sooner, uses 4% to 7% less CPU time, and peaks 37% to 67% lower in memory. The earlier runs below are kept for the record.
 
-In the 2026-10-13 run, KillerPDF 1.9.0 (development build) saved 108 more PDFs than KillerPDF 1.8.90 across the three normal collections: 109 inputs that 1.8.90 skipped or failed now saved, and one stress input that 1.8.90 saved failed. Its regression and standards timings were above the 10% investigation threshold. Both builds received one warmup and five measured passes per collection in alternating order.
+In the 2026-10-13 run, JPDFs 1.9.0 (development build) saved 108 more PDFs than JPDFs 1.8.90 across the three normal collections: 109 inputs that 1.8.90 skipped or failed now saved, and one stress input that 1.8.90 saved failed. Its regression and standards timings were above the 10% investigation threshold. Both builds received one warmup and five measured passes per collection in alternating order.
 
 A [follow-up run on 2026-10-15](#follow-up-run-on-2026-10-15) with a newer 1.9.0 build resolves both items. That stress input now saves, so 1.9.0 saves 109 more PDFs than 1.8.90 and loses none. Every timed collection is now under the threshold, stress runs 7.62% faster with 6.20% less CPU time, and 1.9.0 used 38% to 57% less peak memory than 1.8.90. The damaged-file gate had zero crashes and zero timeouts in both runs, and its outcomes are identical to 1.8.90.
 
@@ -103,8 +103,8 @@ Batch resave now opens each file once instead of twice, and full rewrites alloca
 
 ## Builds and method
 
-- Baseline: KillerPDF 1.8.90 Release, win-x64, source commit `860646ee6336e29274a18cfb89740992a2cdec09`, executable SHA-256 `427BBC7DB4ADC9019A694EFC13831BBDDFA0BE6A84206D042347C4072320B927`.
-- Candidate: KillerPDF 1.9.0 Release, win-x64, source commit `b50f1edf4157b9ee1941d673f9a57990d96a51b9` on `dev/1.9-overkill`, executable SHA-256 `14260C549A58F196319F79CCADC3FDDA0D1D6F1210EAD5931D497F9CBFD27D1E`.
+- Baseline: JPDFs 1.8.90 Release, win-x64, source commit `860646ee6336e29274a18cfb89740992a2cdec09`, executable SHA-256 `427BBC7DB4ADC9019A694EFC13831BBDDFA0BE6A84206D042347C4072320B927`.
+- Candidate: JPDFs 1.9.0 Release, win-x64, source commit `b50f1edf4157b9ee1941d673f9a57990d96a51b9` on `dev/1.9-overkill`, executable SHA-256 `14260C549A58F196319F79CCADC3FDDA0D1D6F1210EAD5931D497F9CBFD27D1E`.
 - Mode: batch resave of each collection with a per-file CSV log and quiet output.
 - One warmup and five measured passes per build and collection. Odd pairs ran 1.8.90 first and even pairs ran 1.9.0 first. Each pass used a fresh process, and the frozen build files were hashed before each pass.
 - All five measured passes of each build produced identical per-file logs.
@@ -114,6 +114,6 @@ Batch resave now opens each file once instead of twice, and full rewrites alloca
 - Input identity: file counts and byte totals match the recorded corpus identity for all four collections. After the series every input was rehashed against the published manifests: 16,696 of 16,696 regression entries, 552 of 552 standards entries (97 local standards files are not in the manifest), and 80 of 80 damaged-file entries matched. The private stress set has no published manifest and was verified by file count and byte total.
 - Full per-file logs remain outside the application repository at `C:\Users\steve\scratch\kp-bench-render\release-1.8.90-vs-1.9-alternating-20261013`. The resumed work is in its `resume-20261013` folder.
 
-The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the measurements for both builds. The 1.8.90 record is [KillerPDF 1.8.90](../1.8.90/CORPUS.md).
+The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the measurements for both builds. The 1.8.90 record is [JPDFs 1.8.90](../1.8.90/CORPUS.md).
 
 This run tests batch opening and saving plus malformed-input process safety. Only the follow-up run measures memory. Neither run tests rendering parity or PDF conformance, and it does not replace interactive rendering checks or a separate qpdf/veraPDF before-and-after conformance sweep.

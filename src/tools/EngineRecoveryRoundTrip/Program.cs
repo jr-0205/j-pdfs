@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
-using KillerPdf.Engine.Rendering;
-using KillerPdf.Engine.Writing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
+using JPDFs.Engine.Rendering;
+using JPDFs.Engine.Writing;
 
 if (args.Length != 3) throw new ArgumentException("Usage: EngineRecoveryRoundTrip CORPUS RECOVERY_SUMMARY_JSON OUTPUT_JSON");
 string root = Path.GetFullPath(args[0]), output = Path.GetFullPath(args[2]);
@@ -29,7 +29,7 @@ foreach (JsonElement file in summary.RootElement.GetProperty("recoveredFiles").E
         if (pixels.All(value => value == 255)) throw new InvalidOperationException("The rendered page is blank.");
         Check(PdfDocument.Open(PdfDocumentWriter.Write(document)), "full rewrite");
         var incremental = new PdfIncrementalUpdateBuilder(document);
-        incremental.AddObject(new KillerPdf.Engine.Objects.PdfInteger(42));
+        incremental.AddObject(new JPDFs.Engine.Objects.PdfInteger(42));
         byte[] saved = incremental.Build();
         if (!saved.AsSpan(0, source.Length).SequenceEqual(source))
             throw new InvalidOperationException("Incremental saving changed original source bytes.");

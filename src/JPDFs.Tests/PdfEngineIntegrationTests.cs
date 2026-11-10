@@ -1,0 +1,2289 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
+using JPDFs.Engine.Objects;
+using JPDFs.Engine.Parsing;
+using JPDFs.Engine.Security;
+using JPDFs.Engine.Writing;
+using JPDFs.Services;
+using Xunit;
+using ContentDocument = JPDFs.Services.PdfContentDocument;
+
+namespace JPDFs.Tests;
+
+public sealed class PdfEngineIntegrationTests
+{
+    [Fact]
+    public void FormDataExchange_RejectsAnInapplicableImportWithoutChangingTheFile()
+    {
+        byte[] source = new PdfDocumentBuilder().AddBlankPage().Build();
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-form-exchange-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, source);
+            var data = new PdfFormDataSet { Fields = [new PdfFormDataField { Name = "Missing", Values = ["Value"] }] };
+            Assert.Throws<InvalidOperationException>(() => PdfEngineIntegration.ApplyFormData(path, data));
+            Assert.Equal(source, File.ReadAllBytes(path));
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Theory]
+    [InlineData(false, 2)]
+    [InlineData(true, 1)]
+    public void BookmarkExchange_AppendsOrReplacesAndRejectsInvalidInputWithoutChangingTheFile(
+        bool replace, int expectedCount)
+    {
+        PdfDocument empty = PdfDocument.Open(new PdfDocumentBuilder().AddBlankPage().Build());
+        byte[] source = new PdfIncrementalPageEditor(empty).AddBookmark("Original", 0).Build();
+        PdfDocument incoming = PdfDocument.Open(new PdfIncrementalPageEditor(empty)
+            .AddBookmark("Imported", 0).Build());
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-bookmark-exchange-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, source);
+            Assert.Throws<InvalidOperationException>(() =>
+                PdfEngineIntegration.ApplyBookmarkData(path, "invalid", replace));
+            Assert.Equal(source, File.ReadAllBytes(path));
+            PdfEngineIntegration.ApplyBookmarkData(path, PdfBookmarkExchange.ToJson(incoming), replace);
+            IReadOnlyList<PdfBookmarkInfo> bookmarks = PdfEngineIntegration.ReadBookmarks(File.ReadAllBytes(path), null);
+            Assert.Equal(expectedCount, bookmarks.Count);
+            Assert.Contains(bookmarks, bookmark => bookmark.Title == "Imported");
+            if (!replace) Assert.Contains(bookmarks, bookmark => bookmark.Title == "Original");
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Theory]
+    [InlineData(".fdf")]
+    [InlineData(".xfdf")]
+    public void FormDataExchange_RoundTripsValuesIntoMatchingFields(string extension)
+    {
+        PdfDocument empty = PdfDocument.Open(new PdfDocumentBuilder().AddBlankPage().Build());
+        PdfDocument source = PdfDocument.Open(new PdfIncrementalPageEditor(empty)
+            .AddTextField(0, "Name", 20, 200, 100, 20, "Alice").Build());
+        byte[] data = PdfEngineIntegration.ExportFormData(source, extension);
+        PdfFormDataSet parsed = PdfEngineIntegration.ReadFormData(data, extension);
+        PdfDocument target = PdfDocument.Open(new PdfIncrementalPageEditor(empty)
+            .AddTextField(0, "Name", 20, 200, 100, 20, "Before").Build());
+
+        Assert.Equal(1, PdfFormDataImporter.CreateReport(target, parsed).ApplicableFieldCount);
+        PdfDocument imported = PdfDocument.Open(PdfFormDataImporter.Apply(target, parsed));
+        PdfFormDataField field = Assert.Single(PdfFormDataExporter.Export(imported).Fields);
+        Assert.Equal("Alice", Assert.Single(field.Values));
+        Assert.Equal("Before", Assert.Single(Assert.Single(PdfFormDataExporter.Export(target).Fields).Values));
+    }
+
+    [Fact]
+    public void AddTextField_CreatesUniquelyNamedEditableWidgets()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-field-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder().AddBlankPage().Build());
+
+            string first = PdfEngineIntegration.AddTextField(path, 0, 72, 600, 200, 24);
+            string second = PdfEngineIntegration.AddTextField(path, 0, 72, 540, 200, 48);
+
+            Assert.Equal("answer_001", first);
+            Assert.Equal("answer_002", second);
+            PdfDocument document = PdfDocument.Open(File.ReadAllBytes(path));
+            IReadOnlyList<PdfFormWidgetInfo> widgets =
+                PdfEngineIntegration.ReadPageFormWidgets(document, 0);
+            Assert.Equal(2, widgets.Count);
+            Assert.Contains(widgets, widget => widget.FieldName == first);
+            Assert.Contains(widgets, widget => widget.FieldName == second);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ReadBookmarks_ProvidesSidebarHierarchyWithoutPdfSharpObjects()
+    {
+        byte[] source = new PdfDocumentBuilder()
+            .AddBlankPage().AddBlankPage()
+            .AddNamedDestination("section", 1, PdfDestination.FitWidth(700))
+            .AddBookmark("Chapter", 0, options: new PdfBookmarkOptions
+            {
+                Style = PdfBookmarkStyle.Bold,
+                Color = new PdfRgbColor(0.2, 0.4, 0.6)
+            })
+            .AddNamedDestinationBookmark("Section", "section", 1)
+            .Build();
+
+        PdfBookmarkInfo chapter = Assert.Single(PdfEngineIntegration.ReadBookmarks(source, null));
+
+        Assert.Equal("Chapter", chapter.Title);
+        Assert.Equal(PdfBookmarkStyle.Bold, chapter.Style);
+        Assert.Equal(new PdfRgbColor(0.2, 0.4, 0.6), chapter.Color);
+        PdfBookmarkInfo section = Assert.Single(chapter.Children);
+        Assert.Equal("section", section.NamedDestination);
+        Assert.Equal(1, section.DestinationPageIndex);
+    }
+
+    [Fact]
+    public void PrintProductionInspection_ProvidesDesktopReportAndSeparationSelection()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-print-production-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            var orange = new PdfSpotColor("Jpdfs Orange", new PdfCmykColor(0, 0.72, 1, 0));
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddPage(300, 400, new PdfContentStreamBuilder()
+                    .SetFillCmyk(0.1, 0.2, 0.3, 0.4).Rectangle(10, 10, 20, 20).Fill())
+                .AddPage(500, 600, new PdfContentStreamBuilder()
+                    .SetFillSpotColor(orange, 0.8).Rectangle(20, 20, 20, 20).Fill())
+                .Build());
+
+            PdfPrintProductionReport report =
+                PdfEngineIntegration.InspectPrintProduction(path, null);
+            PdfSeparationPreview preview = PdfEngineIntegration.CreateSeparationPreview(
+                path, ["Black", "Jpdfs Orange"], null, [1]);
+
+            Assert.Equal(2, report.Pages.Count);
+            Assert.Equal(new PdfPageBoxBounds(0, 0, 500, 600), report.Pages[1].MediaBox);
+            Assert.Equal(["Black", "Cyan", "Magenta", "Yellow", "Jpdfs Orange"],
+                report.Colorants.Select(colorant => colorant.Name));
+            Assert.Equal([1], preview.Pages.Select(page => page.PageIndex));
+            Assert.Empty(preview.Plates[0].PageIndexes);
+            Assert.Equal([1], preview.Plates[1].PageIndexes);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void DocumentReports_ExposeLayersAndPortfolioMetadata()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-document-reports-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder().AddBlankPage().Build());
+
+            PdfOptionalContentInfo layers = PdfEngineIntegration.InspectLayers(path, null);
+            string portfolio = PdfEngineIntegration.InspectPortfolio(path, null);
+            PdfStructuralComparison comparison = PdfEngineIntegration.CompareStructure(path, null, path, null);
+            PdfPreflightReport preflight = PdfEngineIntegration.InspectPreflight(path);
+            PdfAccessibilityReport accessibility = PdfEngineIntegration.InspectAccessibility(path, null);
+
+            Assert.Empty(layers.Groups);
+            Assert.Equal($"Layers: 0{Environment.NewLine}Configurations: 0", layers.ToText());
+            Assert.Equal("PDF portfolio: none", portfolio);
+            Assert.Empty(comparison.Changes);
+            Assert.Equal("Print production", preflight.ProfileName);
+            Assert.Contains("Preflight profile: Print production", preflight.ToText());
+            Assert.Contains("Accessibility result:", accessibility.ToText());
+            Assert.Empty(PdfEngineIntegration.PlanTableOfContents(path, 6, null).Entries);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void InspectPreflight_WithCustomProfile_ReportsTheProfileName()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-custom-preflight-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder().AddBlankPage().Build());
+            var profile = new PdfPreflightProfile("Language check",
+                [PdfPreflightCheck.DocumentLanguage]);
+
+            PdfPreflightReport report = PdfEngineIntegration.InspectPreflight(path, profile);
+
+            Assert.Equal("Language check", report.ProfileName);
+            Assert.Contains("Preflight profile: Language check", report.ToText());
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void TableOfContentsIntegration_PlansAndInsertsClickableContents()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-table-of-contents-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddBlankPage()
+                .AddBookmark("Chapter", 0)
+                .AddBookmark("Section", 1, level: 1)
+                .Build());
+
+            PdfTableOfContentsPlan plan = PdfEngineIntegration.PlanTableOfContents(path, 6, null);
+            PdfTableOfContentsWriteResult result = PdfEngineIntegration.InsertTableOfContents(
+                path, "Contents", 6);
+            PdfDocument output = PdfDocument.Open(File.ReadAllBytes(path));
+
+            Assert.Equal(2, plan.Entries.Count);
+            Assert.Equal(1, result.InsertedPageCount);
+            Assert.Equal(2, result.EntryCount);
+            Assert.Equal(3, PageCount(output));
+            Assert.Contains("Contents", PdfStructuredExport.ToPlainText(output, [0]));
+            Assert.Equal([1, 2], PdfLinkReader.ReadPage(output, 0)
+                .Select(link => link.DestinationPageIndex));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void LayerIntegration_RenamesAndUpdatesSavedState()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-layer-edit-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            var layer = new PdfOptionalContentGroup("Original", initiallyVisible: true);
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddPage(100, 100, new PdfContentStreamBuilder()
+                    .BeginOptionalContent(layer).Rectangle(0, 0, 10, 10).Fill()
+                    .EndMarkedContent())
+                .Build());
+            PdfOptionalContentGroupInfo original = Assert.Single(
+                PdfEngineIntegration.InspectLayers(path, null).Groups);
+
+            PdfEngineIntegration.ApplyLayerEdits(path,
+            [
+                new PdfEngineIntegration.LayerEdit(
+                    original.ObjectNumber, "Reviewed", false, true)
+            ]);
+
+            PdfOptionalContentGroupInfo changed = Assert.Single(
+                PdfEngineIntegration.InspectLayers(path, null).Groups);
+            Assert.Equal("Reviewed", changed.Name);
+            Assert.False(changed.IsInitiallyVisible);
+            Assert.True(changed.IsLocked);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CommentIntegration_ReadsEditsAndRemovesSelectedComment()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-comments-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddTextNote(0, 10, 20, "Review this", name: "review")
+                .AddTextNote(0, 30, 20, "Done", name: "reply", inReplyTo: "review")
+                .Build());
+
+            PdfCommentThread thread = Assert.Single(
+                PdfEngineIntegration.ReadCommentThreads(path, null));
+            PdfCommentInfo reply = Assert.Single(thread.Replies).Comment;
+            PdfEngineIntegration.SetCommentContents(path, reply, "Updated reply");
+
+            thread = Assert.Single(PdfEngineIntegration.ReadCommentThreads(path, null));
+            reply = Assert.Single(thread.Replies).Comment;
+            Assert.Equal("Updated reply", reply.Contents);
+            PdfEngineIntegration.RemoveComment(path, reply);
+
+            thread = Assert.Single(PdfEngineIntegration.ReadCommentThreads(path, null));
+            Assert.Equal("Review this", thread.Comment.Contents);
+            Assert.Empty(thread.Replies);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void DivideSpreads_WritesOrderedPagePairsAndReturnsMappings()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-spreads-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage(600, 400)
+                .AddBlankPage(300, 400)
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            IReadOnlyList<PdfSpreadDivisionMapping> mappings =
+                PdfEngineIntegration.DivideSpreads(path,
+                [new PdfSpreadDivisionRequest(
+                    0, PdfSpreadDivisionDirection.Vertical, 0.4)]);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            Assert.Equal(new PdfSpreadDivisionMapping(0, 0, 1), Assert.Single(mappings));
+            IReadOnlyList<PdfPageInformation> pages =
+                PdfPageInformation.Read(PdfDocument.Open(result));
+            Assert.Equal(3, pages.Count);
+            Assert.Equal(240, pages[0].Width);
+            Assert.Equal(360, pages[1].Width);
+            Assert.Equal(300, pages[2].Width);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void PartialRasterization_PlansAndAppliesReviewedDesktopRegion()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-partial-raster-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddPage(100, 100, new PdfContentStreamBuilder()
+                    .Rectangle(10, 10, 20, 20).Stroke())
+                .Build();
+            File.WriteAllBytes(path, source);
+            PdfPartialRasterizationPlan plan =
+                PdfEngineIntegration.PlanPartialRasterization(
+                    path, 0, new PdfContentBounds(5, 5, 30, 30), 72);
+            PdfImage raster = PdfImage.FromRgb(plan.PixelWidth, plan.PixelHeight,
+                Enumerable.Repeat((byte)180, plan.PixelWidth * plan.PixelHeight * 3).ToArray());
+
+            PdfEngineIntegration.ApplyPartialRasterization(path,
+            [
+                new PdfPartialRasterizationReplacement(0, plan, raster)
+            ]);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            Assert.Equal(25, plan.PixelWidth);
+            Assert.Single(plan.Paths);
+            PdfExtractedImage image = Assert.Single(new PdfPageContentReader(
+                PdfDocument.Open(result)).Read(0).Images);
+            Assert.Equal(plan.Region, image.BoundingBox);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ReplaceBookmarks_WritesEditedHierarchyThroughEngine()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-bookmarks-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage().AddBlankPage()
+                .AddNamedDestination("section", 1, PdfDestination.FitWidth(700))
+                .AddBookmark("Old chapter", 0)
+                .AddNamedDestinationBookmark("Section", "section", 1)
+                .Build());
+            IReadOnlyList<PdfBookmarkInfo> original =
+                PdfEngineIntegration.ReadBookmarks(File.ReadAllBytes(path), null);
+            PdfBookmarkInfo changed = original[0] with
+            {
+                Title = "Renamed chapter",
+                Style = PdfBookmarkStyle.Italic,
+                IsOpen = false
+            };
+
+            PdfEngineIntegration.ReplaceBookmarks(path, [changed]);
+
+            PdfBookmarkInfo result = Assert.Single(
+                PdfEngineIntegration.ReadBookmarks(File.ReadAllBytes(path), null));
+            Assert.Equal("Renamed chapter", result.Title);
+            Assert.Equal(PdfBookmarkStyle.Italic, result.Style);
+            Assert.False(result.IsOpen);
+            PdfBookmarkInfo child = Assert.Single(result.Children);
+            Assert.Equal("section", child.NamedDestination);
+            Assert.Equal(1, child.DestinationPageIndex);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ReadPageLinks_ResolvesViewerTargetsAndAnnotationIndices()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-links-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage(300, 400).AddBlankPage(300, 400)
+                .AddUriLink(0, 10, 20, 80, 15, "https://example.com")
+                .AddPageLink(0, 100, 40, 50, 20, 1)
+                .Build());
+
+            IReadOnlyList<PdfLinkInfo> links = PdfEngineIntegration.ReadPageLinks(path, 0, null);
+
+            Assert.Equal(2, links.Count);
+            Assert.Equal("https://example.com/", links[0].Uri);
+            Assert.Equal(0, links[0].AnnotationIndex);
+            Assert.Equal(1, links[1].DestinationPageIndex);
+            Assert.Equal(1, links[1].AnnotationIndex);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ReadPageFormWidgets_ProvidesInteractiveViewerState()
+    {
+        PdfDocument document = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddBlankPage(300, 400)
+            .AddTextField(0, "contact.email", 20, 300, 180, 24, "a@example.com", 10,
+                new PdfTextFieldOptions { MaximumLength = 120 })
+            .AddComboBoxOptions(0, "region", 20, 250, 140, 24,
+            [
+                new PdfChoiceOption("us", "United States"),
+                new PdfChoiceOption("ca", "Canada")
+            ], "ca")
+            .Build());
+
+        IReadOnlyList<PdfFormWidgetInfo> widgets =
+            PdfEngineIntegration.ReadPageFormWidgets(document, 0);
+
+        Assert.Equal(2, widgets.Count);
+        PdfFormWidgetInfo text = widgets.Single(widget => widget.FieldName == "contact.email");
+        Assert.Equal(PdfFormFieldKind.Text, text.FieldKind);
+        Assert.Equal("a@example.com", text.Value);
+        Assert.Equal(120, text.MaximumLength);
+        PdfFormWidgetInfo choice = widgets.Single(widget => widget.FieldName == "region");
+        Assert.Equal("ca", choice.Value);
+        Assert.Equal("Canada", choice.Options[1].DisplayValue);
+    }
+
+    [Fact]
+    public void CreateBlankDocument_AuthorsOneA4Page()
+    {
+        byte[] result = PdfEngineIntegration.CreateBlankDocument();
+
+        IReadOnlyList<PdfPageInformation> pages =
+            PdfPageInformation.Read(PdfDocument.Open(result));
+        Assert.Single(pages);
+        Assert.Equal(595, pages[0].Width);
+        Assert.Equal(842, pages[0].Height);
+    }
+
+    [Fact]
+    public void RebuildDocument_PreservesPagesAndOptionallyStripsRotations()
+    {
+        string input = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-rebuild-input-{Guid.NewGuid():N}.pdf");
+        string preserved = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-rebuild-preserved-{Guid.NewGuid():N}.pdf");
+        string stripped = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-rebuild-stripped-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            PdfDocument authored = PdfDocument.Open(new PdfDocumentBuilder()
+                .SetMetadata(new PdfDocumentMetadata { Title = "Repair fixture" })
+                .AddBlankPage(200, 300).AddBlankPage(400, 500).Build());
+            File.WriteAllBytes(input, new PdfIncrementalPageEditor(authored)
+                .SetRotation(0, 90).SetRotation(1, 270).Build());
+
+            PdfEngineIntegration.RebuildDocument(input, preserved);
+            PdfEngineIntegration.RebuildDocument(input, stripped, stripRotations: true);
+
+            IReadOnlyList<PdfPageInformation> preservedPages =
+                PdfPageInformation.Read(PdfDocument.Open(File.ReadAllBytes(preserved)));
+            IReadOnlyList<PdfPageInformation> strippedPages =
+                PdfPageInformation.Read(PdfDocument.Open(File.ReadAllBytes(stripped)));
+            Assert.Equal([90, 270], preservedPages.Select(page => page.Rotation));
+            Assert.Equal([0, 0], strippedPages.Select(page => page.Rotation));
+            Assert.Equal([200d, 400d], preservedPages.Select(page => page.Width));
+        }
+        finally
+        {
+            foreach (string path in new[] { input, preserved, stripped })
+                if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ResaveDocument_WritesDeterministicEngineOutput()
+    {
+        string input = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-resave-input-{Guid.NewGuid():N}.pdf");
+        string first = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-resave-first-{Guid.NewGuid():N}.pdf");
+        string second = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-resave-second-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(input, new PdfDocumentBuilder()
+                .SetMetadata(new PdfDocumentMetadata { Title = "Batch fixture" })
+                .AddBlankPage(200, 300).Build());
+
+            PdfEngineIntegration.ResaveDocument(input, first);
+            PdfEngineIntegration.ResaveDocument(input, second);
+
+            Assert.Equal(File.ReadAllBytes(first), File.ReadAllBytes(second));
+            IReadOnlyList<PdfPageInformation> pages = PdfPageInformation.Read(
+                PdfDocument.Open(File.ReadAllBytes(first)));
+            Assert.Single(pages);
+            Assert.Equal(200, pages[0].Width);
+            Assert.Equal(300, pages[0].Height);
+        }
+        finally
+        {
+            foreach (string path in new[] { input, first, second })
+                if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RemoveAnnotation_RemovesOnlySelectedNativeAnnotation()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-remove-annotation-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder().AddBlankPage(200, 300)
+                .AddUriLink(0, 10, 10, 50, 20, "https://example.com/first")
+                .AddUriLink(0, 10, 40, 50, 20, "https://example.com/second")
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.RemoveAnnotation(path, 0, 0);
+
+            byte[] result = File.ReadAllBytes(path);
+            PdfDocument reopened = PdfDocument.Open(result);
+            PdfArray annotations = Assert.IsType<PdfArray>(
+                Page(reopened, 0)[new PdfName("Annots"u8)]);
+            Assert.Single(annotations);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RemapRotationsAfterPageTurns_UpdatesOnlyDistinctSelectedPages()
+    {
+        var rotations = new Dictionary<int, int>
+        {
+            [0] = 0,
+            [1] = 90,
+            [2] = 270,
+        };
+
+        PdfEngineIntegration.RemapRotationsAfterPageTurns(
+            rotations, [0, 2, 2], 90);
+
+        Assert.Equal(90, rotations[0]);
+        Assert.Equal(90, rotations[1]);
+        Assert.Equal(0, rotations[2]);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            PdfEngineIntegration.RemapRotationsAfterPageTurns(
+                rotations, [3], 90));
+    }
+
+    [Fact]
+    public void StripLinkAppearances_MakesLinksInvisibleAndPreservesTargets()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-strip-links-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder().AddBlankPage(200, 300)
+                .AddUriLink(0, 10, 10, 80, 20, "https://example.com/",
+                    new PdfLinkAppearance(borderWidth: 2,
+                        color: new PdfRgbColor(1, 0, 0)))
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.StripLinkAppearances(path);
+
+            byte[] result = File.ReadAllBytes(path);
+            PdfDocument reopened = PdfDocument.Open(result);
+            PdfArray annotations = Assert.IsType<PdfArray>(
+                Page(reopened, 0)[new PdfName("Annots"u8)]);
+            PdfDictionary link = Assert.IsType<PdfDictionary>(reopened.Resolve(
+                Assert.IsType<PdfIndirectReference>(Assert.Single(annotations))));
+            PdfDictionary borderStyle = Assert.IsType<PdfDictionary>(link[new PdfName("BS"u8)]);
+            PdfArray border = Assert.IsType<PdfArray>(link[new PdfName("Border"u8)]);
+            Assert.Equal(0, Assert.IsType<PdfInteger>(borderStyle[new PdfName("W"u8)]).Value);
+            Assert.All(border, value => Assert.Equal(0, Assert.IsType<PdfInteger>(value).Value));
+            Assert.False(link.ContainsKey(new PdfName("C"u8)));
+            Assert.False(link.ContainsKey(new PdfName("AP"u8)));
+            Assert.True(link.ContainsKey(new PdfName("A"u8)));
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void AddSearchableTextLayers_WritesExtractableMultiscriptUnicode()
+    {
+        string input = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-ocr-input-{Guid.NewGuid():N}.pdf");
+        string output = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-ocr-output-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder().AddBlankPage(300, 400).Build();
+            File.WriteAllBytes(input, source);
+            var words = new[]
+            {
+                new PdfOcrPixelWord("Hello", 0, 10, 10, 80, 30),
+                new PdfOcrPixelWord("বাংলা", 0, 10, 40, 100, 65),
+                new PdfOcrPixelWord("日本語", 0, 10, 75, 100, 100),
+                new PdfOcrPixelWord("中文", 0, 10, 110, 80, 135),
+            };
+
+            int count = PdfEngineIntegration.AddSearchableTextLayers(
+                input, output,
+                [new PdfOcrPixelPage(300, 400, words)]);
+
+            Assert.Equal(4, count);
+            Assert.True(File.ReadAllBytes(output).AsSpan(0, source.Length).SequenceEqual(source));
+            using ContentDocument extracted = ContentDocument.Open(output, null);
+            string text = extracted.GetPage(1).Text;
+            Assert.Contains("Hello", text);
+            Assert.Contains("বাংলা", text);
+            Assert.Contains("日本語", text);
+            Assert.Contains("中文", text);
+        }
+        finally
+        {
+            if (File.Exists(input)) File.Delete(input);
+            if (File.Exists(output)) File.Delete(output);
+        }
+    }
+
+    [Fact]
+    public void AddSearchableTextLayers_HandlesEveryNativePageRotation()
+    {
+        string input = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-ocr-rotated-input-{Guid.NewGuid():N}.pdf");
+        string output = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-ocr-rotated-output-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            PdfDocument authored = PdfDocument.Open(new PdfDocumentBuilder()
+                .AddBlankPage(300, 400).AddBlankPage(300, 400)
+                .AddBlankPage(300, 400).AddBlankPage(300, 400).Build());
+            byte[] source = new PdfIncrementalPageEditor(authored)
+                .SetRotation(0, 0).SetRotation(1, 90)
+                .SetRotation(2, 180).SetRotation(3, 270).Build();
+            File.WriteAllBytes(input, source);
+            var layers = Enumerable.Range(0, 4).Select(index =>
+                new PdfOcrPixelPage(
+                    index % 2 == 0 ? 300 : 400,
+                    index % 2 == 0 ? 400 : 300,
+                    [new PdfOcrPixelWord(
+                        $"Rotation{index}", 0, 10, 10, 120, 35)])).ToArray();
+
+            Assert.Equal(4, PdfEngineIntegration.AddSearchableTextLayers(
+                input, output, layers));
+
+            using ContentDocument extracted = ContentDocument.Open(output, null);
+            for (int index = 0; index < 4; index++)
+                Assert.Contains($"Rotation{index}", extracted.GetPage(index + 1).Text);
+        }
+        finally
+        {
+            if (File.Exists(input)) File.Delete(input);
+            if (File.Exists(output)) File.Delete(output);
+        }
+    }
+
+    [Fact]
+    public void ApplyFormValues_WritesAllDesktopFieldTypesInOneRevision()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-forms-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddBlankPage()
+                .AddTextField(0, "customer.name", 20, 20, 140, 24, "Original")
+                .AddComboBoxOptions(0, "customer.country", 20, 60, 140, 24, [
+                    new PdfChoiceOption("US", "United States"),
+                    new PdfChoiceOption("CA", "Canada")], "US")
+                .AddCheckBox(0, "customer.approved", 20, 100, 20, 20)
+                .AddRadioGroup("customer.plan", [
+                    new PdfRadioButtonOption(0, 20, 140, 20, 20, "Free"),
+                    new PdfRadioButtonOption(1, 20, 20, 20, 20, "Pro")], "Free")
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.ApplyFormValues(path, new PdfEngineIntegration.FormEdits(
+                new Dictionary<string, string> { ["customer.name"] = "Updated" },
+                new Dictionary<string, string> { ["customer.country"] = "CA" },
+                new Dictionary<string, IReadOnlyList<string>>(),
+                new Dictionary<string, bool> { ["customer.approved"] = true },
+                new Dictionary<string, string> { ["customer.plan"] = "/Pro" },
+                new Dictionary<string, double> { ["customer.name"] = 7.5 }));
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            Assert.Equal(2, PdfDocumentInformation.Read(PdfDocument.Open(result)).PageCount);
+            string syntax = System.Text.Encoding.Latin1.GetString(result);
+            Assert.Contains("/V /Pro", syntax);
+            Assert.Contains("7.5 Tf", syntax);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void ApplyFormValues_SavesUnlistedWidgetWithEmptyCreationDate(int colorComponents)
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-unlisted-form-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            PdfDocument original = PdfDocument.Open(new PdfDocumentBuilder()
+                .SetMetadata(new PdfDocumentMetadata { Title = "Form" })
+                .AddBlankPage()
+                .AddTextField(0, "Name", 20, 20, 140, 24, "Original")
+                .Build());
+            var rootName = new PdfName("Root"u8);
+            var infoName = new PdfName("Info"u8);
+            var acroFormName = new PdfName("AcroForm"u8);
+            var root = (PdfIndirectReference)original.Trailer[rootName];
+            var info = (PdfIndirectReference)original.Trailer[infoName];
+            var catalog = (PdfDictionary)original.Resolve(root);
+            var update = new PdfIncrementalUpdateBuilder(original);
+            update.ReplaceObject(root.ObjectNumber, new PdfDictionary(
+                catalog.Where(entry => !entry.Key.Equals(acroFormName))));
+            update.ReplaceObject(info.ObjectNumber, new PdfDictionary(
+            [
+                new(new PdfName("CreationDate"u8),
+                    new PdfString([], PdfStringForm.Literal))
+            ]));
+            PdfFormWidgetInfo originalWidget = Assert.Single(PdfFormWidgetReader.ReadPage(original, 0));
+            var widgetReference = new PdfIndirectReference(
+                originalWidget.ObjectNumber, originalWidget.Generation);
+            var widget = (PdfDictionary)original.Resolve(widgetReference);
+            var mkName = new PdfName("MK"u8);
+            var color = new PdfArray(Enumerable.Repeat<PdfObject>(
+                new PdfInteger(1), colorComponents));
+            var mk = new PdfDictionary(
+            [
+                new(new PdfName("BG"u8), color),
+                new(new PdfName("BC"u8), color)
+            ]);
+            update.ReplaceObject(widgetReference.ObjectNumber, new PdfDictionary(
+                widget.Where(entry => !entry.Key.Equals(mkName))
+                    .Append(new KeyValuePair<PdfName, PdfObject>(mkName, mk))));
+            byte[] source = update.Build();
+            File.WriteAllBytes(path, source);
+
+            Assert.Single(Assert.Single(PdfEngineIntegration.ReadAllPageFormWidgets(path, null)));
+            PdfEngineIntegration.ApplyFormValues(path, new PdfEngineIntegration.FormEdits(
+                new Dictionary<string, string> { ["Name"] = "Updated" },
+                new Dictionary<string, string>(),
+                new Dictionary<string, IReadOnlyList<string>>(),
+                new Dictionary<string, bool>(),
+                new Dictionary<string, string>(),
+                new Dictionary<string, double>()));
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfDocument saved = PdfDocument.Open(result);
+            Assert.True(((PdfDictionary)saved.Resolve(root)).ContainsKey(acroFormName));
+            Assert.Equal("Updated", Assert.Single(PdfFormWidgetReader.ReadPage(saved, 0)).Value);
+            Assert.Single(PdfPageInformation.Read(saved));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyFormValues_WritesABatchOfOnlyMultiSelectValues()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-multi-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddMultiSelectListBox(0, "customer.colours", 20, 20, 140, 96,
+                    ["Red", "Green", "Blue", "Amber"], ["Green", "Blue"])
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.ApplyFormValues(path, new PdfEngineIntegration.FormEdits(
+                new Dictionary<string, string>(),
+                new Dictionary<string, string>(),
+                new Dictionary<string, IReadOnlyList<string>>
+                {
+                    ["customer.colours"] = new[] { "Red", "Amber" }
+                },
+                new Dictionary<string, bool>(),
+                new Dictionary<string, string>(),
+                new Dictionary<string, double>()));
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfFormWidgetInfo widget = Assert.Single(
+                PdfEngineIntegration.ReadPageFormWidgets(PdfDocument.Open(result), 0),
+                candidate => candidate.FieldName == "customer.colours");
+            Assert.Equal(new[] { "Red", "Amber" }, widget.Values);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData("don’t")]
+    [InlineData("a—b")]
+    [InlineData("€50")]
+    [InlineData("A\U0001F600B")]
+    [InlineData("日本")]
+    public void ApplyFormValues_EmbedsFontForUnicodeTextValues(string value)
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-unicode-form-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddTextField(0, "customer.name", 20, 20, 180, 28, "Original")
+                .Build());
+
+            PdfEngineIntegration.ApplyFormValues(path, new PdfEngineIntegration.FormEdits(
+                new Dictionary<string, string> { ["customer.name"] = value },
+                new Dictionary<string, string>(),
+                new Dictionary<string, IReadOnlyList<string>>(), new Dictionary<string, bool>(),
+                new Dictionary<string, string>(), new Dictionary<string, double>()));
+
+            PdfFormWidgetInfo field = Assert.Single(PdfFormWidgetReader.ReadPage(
+                PdfDocument.Open(File.ReadAllBytes(path)), 0));
+            Assert.Equal(value, field.Value);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyFormValues_EmbedsFontForUnicodeChoiceValues()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-unicode-choice-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddComboBox(0, "customer.currency", 20, 20, 180, 28,
+                    ["Dollar", "Other"], "Dollar", editable: true)
+                .Build());
+
+            PdfEngineIntegration.ApplyFormValues(path, new PdfEngineIntegration.FormEdits(
+                new Dictionary<string, string>(),
+                new Dictionary<string, string> { ["customer.currency"] = "€50" },
+                new Dictionary<string, IReadOnlyList<string>>(), new Dictionary<string, bool>(),
+                new Dictionary<string, string>(), new Dictionary<string, double>()));
+
+            PdfFormWidgetInfo field = Assert.Single(PdfFormWidgetReader.ReadPage(
+                PdfDocument.Open(File.ReadAllBytes(path)), 0));
+            Assert.Equal("€50", field.Value);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RemoveEncryption_WritesPasswordFreeDocumentWithPreservedMetadata()
+    {
+        string sourcePath = Path.Combine(Path.GetTempPath(), $"jpdfs-encrypted-{Guid.NewGuid():N}.pdf");
+        string destinationPath = Path.Combine(Path.GetTempPath(), $"jpdfs-decrypted-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .SetMetadata(new PdfDocumentMetadata { Title = "Preserved" })
+                .SetPasswordEncryption(new PdfPasswordEncryptionOptions
+                {
+                    UserPassword = "user",
+                    OwnerPassword = "owner"
+                })
+                .AddBlankPage()
+                .Build();
+            string malformed = System.Text.Encoding.Latin1.GetString(source)
+                .Replace("startxref", "startref ", StringComparison.Ordinal);
+            File.WriteAllBytes(sourcePath,
+                System.Text.Encoding.Latin1.GetBytes(malformed));
+
+            PdfEngineIntegration.RemoveEncryption(sourcePath, destinationPath, "owner");
+
+            PdfDocument document = PdfDocument.Open(File.ReadAllBytes(destinationPath));
+            Assert.False(document.IsEncrypted);
+            Assert.Equal("Preserved", PdfDocumentInformation.Read(document).Title);
+        }
+        finally
+        {
+            if (File.Exists(sourcePath)) File.Delete(sourcePath);
+            if (File.Exists(destinationPath)) File.Delete(destinationPath);
+        }
+    }
+
+    [Fact]
+    public void CreateZeroRotationCopy_PreservesSourcePrefixAndClearsEveryRotation()
+    {
+        string sourcePath = Path.Combine(Path.GetTempPath(), $"jpdfs-rotated-{Guid.NewGuid():N}.pdf");
+        string destinationPath = Path.Combine(Path.GetTempPath(), $"jpdfs-render-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] unrotated = new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddBlankPage()
+                .Build();
+            byte[] source = new PdfIncrementalPageEditor(PdfDocument.Open(unrotated))
+                .SetRotation(0, 90)
+                .SetRotation(1, 270)
+                .Build();
+            string malformed = System.Text.Encoding.Latin1.GetString(source)
+                .Replace("startxref", "startref ", StringComparison.Ordinal);
+            source = System.Text.Encoding.Latin1.GetBytes(malformed);
+            File.WriteAllBytes(sourcePath, source);
+
+            PdfEngineIntegration.CreateZeroRotationCopy(sourcePath, destinationPath);
+
+            byte[] result = File.ReadAllBytes(destinationPath);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            Assert.Contains("/Rotate 0", System.Text.Encoding.ASCII.GetString(result));
+            Assert.Equal(2, PdfDocumentInformation.Read(PdfDocument.Open(result)).PageCount);
+        }
+        finally
+        {
+            if (File.Exists(sourcePath)) File.Delete(sourcePath);
+            if (File.Exists(destinationPath)) File.Delete(destinationPath);
+        }
+    }
+
+    [Fact]
+    public void MergeDocuments_PreservesFirstPrefixAndImportsCompleteDocuments()
+    {
+        byte[] first = new PdfDocumentBuilder()
+            .AddBlankPage()
+            .AddBookmark("First", 0)
+            .Build();
+        byte[] second = new PdfDocumentBuilder()
+            .AddBlankPage()
+            .AddBlankPage()
+            .AddBookmark("Second", 1)
+            .Build();
+
+        byte[] merged = PdfEngineIntegration.MergeDocuments([first, second]);
+
+        Assert.True(merged.AsSpan(0, first.Length).SequenceEqual(first));
+        Assert.Equal(3, PdfDocumentInformation.Read(PdfDocument.Open(merged)).PageCount);
+    }
+
+    [Fact]
+    public void MergeFiles_ComposesPdfAndImageInputsInOriginalOrder()
+    {
+        string pdfPath = Path.Combine(Path.GetTempPath(), $"jpdfs-merge-{Guid.NewGuid():N}.pdf");
+        string imagePath = Path.Combine(Path.GetTempPath(), $"jpdfs-merge-{Guid.NewGuid():N}.png");
+        try
+        {
+            File.WriteAllBytes(pdfPath, new PdfDocumentBuilder()
+                .AddPage(200, 300, ReadOnlyMemory<byte>.Empty)
+                .AddBookmark("PDF page", 0)
+                .Build());
+            using (var bitmap = new System.Drawing.Bitmap(40, 20))
+            {
+                bitmap.SetResolution(72, 72);
+                using System.Drawing.Graphics graphics = System.Drawing.Graphics.FromImage(bitmap);
+                graphics.Clear(System.Drawing.Color.CornflowerBlue);
+                bitmap.Save(imagePath, System.Drawing.Imaging.ImageFormat.Png);
+            }
+
+            byte[] merged = PdfEngineIntegration.MergeFiles([pdfPath, imagePath]);
+
+            PdfDocument document = PdfDocument.Open(merged);
+            byte[] pdfSource = File.ReadAllBytes(pdfPath);
+            Assert.True(merged.AsSpan(0, pdfSource.Length).SequenceEqual(pdfSource));
+            Assert.Equal(2, PdfDocumentInformation.Read(document).PageCount);
+            string syntax = System.Text.Encoding.Latin1.GetString(merged);
+            Assert.Contains("/Subtype /Image", syntax);
+            Assert.Contains("/Outlines", syntax);
+        }
+        finally
+        {
+            if (File.Exists(pdfPath)) File.Delete(pdfPath);
+            if (File.Exists(imagePath)) File.Delete(imagePath);
+        }
+    }
+
+    [Fact]
+    public void MergeFiles_EmbedsJpegInputWithoutLosslessExpansion()
+    {
+        string imagePath = Path.Combine(
+            Path.GetTempPath(), $"jpdfs-import-{Guid.NewGuid():N}.jpg");
+        try
+        {
+            using (var bitmap = new System.Drawing.Bitmap(80, 60))
+            {
+                bitmap.SetResolution(96, 96);
+                using System.Drawing.Graphics graphics = System.Drawing.Graphics.FromImage(bitmap);
+                graphics.Clear(System.Drawing.Color.CornflowerBlue);
+                bitmap.Save(imagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+            byte[] jpeg = File.ReadAllBytes(imagePath);
+
+            byte[] merged = PdfEngineIntegration.MergeFiles([imagePath]);
+
+            string syntax = System.Text.Encoding.Latin1.GetString(merged);
+            Assert.Contains("/Filter /DCTDecode", syntax);
+            Assert.True(merged.AsSpan().IndexOf(jpeg) >= 0);
+        }
+        finally
+        {
+            if (File.Exists(imagePath)) File.Delete(imagePath);
+        }
+    }
+
+    [Fact]
+    public void CreateRasterDocument_AuthorsBgraPagesWithRequestedPointSizes()
+    {
+        byte[] result = PdfEngineIntegration.CreateRasterDocument([
+            new PdfEngineIntegration.RasterPage(2, 1, 144, 72,
+                new byte[] { 30, 20, 10, 255, 60, 50, 40, 128 }),
+            new PdfEngineIntegration.RasterPage(1, 1, 72, 144,
+                new byte[] { 90, 80, 70, 255 })]);
+
+        Assert.Equal(2, PdfDocumentInformation.Read(PdfDocument.Open(result)).PageCount);
+        string syntax = System.Text.Encoding.Latin1.GetString(result);
+        Assert.Contains("/MediaBox [0 0 144 72]", syntax);
+        Assert.Contains("/MediaBox [0 0 72 144]", syntax);
+        Assert.Contains("/SMask", syntax);
+    }
+
+    [Fact]
+    public void CreateRasterDocument_EmbedsSuppliedJpegWithoutRecompression()
+    {
+        BitmapSource bitmap = BitmapSource.Create(2, 1, 96, 96, PixelFormats.Bgr24,
+            null, new byte[] { 0, 0, 255, 0, 255, 0 }, 6);
+        var encoder = new JpegBitmapEncoder { QualityLevel = 70 };
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        byte[] jpeg = stream.ToArray();
+
+        byte[] result = PdfEngineIntegration.CreateRasterDocument([
+            new PdfEngineIntegration.RasterPage(2, 1, 144, 72,
+                ReadOnlyMemory<byte>.Empty, jpeg)]);
+
+        string syntax = System.Text.Encoding.Latin1.GetString(result);
+        Assert.Contains("/Filter /DCTDecode", syntax);
+        Assert.True(result.AsSpan().IndexOf(jpeg) >= 0);
+    }
+
+    [Fact]
+    public void CreateRasterDocument_EmbedsOneChannelGrayscaleJpeg()
+    {
+        byte[] pixels =
+        [
+            24, 24, 24, 255,
+            208, 208, 208, 255,
+        ];
+        byte[] jpeg = BitmapHelpers.EncodeJpeg(
+            pixels, 2, 1, 150, quality: 80, grayscale: true);
+
+        byte[] result = PdfEngineIntegration.CreateRasterDocument([
+            new PdfEngineIntegration.RasterPage(
+                2, 1, 144, 72, pixels, jpeg, Grayscale: true)]);
+
+        string syntax = System.Text.Encoding.Latin1.GetString(result);
+        Assert.Contains("/Filter /DCTDecode", syntax);
+        Assert.Contains("/ColorSpace /DeviceGray", syntax);
+        Assert.DoesNotContain("/SMask", syntax);
+        Assert.True(result.AsSpan().IndexOf(jpeg) >= 0);
+    }
+
+    [Fact]
+    public void CreateRasterDocument_StoresBitonalPagesAsOneBitWithoutAlphaMask()
+    {
+        byte[] result = PdfEngineIntegration.CreateRasterDocument([
+            new PdfEngineIntegration.RasterPage(2, 1, 144, 72,
+                new byte[] { 0, 0, 0, 255, 255, 255, 255, 255 },
+                Bitonal: true)]);
+
+        string syntax = System.Text.Encoding.Latin1.GetString(result);
+        Assert.Contains("/BitsPerComponent 1", syntax);
+        Assert.Contains("/ColorSpace /DeviceGray", syntax);
+        Assert.DoesNotContain("/SMask", syntax);
+    }
+
+    [Fact]
+    public void CreateRasterDocument_StoresGrayscalePagesWithOneColorComponent()
+    {
+        byte[] result = PdfEngineIntegration.CreateRasterDocument([
+            new PdfEngineIntegration.RasterPage(2, 1, 144, 72,
+                new byte[] { 24, 24, 24, 255, 208, 208, 208, 255 },
+                Grayscale: true)]);
+
+        string syntax = System.Text.Encoding.Latin1.GetString(result);
+        Assert.Contains("/BitsPerComponent 8", syntax);
+        Assert.Contains("/ColorSpace /DeviceGray", syntax);
+        Assert.DoesNotContain("/SMask", syntax);
+    }
+
+    [Fact]
+    public void MergeReadableFiles_SkipsInvalidFolderImportEntries()
+    {
+        string validPath = Path.Combine(Path.GetTempPath(), $"jpdfs-readable-{Guid.NewGuid():N}.pdf");
+        string invalidPath = Path.Combine(Path.GetTempPath(), $"jpdfs-invalid-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(validPath, new PdfDocumentBuilder().AddBlankPage().Build());
+            File.WriteAllText(invalidPath, "not a PDF");
+
+            byte[] result = PdfEngineIntegration.MergeReadableFiles([invalidPath, validPath]);
+
+            Assert.Equal(1, PdfDocumentInformation.Read(PdfDocument.Open(result)).PageCount);
+        }
+        finally
+        {
+            if (File.Exists(validPath)) File.Delete(validPath);
+            if (File.Exists(invalidPath)) File.Delete(invalidPath);
+        }
+    }
+
+    [Fact]
+    public void ExtractPages_UsesRequestedPageOrderAndReturnsIndependentDocument()
+    {
+        byte[] source = new PdfDocumentBuilder()
+            .AddPage(100, 200, ReadOnlyMemory<byte>.Empty)
+            .AddPage(100, 300, ReadOnlyMemory<byte>.Empty)
+            .AddPage(100, 400, ReadOnlyMemory<byte>.Empty)
+            .Build();
+
+        byte[] extracted = PdfEngineIntegration.ExtractPages(source, [2, 0]);
+        Assert.Equal(2, PdfDocumentInformation.Read(PdfDocument.Open(extracted)).PageCount);
+    }
+
+    [Fact]
+    public void SplitPages_ReturnsOneValidDocumentPerPage()
+    {
+        byte[] source = new PdfDocumentBuilder()
+            .AddPage(100, 200, ReadOnlyMemory<byte>.Empty)
+            .AddPage(100, 300, ReadOnlyMemory<byte>.Empty)
+            .AddPage(100, 400, ReadOnlyMemory<byte>.Empty)
+            .Build();
+
+        IReadOnlyList<byte[]> pages = PdfEngineIntegration.SplitPages(source);
+
+        Assert.Equal(3, pages.Count);
+        Assert.All(pages, page => Assert.Equal(
+            1, PdfDocumentInformation.Read(PdfDocument.Open(page)).PageCount));
+    }
+
+    [Fact]
+    public void ValidateDocument_RejectsSourceWithoutTrailer()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-invalid-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllText(path, "%PDF-1.7\n1 0 obj\n<<>>\nendobj\n");
+
+            Assert.ThrowsAny<Exception>(() => PdfEngineIntegration.ValidateDocument(path));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void DuplicatePage_DeepCopiesPageAtFollowingPosition()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-duplicate-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage(100, 200)
+                .AddBlankPage(300, 400)
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.DuplicatePage(path, 0);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfDocument reopened = PdfDocument.Open(result);
+            Assert.Equal(3, PageCount(reopened));
+            Assert.Equal([0d, 0d, 100d, 200d], PageMediaBox(reopened, 0));
+            Assert.Equal([0d, 0d, 100d, 200d], PageMediaBox(reopened, 1));
+            Assert.Equal([0d, 0d, 300d, 400d], PageMediaBox(reopened, 2));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RemapRotationsAfterPageDuplication_CopiesSourceRotation()
+    {
+        var rotations = new Dictionary<int, int> { [0] = 90, [1] = 270 };
+
+        PdfEngineIntegration.RemapRotationsAfterPageDuplication(rotations, 0);
+
+        Assert.Equal(new Dictionary<int, int> { [0] = 90, [1] = 90, [2] = 270 }, rotations);
+    }
+
+    [Fact]
+    public void ReplacePage_ImportsReplacementAtSamePositionAndKeepsPageCount()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-replace-{Guid.NewGuid():N}.pdf");
+        string replacementPath = Path.Combine(Path.GetTempPath(), $"jpdfs-replacement-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage(100, 200).SetPageRotation(0, 90)
+                .AddBlankPage(200, 300).SetPageRotation(1, 180)
+                .AddBlankPage(300, 400).SetPageRotation(2, 270)
+                .Build();
+            File.WriteAllBytes(path, source);
+            File.WriteAllBytes(replacementPath, new PdfDocumentBuilder()
+                .AddBlankPage(612, 792).SetPageRotation(0, 90)
+                .Build());
+
+            PdfEngineIntegration.ReplacePage(path, 1, replacementPath);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfDocument reopened = PdfDocument.Open(result);
+            Assert.Equal(3, PageCount(reopened));
+            Assert.Equal([0d, 0d, 100d, 200d], PageMediaBox(reopened, 0));
+            Assert.Equal([0d, 0d, 612d, 792d], PageMediaBox(reopened, 1));
+            Assert.Equal(0, PageRotation(reopened, 1));
+            Assert.Equal([0d, 0d, 300d, 400d], PageMediaBox(reopened, 2));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(replacementPath)) File.Delete(replacementPath);
+        }
+    }
+
+    [Fact]
+    public void RemapRotationsAfterPageReplacement_ResetsOnlyReplacementPage()
+    {
+        var rotations = new Dictionary<int, int> { [0] = 90, [1] = 180, [2] = 270 };
+
+        PdfEngineIntegration.RemapRotationsAfterPageReplacement(rotations, 1);
+
+        Assert.Equal(new Dictionary<int, int> { [0] = 90, [1] = 0, [2] = 270 }, rotations);
+    }
+
+    [Fact]
+    public void ReplacePages_SwapsBatchInOneStablePageOrder()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-replace-pages-{Guid.NewGuid():N}.pdf");
+        string first = Path.Combine(Path.GetTempPath(), $"jpdfs-replace-first-{Guid.NewGuid():N}.pdf");
+        string second = Path.Combine(Path.GetTempPath(), $"jpdfs-replace-second-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage(100, 200).AddBlankPage(200, 300)
+                .AddBlankPage(300, 400).AddBlankPage(400, 500).Build());
+            File.WriteAllBytes(first, new PdfDocumentBuilder().AddBlankPage(610, 710).Build());
+            File.WriteAllBytes(second, new PdfDocumentBuilder().AddBlankPage(620, 720).Build());
+
+            PdfEngineIntegration.ReplacePages(path,
+                new Dictionary<int, string> { [1] = first, [3] = second });
+
+            PdfDocument reopened = PdfDocument.Open(File.ReadAllBytes(path));
+            Assert.Equal([100d, 610d, 300d, 620d], Enumerable.Range(0, 4)
+                .Select(index => PageMediaBox(reopened, index)[2]));
+            var rotations = new Dictionary<int, int> { [0] = 90, [1] = 180, [2] = 270, [3] = 90 };
+            PdfEngineIntegration.RemapRotationsAfterPageReplacements(rotations, [1, 3]);
+            Assert.Equal([90, 0, 270, 0], Enumerable.Range(0, 4)
+                .Select(index => rotations[index]));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(first)) File.Delete(first);
+            if (File.Exists(second)) File.Delete(second);
+        }
+    }
+
+    [Fact]
+    public void SetTextFieldBackground_PersistsColorAndPreservesValue()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-form-color-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddTextField(0, "customer.name", 20, 20, 140, 24, "Original")
+                .Build());
+
+            PdfEngineIntegration.SetTextFieldBackground(
+                path, "customer.name",
+                System.Windows.Media.Color.FromRgb(0x22, 0x88, 0xCC), null);
+
+            PdfFormWidgetInfo field = Assert.Single(PdfFormWidgetReader.ReadPage(
+                PdfDocument.Open(File.ReadAllBytes(path)), 0));
+            Assert.Equal("Original", field.Value);
+            Assert.NotNull(field.BackgroundColor);
+            Assert.Equal(0x22 / 255d, field.BackgroundColor.Value.Red, 6);
+            Assert.Equal(0x88 / 255d, field.BackgroundColor.Value.Green, 6);
+            Assert.Equal(0xCC / 255d, field.BackgroundColor.Value.Blue, 6);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ReplacePagesAndCompact_RemovesSupersededImageData()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-compact-pages-{Guid.NewGuid():N}.pdf");
+        string replacement = Path.Combine(Path.GetTempPath(), $"jpdfs-compact-replacement-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] rgba = new byte[512 * 512 * 4];
+            Random.Shared.NextBytes(rgba);
+            byte[] source = new PdfDocumentBuilder().AddPage(612, 792,
+                new PdfContentStreamBuilder().DrawImage(
+                    PdfImage.FromRgba(512, 512, rgba), 0, 0, 612, 792)).Build();
+            File.WriteAllBytes(path, source);
+            File.WriteAllBytes(replacement, new PdfDocumentBuilder().AddBlankPage(612, 792).Build());
+
+            PdfEngineIntegration.ReplacePagesAndCompact(path,
+                new Dictionary<int, string> { [0] = replacement });
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.Length < source.Length / 10);
+            Assert.Equal(1, PageCount(PdfDocument.Open(result)));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(replacement)) File.Delete(replacement);
+        }
+    }
+
+    [Fact]
+    public void ExtractAndSplitPages_IgnoreMalformedOptionalPageThumbnail()
+    {
+        byte[] source = MalformedThumbnailSource();
+
+        byte[] extracted = PdfEngineIntegration.ExtractPages(source, [0]);
+        IReadOnlyList<byte[]> split = PdfEngineIntegration.SplitPages(source);
+
+        Assert.Equal(1, PdfDocumentInformation.Read(PdfDocument.Open(extracted)).PageCount);
+        Assert.Single(split);
+        Assert.Equal(1, PdfDocumentInformation.Read(PdfDocument.Open(split[0])).PageCount);
+        Assert.False(Page(PdfDocument.Open(extracted), 0)
+            .ContainsKey(new PdfName("Thumb"u8)));
+        Assert.False(Page(PdfDocument.Open(split[0]), 0)
+            .ContainsKey(new PdfName("Thumb"u8)));
+    }
+
+    [Fact]
+    public void ReplacePagesAndCompact_ReplacesSelectedTaggedPageWithRasterPage()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-tagged-transform-{Guid.NewGuid():N}.pdf");
+        string replacement = Path.Combine(Path.GetTempPath(), $"jpdfs-tagged-transform-page-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .SetMetadata(new PdfDocumentMetadata
+                    { Title = "Tagged transform", Language = "en-US" })
+                .EnablePdfUa2Conformance()
+                .AddPage(200, 300, new PdfContentStreamBuilder()
+                    .BeginMarkedContent(PdfStructureType.Figure, 0)
+                    .Rectangle(10, 10, 20, 20).Fill().EndMarkedContent())
+                .AddPage(210, 310, new PdfContentStreamBuilder()
+                    .BeginMarkedContent(PdfStructureType.Figure, 0)
+                    .Rectangle(20, 20, 20, 20).Fill().EndMarkedContent())
+                .AddStructureContainer(PdfStructureType.Document)
+                .AddStructureElement(PdfStructureType.Figure, 0, 0, 1,
+                    alternateDescription: "First square")
+                .AddStructureElement(PdfStructureType.Figure, 1, 0, 1,
+                    alternateDescription: "Second square")
+                .Build();
+            File.WriteAllBytes(path, source);
+            File.WriteAllBytes(replacement,
+                new PdfDocumentBuilder().AddBlankPage(320, 480).Build());
+
+            PdfEngineIntegration.ReplacePagesAndCompact(path,
+                new Dictionary<int, string> { [0] = replacement });
+
+            PdfDocument result = PdfDocument.Open(File.ReadAllBytes(path));
+            PdfDictionary catalog = Assert.IsType<PdfDictionary>(result.Resolve(
+                Assert.IsType<PdfIndirectReference>(result.Trailer[new PdfName("Root"u8)])));
+            Assert.True(catalog.ContainsKey(new PdfName("StructTreeRoot"u8)));
+            Assert.Equal([320d, 210d], Enumerable.Range(0, 2)
+                .Select(index => PageMediaBox(result, index)[2]));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(replacement)) File.Delete(replacement);
+        }
+    }
+
+    [Fact]
+    public void ReplacePagesAndCompact_KeepsReplacementWhenRetainedFontWidthsAreMalformed()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-font-width-transform-{Guid.NewGuid():N}.pdf");
+        string replacement = Path.Combine(Path.GetTempPath(), $"jpdfs-font-width-page-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, BuildMalformedSource());
+            File.WriteAllBytes(replacement,
+                new PdfDocumentBuilder().AddBlankPage(320, 480).Build());
+
+            PdfEngineIntegration.ReplacePagesAndCompact(path,
+                new Dictionary<int, string> { [0] = replacement });
+
+            PdfDocument result = PdfDocument.Open(File.ReadAllBytes(path));
+            Assert.Equal([320d, 210d], Enumerable.Range(0, 2)
+                .Select(index => PageMediaBox(result, index)[2]));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(replacement)) File.Delete(replacement);
+        }
+
+        static byte[] BuildMalformedSource()
+        {
+            string[] objects =
+            [
+                "<< /Type /Catalog /Pages 2 0 R >>",
+                "<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>",
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 300] /Resources << >> /Contents 5 0 R >>",
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 210 310] /Resources << /Font << /F1 6 0 R >> >> /Contents 7 0 R >>",
+                "<< /Length 0 >>\nstream\n\nendstream",
+                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 32 /LastChar 33 /Widths [500] >>",
+                "<< /Length 0 >>\nstream\n\nendstream"
+            ];
+            var pdf = new System.Text.StringBuilder("%PDF-1.7\n");
+            var offsets = new List<int>();
+            for (int index = 0; index < objects.Length; index++)
+            {
+                offsets.Add(System.Text.Encoding.ASCII.GetByteCount(pdf.ToString()));
+                pdf.Append(index + 1).Append(" 0 obj\n")
+                    .Append(objects[index]).Append("\nendobj\n");
+            }
+            int startXref = System.Text.Encoding.ASCII.GetByteCount(pdf.ToString());
+            pdf.Append("xref\n0 ").Append(objects.Length + 1)
+                .Append("\n0000000000 65535 f \n");
+            foreach (int offset in offsets)
+                pdf.Append(offset.ToString("D10")).Append(" 00000 n \n");
+            pdf.Append("trailer\n<< /Size ").Append(objects.Length + 1)
+                .Append(" /Root 1 0 R >>\nstartxref\n")
+                .Append(startXref).Append("\n%%EOF\n");
+            return System.Text.Encoding.ASCII.GetBytes(pdf.ToString());
+        }
+    }
+
+    [Fact]
+    public void ReplaceAllPagesAndCompact_AcceptsSinglePageDocument()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"jpdfs-transform-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        string source = Path.Combine(root, "source.pdf");
+        string replacement = Path.Combine(root, "replacement.pdf");
+        try
+        {
+            File.WriteAllBytes(source, new PdfDocumentBuilder().AddBlankPage(240, 200).Build());
+            File.WriteAllBytes(replacement, PdfEngineIntegration.CreateRasterDocument([
+                new PdfEngineIntegration.RasterPage(1, 1, 200, 240, new byte[] { 0, 0, 0, 255 })]));
+
+            PdfEngineIntegration.ReplaceAllPagesAndCompact(source, [replacement]);
+
+            var page = new PdfPageContentReader(PdfDocument.Open(File.ReadAllBytes(source))).Read(0);
+            Assert.Equal(200, page.Width);
+            Assert.Equal(240, page.Height);
+            Assert.Single(page.Images);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void ReplaceAllPagesAndCompact_DoesNotRetainAnyOriginalPageImages()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-all-pages-{Guid.NewGuid():N}.pdf");
+        string first = Path.Combine(Path.GetTempPath(), $"jpdfs-all-first-{Guid.NewGuid():N}.pdf");
+        string second = Path.Combine(Path.GetTempPath(), $"jpdfs-all-second-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            var bitmap = BitmapSource.Create(2, 1, 96, 96, PixelFormats.Rgb24,
+                null, new byte[] { 255, 0, 0, 0, 0, 255 }, 6);
+            var encoder = new JpegBitmapEncoder { QualityLevel = 80 };
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            using var jpegStream = new MemoryStream();
+            encoder.Save(jpegStream);
+            byte[] jpeg = jpegStream.ToArray();
+            byte[] source = new PdfDocumentBuilder()
+                .SetMetadata(new PdfDocumentMetadata { Title = "Keep me" })
+                .AddPage(612, 792, new PdfContentStreamBuilder().DrawImage(
+                    PdfImage.FromJpeg(jpeg), 0, 0, 612, 792))
+                .AddPage(612, 792, new PdfContentStreamBuilder().DrawImage(
+                    PdfImage.FromJpeg(jpeg), 0, 0, 612, 792))
+                .Build();
+            File.WriteAllBytes(path, source);
+            byte[] bitonal = PdfEngineIntegration.CreateRasterDocument([
+                new PdfEngineIntegration.RasterPage(2, 1, 612, 792,
+                    new byte[] { 0, 0, 0, 255, 255, 255, 255, 255 }, Bitonal: true)]);
+            File.WriteAllBytes(first, bitonal);
+            File.WriteAllBytes(second, bitonal);
+
+            PdfEngineIntegration.ReplaceAllPagesAndCompact(path, [first, second]);
+
+            byte[] result = File.ReadAllBytes(path);
+            PdfDocumentInformation information = PdfDocumentInformation.Read(PdfDocument.Open(result));
+            Assert.Equal(2, information.PageCount);
+            Assert.Equal("Keep me", information.Title);
+            string syntax = System.Text.Encoding.Latin1.GetString(result);
+            Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(
+                syntax, @"/Subtype\s*/Image").Count);
+            Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(
+                syntax, @"/BitsPerComponent\s+1\b").Count);
+            Assert.DoesNotContain("/DCTDecode", syntax);
+            Assert.Equal([0d, 0d, 612d, 792d], PageMediaBox(PdfDocument.Open(result), 0));
+            Assert.Equal([0d, 0d, 612d, 792d], PageMediaBox(PdfDocument.Open(result), 1));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(first)) File.Delete(first);
+            if (File.Exists(second)) File.Delete(second);
+        }
+    }
+
+    [Fact]
+    public void SanitizeRasterizedBookmarks_DropsInvalidParentsAndPromotesValidChildren()
+    {
+        var validChild = new PdfBookmarkInfo
+        {
+            ObjectNumber = 2,
+            Generation = 0,
+            Title = "Valid child",
+            IsOpen = false,
+            Style = PdfBookmarkStyle.Regular,
+            DestinationPageIndex = 1,
+            NamedDestination = "old-name",
+            Destination = PdfDestination.FitPage(),
+            Children = []
+        };
+        var invalidParent = new PdfBookmarkInfo
+        {
+            ObjectNumber = 1,
+            Generation = 0,
+            Title = "01.jpg",
+            IsOpen = true,
+            Style = PdfBookmarkStyle.Regular,
+            Children = [validChild]
+        };
+
+        PdfBookmarkInfo result = Assert.Single(
+            PdfEngineIntegration.SanitizeRasterizedBookmarks([invalidParent], 2));
+
+        Assert.Equal("Valid child", result.Title);
+        Assert.Equal(1, result.DestinationPageIndex);
+        Assert.Null(result.NamedDestination);
+        Assert.Empty(result.Children);
+    }
+
+    [Fact]
+    public void ExtractPages_WritesSelectedOrderWithEffectiveRotations()
+    {
+        string sourcePath = Path.Combine(Path.GetTempPath(), $"jpdfs-extract-source-{Guid.NewGuid():N}.pdf");
+        string destinationPath = Path.Combine(Path.GetTempPath(), $"jpdfs-extract-output-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(sourcePath, new PdfDocumentBuilder()
+                .AddBlankPage(100, 200)
+                .AddBlankPage(200, 300)
+                .AddBlankPage(300, 400)
+                .Build());
+
+            PdfEngineIntegration.ExtractPages(sourcePath, destinationPath, [2, 0],
+                new Dictionary<int, int> { [0] = 90, [1] = 180, [2] = 270 });
+
+            PdfDocument reopened = PdfDocument.Open(File.ReadAllBytes(destinationPath));
+            Assert.Equal(2, PageCount(reopened));
+            Assert.Equal([0d, 0d, 300d, 400d], PageMediaBox(reopened, 0));
+            Assert.Equal(270, PageRotation(reopened, 0));
+            Assert.Equal([0d, 0d, 100d, 200d], PageMediaBox(reopened, 1));
+            Assert.Equal(90, PageRotation(reopened, 1));
+        }
+        finally
+        {
+            if (File.Exists(sourcePath)) File.Delete(sourcePath);
+            if (File.Exists(destinationPath)) File.Delete(destinationPath);
+        }
+    }
+
+    [Fact]
+    public void AppendDocuments_MergesCompleteSourcesAndNormalizesStoredRotations()
+    {
+        string targetPath = Path.Combine(Path.GetTempPath(), $"jpdfs-merge-target-{Guid.NewGuid():N}.pdf");
+        string sourcePath = Path.Combine(Path.GetTempPath(), $"jpdfs-merge-source-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(targetPath, new PdfDocumentBuilder().AddBlankPage(100, 200).Build());
+            File.WriteAllBytes(sourcePath, new PdfDocumentBuilder()
+                .AddBlankPage(200, 300).SetPageRotation(0, 90)
+                .AddBlankPage(300, 400).SetPageRotation(1, 270)
+                .Build());
+            var imports = new[]
+            {
+                new PdfEngineIntegration.ImportedDocument(sourcePath, [90, 270])
+            };
+
+            PdfEngineIntegration.AppendDocuments(targetPath, imports);
+
+            PdfDocument reopened = PdfDocument.Open(File.ReadAllBytes(targetPath));
+            Assert.Equal(3, PageCount(reopened));
+            Assert.Equal([0d, 0d, 200d, 300d], PageMediaBox(reopened, 1));
+            Assert.Equal(0, PageRotation(reopened, 1));
+            Assert.Equal([0d, 0d, 300d, 400d], PageMediaBox(reopened, 2));
+            Assert.Equal(0, PageRotation(reopened, 2));
+
+            var rotations = new Dictionary<int, int> { [0] = 180 };
+            PdfEngineIntegration.RemapRotationsAfterDocumentAppend(rotations, imports);
+            Assert.Equal(new Dictionary<int, int>
+            {
+                [0] = 180, [1] = 90, [2] = 270
+            }, rotations);
+        }
+        finally
+        {
+            if (File.Exists(targetPath)) File.Delete(targetPath);
+            if (File.Exists(sourcePath)) File.Delete(sourcePath);
+        }
+    }
+
+    [Fact]
+    public void InsertDocuments_AddsSourcesAtRequestedPositionAndShiftsRotations()
+    {
+        string targetPath = Path.Combine(Path.GetTempPath(), $"jpdfs-insert-doc-target-{Guid.NewGuid():N}.pdf");
+        string sourcePath = Path.Combine(Path.GetTempPath(), $"jpdfs-insert-doc-source-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(targetPath, new PdfDocumentBuilder()
+                .AddBlankPage(100, 200).AddBlankPage(400, 500).Build());
+            File.WriteAllBytes(sourcePath, new PdfDocumentBuilder()
+                .AddBlankPage(200, 300).AddBlankPage(300, 400).Build());
+            var imports = new[]
+            {
+                new PdfEngineIntegration.ImportedDocument(sourcePath, [90, 270])
+            };
+
+            PdfEngineIntegration.InsertDocuments(targetPath, imports, 1);
+
+            PdfDocument reopened = PdfDocument.Open(File.ReadAllBytes(targetPath));
+            Assert.Equal([100d, 200d, 300d, 400d], Enumerable.Range(0, 4)
+                .Select(index => PageMediaBox(reopened, index)[2]));
+            var rotations = new Dictionary<int, int> { [0] = 0, [1] = 180 };
+            PdfEngineIntegration.RemapRotationsAfterDocumentInsertion(rotations, imports, 1);
+            Assert.Equal([0, 90, 270, 180], Enumerable.Range(0, 4)
+                .Select(index => rotations[index]));
+        }
+        finally
+        {
+            if (File.Exists(targetPath)) File.Delete(targetPath);
+            if (File.Exists(sourcePath)) File.Delete(sourcePath);
+        }
+    }
+
+    [Fact]
+    public void InsertBlankPage_AddsA4PageAtRequestedPosition()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-insert-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage(100, 200).SetPageRotation(0, 90)
+                .AddBlankPage(300, 400).SetPageRotation(1, 270)
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.InsertBlankPage(path, 1, 595, 842);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfDocument reopened = PdfDocument.Open(result);
+            Assert.Equal(3, PageCount(reopened));
+            Assert.Equal([0d, 0d, 100d, 200d], PageMediaBox(reopened, 0));
+            Assert.Equal([0d, 0d, 595d, 842d], PageMediaBox(reopened, 1));
+            Assert.Equal([0d, 0d, 300d, 400d], PageMediaBox(reopened, 2));
+            Assert.Equal(270, PageRotation(reopened, 2));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RemapRotationsAfterPageInsertion_ShiftsPagesAndAddsZeroRotation()
+    {
+        var rotations = new Dictionary<int, int>
+        {
+            [0] = 90,
+            [1] = 180,
+            [2] = 270
+        };
+
+        PdfEngineIntegration.RemapRotationsAfterPageInsertion(rotations, 1);
+
+        Assert.Equal(new Dictionary<int, int>
+        {
+            [0] = 90,
+            [1] = 0,
+            [2] = 180,
+            [3] = 270
+        }, rotations);
+    }
+
+    [Fact]
+    public void RemapRotationsAfterPageInsertion_ShiftsForMultipleInsertedPages()
+    {
+        var rotations = new Dictionary<int, int>
+        {
+            [0] = 90,
+            [1] = 180
+        };
+
+        PdfEngineIntegration.RemapRotationsAfterPageInsertion(rotations, 0, 2);
+
+        Assert.Equal(new Dictionary<int, int>
+        {
+            [0] = 0,
+            [1] = 0,
+            [2] = 90,
+            [3] = 180
+        }, rotations);
+    }
+
+    [Fact]
+    public void MovePage_ReordersPagesAndPreservesTheirRotation()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-move-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage(100, 200).SetPageRotation(0, 90)
+                .AddBlankPage(200, 300).SetPageRotation(1, 180)
+                .AddBlankPage(300, 400).SetPageRotation(2, 270)
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.MovePage(path, 0, 2);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfDocument reopened = PdfDocument.Open(result);
+            Assert.Equal([0d, 0d, 200d, 300d], PageMediaBox(reopened, 0));
+            Assert.Equal(180, PageRotation(reopened, 0));
+            Assert.Equal([0d, 0d, 300d, 400d], PageMediaBox(reopened, 1));
+            Assert.Equal(270, PageRotation(reopened, 1));
+            Assert.Equal([0d, 0d, 100d, 200d], PageMediaBox(reopened, 2));
+            Assert.Equal(90, PageRotation(reopened, 2));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RemapRotationsAfterPageMove_MovesRotationWithPage()
+    {
+        var rotations = new Dictionary<int, int>
+        {
+            [0] = 90,
+            [1] = 180,
+            [2] = 270,
+            [3] = 0
+        };
+
+        PdfEngineIntegration.RemapRotationsAfterPageMove(rotations, 0, 2);
+
+        Assert.Equal(new Dictionary<int, int>
+        {
+            [0] = 180,
+            [1] = 270,
+            [2] = 90,
+            [3] = 0
+        }, rotations);
+    }
+
+    [Fact]
+    public void MovePages_ReordersDiscontiguousSelectionAsOrderedBlock()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-move-pages-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            File.WriteAllBytes(path, new PdfDocumentBuilder()
+                .AddBlankPage(100, 200).AddBlankPage(200, 300).AddBlankPage(300, 400)
+                .AddBlankPage(400, 500).AddBlankPage(500, 600).Build());
+
+            IReadOnlyList<int> selected = PdfEngineIntegration.MovePages(path, [1, 3], 5);
+
+            Assert.Equal([3, 4], selected);
+            PdfDocument reopened = PdfDocument.Open(File.ReadAllBytes(path));
+            Assert.Equal(100, PageMediaBox(reopened, 0)[2]);
+            Assert.Equal(300, PageMediaBox(reopened, 1)[2]);
+            Assert.Equal(500, PageMediaBox(reopened, 2)[2]);
+            Assert.Equal(200, PageMediaBox(reopened, 3)[2]);
+            Assert.Equal(400, PageMediaBox(reopened, 4)[2]);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void RemapRotationsAfterPageMoves_FollowsBatchOrder()
+    {
+        var rotations = new Dictionary<int, int>
+        {
+            [0] = 0, [1] = 90, [2] = 180, [3] = 270, [4] = 0
+        };
+
+        PdfEngineIntegration.RemapRotationsAfterPageMoves(rotations, [1, 3], 5);
+
+        Assert.Equal([0, 180, 0, 90, 270],
+            Enumerable.Range(0, rotations.Count).Select(index => rotations[index]));
+    }
+
+    [Fact]
+    public void RemovePages_DeletesSelectedPagesAndPreservesRetainedRotations()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-delete-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage(100, 200).SetPageRotation(0, 90)
+                .AddBlankPage(200, 300).SetPageRotation(1, 180)
+                .AddBlankPage(300, 400).SetPageRotation(2, 270)
+                .AddBlankPage(400, 500)
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.RemovePages(path, [2, 0]);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfDocument reopened = PdfDocument.Open(result);
+            Assert.Equal(2, PageCount(reopened));
+            Assert.Equal([0d, 0d, 200d, 300d], PageMediaBox(reopened, 0));
+            Assert.Equal(180, PageRotation(reopened, 0));
+            Assert.Equal([0d, 0d, 400d, 500d], PageMediaBox(reopened, 1));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RemapRotationsAfterPageRemoval_DropsDeletedEntriesAndRenumbersSurvivors()
+    {
+        var rotations = new Dictionary<int, int>
+        {
+            [0] = 90,
+            [1] = 180,
+            [2] = 270,
+            [3] = 0,
+            [4] = 90
+        };
+
+        PdfEngineIntegration.RemapRotationsAfterPageRemoval(rotations, [3, 1]);
+
+        Assert.Equal(new Dictionary<int, int>
+        {
+            [0] = 90,
+            [1] = 270,
+            [2] = 90
+        }, rotations);
+    }
+
+    [Fact]
+    public void ApplyCropBoxes_WritesMatchingCropAndTrimBoxesIncrementally()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-crop-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage(200, 300)
+                .SetPageRotation(0, 90)
+                .AddBlankPage(400, 500)
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.ApplyCropBoxes(path,
+                new Dictionary<int, PdfEngineIntegration.PageRectangle?>
+                {
+                    [0] = new(10, 20, 150, 240),
+                    [1] = new(25, 30, 300, 400)
+                });
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfDocument reopened = PdfDocument.Open(result);
+            Assert.Equal([10d, 20d, 160d, 260d], PageBox(reopened, 0, "CropBox"));
+            Assert.Equal([10d, 20d, 160d, 260d], PageBox(reopened, 0, "TrimBox"));
+            Assert.Equal(90, PageRotation(reopened, 0));
+            Assert.Equal([25d, 30d, 325d, 430d], PageBox(reopened, 1, "CropBox"));
+            Assert.Equal([25d, 30d, 325d, 430d], PageBox(reopened, 1, "TrimBox"));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyCropBoxes_WithNullRectangleRemovesCropAndTrimBoxes()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-crop-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage(200, 300)
+                .SetPageBox(0, PdfPageBox.Crop, 10, 10, 180, 280)
+                .SetPageBox(0, PdfPageBox.Trim, 20, 20, 160, 260)
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.ApplyCropBoxes(path,
+                new Dictionary<int, PdfEngineIntegration.PageRectangle?> { [0] = null });
+
+            PdfDocument reopened = PdfDocument.Open(File.ReadAllBytes(path));
+            PdfDictionary page = Page(reopened, 0);
+            Assert.False(page.ContainsKey(new PdfName("CropBox"u8)));
+            Assert.False(page.ContainsKey(new PdfName("TrimBox"u8)));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyPageRotations_WritesFinalIncrementalRotationRevision()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-rotation-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddBlankPage()
+                .Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.ApplyPageRotations(path, new Dictionary<int, int>
+            {
+                [0] = 90,
+                [1] = 270
+            });
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfDocument reopened = PdfDocument.Open(result);
+            Assert.Equal(90, PageRotation(reopened, 0));
+            Assert.Equal(270, PageRotation(reopened, 1));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyDocumentMetadata_WritesCompleteMetadataAndPreservesPrefix()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-metadata-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder().AddBlankPage().Build();
+            File.WriteAllBytes(path, source);
+            var metadata = new PdfDocumentMetadata
+            {
+                Title = "Updated title",
+                Author = "Steve",
+                Subject = "The JPDFs.Engine",
+                Keywords = "PDF 2.0, PDF/A",
+                Creator = "JPDFs",
+                Producer = "Original producer",
+                Language = "en-US",
+                CreationDate = new DateTimeOffset(2026, 8, 24, 10, 11, 12, TimeSpan.FromHours(-7)),
+                ModificationDate = new DateTimeOffset(2026, 8, 24, 11, 12, 13, TimeSpan.Zero),
+                Trapped = PdfTrappedStatus.False
+            };
+
+            PdfEngineIntegration.ApplyDocumentMetadata(path, metadata);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            var info = PdfDocumentInformation.Read(PdfDocument.Open(result));
+            Assert.Equal(metadata.Title, info.Title);
+            Assert.Equal(metadata.Author, info.Author);
+            Assert.Equal(metadata.Subject, info.Subject);
+            Assert.Equal(metadata.Keywords, info.Keywords);
+            Assert.Equal(metadata.Creator, info.Creator);
+            Assert.Equal(metadata.Producer, info.Producer);
+            Assert.Equal(metadata.Language, info.Language);
+            Assert.Equal(metadata.CreationDate, info.CreationDate);
+            Assert.Equal(metadata.ModificationDate, info.ModificationDate);
+            Assert.Equal(metadata.Trapped, info.Trapped);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyDocumentMetadata_DropsInvalidExistingLanguageAndWritesOtherChanges()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-metadata-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder().AddBlankPage().Build();
+            File.WriteAllBytes(path, source);
+            var metadata = new PdfDocumentMetadata
+            {
+                Title = "Updated title",
+                Language = "en_US"
+            };
+
+            PdfEngineIntegration.ApplyDocumentMetadata(path, metadata);
+
+            PdfDocumentInformation info = PdfDocumentInformation.Read(
+                PdfDocument.Open(File.ReadAllBytes(path)));
+            Assert.Equal("Updated title", info.Title);
+            Assert.Null(info.Language);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyInitialView_WritesViewerStateAndPreservesPrefix()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-initial-view-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder()
+                .AddBlankPage()
+                .AddBlankPage()
+                .Build();
+            File.WriteAllBytes(path, source);
+            var initialView = new PdfInitialView
+            {
+                PageLayout = PdfPageLayout.TwoPageRight,
+                PageMode = PdfPageMode.UseOutlines,
+                PageIndex = 1,
+                Destination = PdfDestination.FitWidth(640),
+                ViewerPreferences = new PdfViewerPreferences
+                {
+                    DisplayDocumentTitle = true,
+                    FitWindow = true
+                }
+            };
+
+            PdfEngineIntegration.ApplyInitialView(path, initialView);
+
+            byte[] result = File.ReadAllBytes(path);
+            Assert.True(result.AsSpan(0, source.Length).SequenceEqual(source));
+            PdfInitialView saved = PdfDocumentInformation.Read(
+                PdfDocument.Open(result)).InitialView;
+            Assert.Equal(initialView.PageLayout, saved.PageLayout);
+            Assert.Equal(initialView.PageMode, saved.PageMode);
+            Assert.Equal(initialView.PageIndex, saved.PageIndex);
+            Assert.Equal(initialView.Destination.Kind, saved.Destination?.Kind);
+            Assert.Equal(initialView.Destination.Values, saved.Destination?.Values);
+            Assert.True(saved.ViewerPreferences.DisplayDocumentTitle);
+            Assert.True(saved.ViewerPreferences.FitWindow);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyPageRotations_WithNoApplicationRotations_LeavesFileUntouched()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-rotation-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder().AddBlankPage().Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.ApplyPageRotations(path, new Dictionary<int, int>());
+
+            Assert.Equal(source, File.ReadAllBytes(path));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ApplyPageRotations_WithInvalidPageIndex_PreservesOriginalFile()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"jpdfs-rotation-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder().AddBlankPage().Build();
+            File.WriteAllBytes(path, source);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                PdfEngineIntegration.ApplyPageRotations(path, new Dictionary<int, int> { [1] = 90 }));
+
+            Assert.Equal(source, File.ReadAllBytes(path));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ClearInvalidatedSignatures_LeavesUnsignedFileByteIdentical()
+    {
+        string path = Path.Combine(Path.GetTempPath(),
+            $"jpdfs-signature-cleanup-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            byte[] source = new PdfDocumentBuilder().AddBlankPage().Build();
+            File.WriteAllBytes(path, source);
+
+            PdfEngineIntegration.ClearInvalidatedSignatures(path);
+
+            Assert.Equal(source, File.ReadAllBytes(path));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    private static long PageRotation(PdfDocument document, int pageIndex)
+    {
+        return Assert.IsType<PdfInteger>(Page(document, pageIndex)[new PdfName("Rotate"u8)]).Value;
+    }
+
+    private static byte[] MalformedThumbnailSource()
+    {
+        PdfDocument original = PdfDocument.Open(new PdfDocumentBuilder()
+            .AddBlankPage(200, 300)
+            .Build());
+        PdfDictionary catalog = Assert.IsType<PdfDictionary>(original.Resolve(
+            Assert.IsType<PdfIndirectReference>(original.Trailer[new PdfName("Root"u8)])));
+        PdfDictionary pages = Assert.IsType<PdfDictionary>(original.Resolve(
+            Assert.IsType<PdfIndirectReference>(catalog[new PdfName("Pages"u8)])));
+        PdfIndirectReference pageReference = Assert.IsType<PdfIndirectReference>(
+            Assert.IsType<PdfArray>(pages[new PdfName("Kids"u8)])[0]);
+        PdfDictionary page = Assert.IsType<PdfDictionary>(original.Resolve(pageReference));
+        var update = new PdfIncrementalUpdateBuilder(original);
+        PdfIndirectReference thumbnail = update.AddObject(new PdfStream(
+            new PdfDictionary([
+                new(new PdfName("Type"u8), new PdfName("XObject"u8)),
+                new(new PdfName("Width"u8), new PdfInteger(10)),
+                new(new PdfName("Height"u8), new PdfInteger(10))
+            ]), []));
+        update.ReplaceObject(pageReference.ObjectNumber, new PdfDictionary(page
+            .Where(entry => !entry.Key.Equals(new PdfName("Thumb"u8)))
+            .Append(new KeyValuePair<PdfName, PdfObject>(
+                new PdfName("Thumb"u8), thumbnail))));
+        return update.Build();
+    }
+
+    private static double[] PageBox(PdfDocument document, int pageIndex, string name)
+    {
+        PdfName key = name switch
+        {
+            "CropBox" => new PdfName("CropBox"u8),
+            "TrimBox" => new PdfName("TrimBox"u8),
+            _ => throw new ArgumentOutOfRangeException(nameof(name))
+        };
+        PdfArray box = Assert.IsType<PdfArray>(Page(document, pageIndex)[key]);
+        return [.. box.Select(item => item switch
+        {
+            PdfInteger integer => (double)integer.Value,
+            PdfReal real => real.Value,
+            _ => throw new Xunit.Sdk.XunitException("Page box contains a nonnumeric value.")
+        })];
+    }
+
+    private static double[] PageMediaBox(PdfDocument document, int pageIndex)
+    {
+        PdfArray box = Assert.IsType<PdfArray>(
+            Page(document, pageIndex)[new PdfName("MediaBox"u8)]);
+        return [.. box.Select(item => item switch
+        {
+            PdfInteger integer => (double)integer.Value,
+            PdfReal real => real.Value,
+            _ => throw new Xunit.Sdk.XunitException("Media box contains a nonnumeric value.")
+        })];
+    }
+
+    private static int PageCount(PdfDocument document)
+    {
+        PdfDictionary catalog = Assert.IsType<PdfDictionary>(document.Resolve(
+            Assert.IsType<PdfIndirectReference>(document.Trailer[new PdfName("Root"u8)])));
+        PdfDictionary pages = Assert.IsType<PdfDictionary>(document.Resolve(
+            Assert.IsType<PdfIndirectReference>(catalog[new PdfName("Pages"u8)])));
+        return checked((int)Assert.IsType<PdfInteger>(pages[new PdfName("Count"u8)]).Value);
+    }
+
+    private static PdfDictionary Page(PdfDocument document, int pageIndex)
+    {
+        PdfDictionary catalog = Assert.IsType<PdfDictionary>(document.Resolve(
+            Assert.IsType<PdfIndirectReference>(document.Trailer[new PdfName("Root"u8)])));
+        PdfDictionary pages = Assert.IsType<PdfDictionary>(document.Resolve(
+            Assert.IsType<PdfIndirectReference>(catalog[new PdfName("Pages"u8)])));
+        PdfArray kids = Assert.IsType<PdfArray>(pages[new PdfName("Kids"u8)]);
+        return Assert.IsType<PdfDictionary>(document.Resolve(
+            Assert.IsType<PdfIndirectReference>(kids[pageIndex])));
+    }
+}

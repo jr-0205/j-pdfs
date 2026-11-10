@@ -1,10 +1,10 @@
 using System.IO;
 using System.Text;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -17,7 +17,7 @@ public partial class MainWindow
         {
             if (!batch && (_doc is null || string.IsNullOrWhiteSpace(_currentFile)))
             {
-                KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+                JpdfsDialog.Show(this, Loc("Str_Msg_OpenFirst"));
                 return;
             }
             string[]? inputs = batch ? SelectBatchInputs(title) : [_originalFile ?? _currentFile!];
@@ -60,7 +60,7 @@ public partial class MainWindow
                 if (batch) _macroRedaction.Marked.Clear();
                 if (batch && _macroRedaction.Terms.Length == 0)
                 {
-                    KillerDialog.Show(this, Loc("Str_Macro_RedactNothing"));
+                    JpdfsDialog.Show(this, Loc("Str_Macro_RedactNothing"));
                     return;
                 }
             }

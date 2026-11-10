@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 // Comments (#288): every review comment in the PDF with its replies. A comment's text can be
 // edited, answered with a reply or deleted, and new notes can be added to the current page.

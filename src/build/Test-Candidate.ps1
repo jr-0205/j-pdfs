@@ -11,7 +11,7 @@
     Where logs and test results are written. Defaults to a fresh folder under the system temp.
 #>
 param(
-    [string]$ResultsDirectory = (Join-Path ([IO.Path]::GetTempPath()) ("KillerPDF-candidate-" + (Get-Date -Format 'yyyyMMdd-HHmmss')))
+    [string]$ResultsDirectory = (Join-Path ([IO.Path]::GetTempPath()) ("JPDFs-candidate-" + (Get-Date -Format 'yyyyMMdd-HHmmss')))
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,24 +38,24 @@ function Step([string]$Name, [scriptblock]$Body) {
 Push-Location $root
 try {
     Step 'Build application (Release)' {
-        dotnet build KillerPDF.csproj --configuration Release --verbosity minimal -nodeReuse:false
+        dotnet build JPDFs.csproj --configuration Release --verbosity minimal -nodeReuse:false
     }
     Step 'Website shortcut data matches the app' {
-        dotnet run --project tools/KillerPDF.ShortcutSite/KillerPDF.ShortcutSite.csproj --configuration Release -- $root --check
+        dotnet run --project tools/JPDFs.ShortcutSite/JPDFs.ShortcutSite.csproj --configuration Release -- $root --check
     }
     Step 'Application tests' {
-        dotnet test KillerPDF.Tests/KillerPDF.Tests.csproj --configuration Release -nodeReuse:false `
+        dotnet test JPDFs.Tests/JPDFs.Tests.csproj --configuration Release -nodeReuse:false `
             --logger 'trx;LogFileName=app-tests.trx' --results-directory $ResultsDirectory
     }
     Step 'Engine tests' {
-        dotnet test engine/KillerPdf.Engine.Tests/KillerPdf.Engine.Tests.csproj --configuration Release -nodeReuse:false `
+        dotnet test engine/JPDFs.Engine.Tests/JPDFs.Engine.Tests.csproj --configuration Release -nodeReuse:false `
             --logger 'trx;LogFileName=engine-tests.trx' --results-directory $ResultsDirectory
     }
     Step 'Synthetic PDF fixture without a window' {
-        dotnet build tests/KillerPDF.UiSmoke/KillerPDF.UiSmoke.csproj --configuration Release --verbosity minimal -nodeReuse:false
+        dotnet build tests/JPDFs.UiSmoke/JPDFs.UiSmoke.csproj --configuration Release --verbosity minimal -nodeReuse:false
         if ($LASTEXITCODE -ne 0) { return }
-        dotnet run --project tests/KillerPDF.UiSmoke/KillerPDF.UiSmoke.csproj --configuration Release --no-build -- `
-            --verify-fixture bin/Release/net10.0-windows/KillerPDF.dll (Join-Path $ResultsDirectory 'fixture')
+        dotnet run --project tests/JPDFs.UiSmoke/JPDFs.UiSmoke.csproj --configuration Release --no-build -- `
+            --verify-fixture bin/Release/net10.0-windows/JPDFs.dll (Join-Path $ResultsDirectory 'fixture')
     }
     Step 'Translation parity' {
         function Read-StringMap([string]$Path) {
@@ -87,7 +87,7 @@ try {
         "$($english.Count) keys match across all locales"
     }
     Step 'Package vulnerability audit' {
-        foreach ($project in 'KillerPDF.csproj', 'engine/KillerPdf.Engine/KillerPdf.Engine.csproj') {
+        foreach ($project in 'JPDFs.csproj', 'engine/JPDFs.Engine/JPDFs.Engine.csproj') {
             $report = dotnet list $project package --vulnerable --include-transitive 2>&1
             $report
             if ($LASTEXITCODE -ne 0) { throw "The audit could not run for $project." }

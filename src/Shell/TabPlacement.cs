@@ -1,7 +1,7 @@
-using KillerPDF.Controls;
-using KillerPDF.Features;
+using JPDFs.Controls;
+using JPDFs.Features;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {

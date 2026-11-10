@@ -1,7 +1,7 @@
 using System.Text;
 using System.Windows;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>One extracted word in the reading frame of its line: text runs left to right.</summary>
 internal readonly record struct ReplaceWord(string Text, Rect Bounds, int SourceStart = -1);
@@ -58,8 +58,8 @@ internal static class TextReplacePlanner
 
     internal static IReadOnlyList<MatchSpan> FindSpans(string text, string find, bool matchCase, bool wholeWord)
     {
-        string folded = KillerPdf.Engine.Documents.PdfSearchText.Fold(text, out int[] origin);
-        string needle = KillerPdf.Engine.Documents.PdfSearchText.Fold(find);
+        string folded = JPDFs.Engine.Documents.PdfSearchText.Fold(text, out int[] origin);
+        string needle = JPDFs.Engine.Documents.PdfSearchText.Fold(find);
         return [.. FindAll(folded, needle, matchCase, wholeWord).Select(start =>
             new MatchSpan(origin[start], origin[start + needle.Length - 1] + 1 - origin[start], start, needle.Length))];
     }
@@ -67,7 +67,7 @@ internal static class TextReplacePlanner
     internal static string ReplaceSpans(string text, IReadOnlyList<MatchSpan> matches, string replacement)
     {
         if (matches.Count == 0) return text;
-        string folded = KillerPdf.Engine.Documents.PdfSearchText.Fold(text, out int[] origin);
+        string folded = JPDFs.Engine.Documents.PdfSearchText.Fold(text, out int[] origin);
         var result = new StringBuilder(text.Length);
         int copied = 0;
         for (int index = 0; index < matches.Count;)

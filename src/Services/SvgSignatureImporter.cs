@@ -3,7 +3,7 @@ using System.IO;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>A passive SVG signature: its size, the raw path data it carries and every visible
 /// outline, already transformed into the SVG's own units with the view box corner at 0,0.</summary>

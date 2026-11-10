@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>The document card's corners while its tab strip is showing, and the clip inside them.</summary>
     internal static class CardCorners

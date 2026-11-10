@@ -3,14 +3,14 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPDF.Features;
-using KillerPDF.Features.About;
-using KillerPDF.Services;
+using JPDFs.Features;
+using JPDFs.Features.About;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     /// <summary>
-    /// APP-OWNED: what KillerPDF's About card adds to the shared core (Shell/About.cs): the two-run
+    /// APP-OWNED: what JPDFs's About card adds to the shared core (Shell/About.cs): the two-run
     /// wordmark and linked tagline, the card opening above a tool window or dialog the main window
     /// owns, the Close to system tray row, Clear all Data, and the unsaved-changes gate and document
     /// reopen the update hooks use (Features/About/AboutController.Extras.cs).
@@ -36,7 +36,7 @@ namespace KillerPDF.Shell
             handled = true;
         }
 
-        // KillerPDF's own short fade, which resets the overlay for the next open; About also
+        // JPDFs's own short fade, which resets the overlay for the next open; About also
         // closes the window it was carried in.
         partial void OverlayFadingOut(UIElement overlay, ref bool handled)
         {
@@ -216,7 +216,7 @@ namespace KillerPDF.Shell
             BuildAboutTagline();
         }
 
-        /// <summary>"Killer" in the text color, "PDF" in the brand green, the pair clickable.</summary>
+        /// <summary>"Jpdfs" in the text color, "PDF" in the brand green, the pair clickable.</summary>
         private void BuildAboutWordmark()
         {
             AboutLogoBlock.Inlines.Clear();
@@ -263,7 +263,7 @@ namespace KillerPDF.Shell
 
         /// <summary>
         /// Localized tagline. {0} is the (untranslated) brand, so splitting on the placeholder keeps
-        /// "Killer Tools" a styled, clickable link while the rest translates and the brand can sit
+        /// "Jpdfs Tools" a styled, clickable link while the rest translates and the brand can sit
         /// anywhere in the sentence the language needs it. A "\n" in the localized string marks the
         /// line break; the second line carries the license and the brand.
         /// </summary>
@@ -289,7 +289,7 @@ namespace KillerPDF.Shell
 
             AddText(pre);
             AboutTaglineBlock.Inlines.Add(
-                AccentLink("Killer Tools", () => WebLink.Open("https://killertools.net")));
+                AccentLink("Jpdfs Tools", () => WebLink.Open("https://jpdfstools.net")));
             AddText(suf);
         }
 
@@ -318,19 +318,19 @@ namespace KillerPDF.Shell
         private void AboutClearData_Click(object sender, RoutedEventArgs e)
         {
             Window owner = _aboutHost ?? this;
-            var res = KillerDialog.Show(owner,
+            var res = JpdfsDialog.Show(owner,
                 Loc("Str_ClearDataConfirm"),
                 Loc("Str_ClearAllData"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (res != MessageBoxResult.Yes) return;
 
             if (!App.ClearAllData())
             {
-                KillerDialog.Show(owner, Loc("Str_Watch_Busy"), Loc("Str_ClearAllData"),
+                JpdfsDialog.Show(owner, Loc("Str_Watch_Busy"), Loc("Str_ClearAllData"),
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             SetStatus(Loc("Str_St_DataCleared"));
-            KillerDialog.Show(owner,
+            JpdfsDialog.Show(owner,
                 Loc("Str_ClearDataDone"),
                 Loc("Str_ClearAllData"), MessageBoxButton.OK, MessageBoxImage.Information);
         }

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
-using KillerPDF.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Document structure edits from the command line: link cleanup, a table of contents, page
     // labels, the initial view, layers, attachments and portfolio presentation. Each writes a
@@ -24,7 +24,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --repair-links <in.pdf> <out.pdf> [--unsafe] [--unresolved]   (both by default)");
+                con.WriteLine("Usage: JPDFs.exe --repair-links <in.pdf> <out.pdf> [--unsafe] [--unresolved]   (both by default)");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
@@ -46,7 +46,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --toc <in.pdf> <out.pdf> [--title <text>] [--depth <1-6>]");
+                con.WriteLine("Usage: JPDFs.exe --toc <in.pdf> <out.pdf> [--title <text>] [--depth <1-6>]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
@@ -77,7 +77,7 @@ namespace KillerPDF.Features
         // Each range starts at a page and runs to the next; the first must start at page 1.
         private static int CliPageLabels(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
-            const string usage = "Usage: KillerPDF.exe --page-labels <in.pdf> <out.pdf> <page:style[:prefix[:start]],...>\n"
+            const string usage = "Usage: JPDFs.exe --page-labels <in.pdf> <out.pdf> <page:style[:prefix[:start]],...>\n"
                 + "  style: decimal, upper-roman, lower-roman, upper-letters, lower-letters or none\n"
                 + "  example: 1:lower-roman,5:decimal,40:decimal:A-:1";
             if (pos.Count != 3) { con.WriteLine(usage); return 2; }
@@ -132,7 +132,7 @@ namespace KillerPDF.Features
         // Anything not named keeps the setting the document already has.
         private static int CliInitialView(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
-            const string usage = "Usage: KillerPDF.exe --initial-view <in.pdf> <out.pdf> [--page <n>]\n"
+            const string usage = "Usage: JPDFs.exe --initial-view <in.pdf> <out.pdf> [--page <n>]\n"
                 + "  [--zoom fit-page|fit-width|fit-height|actual|<percent>]\n"
                 + "  [--layout default|single|one-column|two-column-left|two-column-right|two-page-left|two-page-right]\n"
                 + "  [--panel default|none|outlines|thumbnails|layers|attachments|full-screen]\n"
@@ -229,7 +229,7 @@ namespace KillerPDF.Features
         // The layer is its name, or # and its object number as --layers lists it.
         private static int CliSetLayer(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
-            const string usage = "Usage: KillerPDF.exe --set-layer <in.pdf> <out.pdf> <layer name or #object> [--name <new name>] [--visible on|off] [--locked on|off]";
+            const string usage = "Usage: JPDFs.exe --set-layer <in.pdf> <out.pdf> <layer name or #object> [--name <new name>] [--visible on|off] [--locked on|off]";
             if (pos.Count != 3) { con.WriteLine(usage); return 2; }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
             PdfOptionalContentInfo layers = PdfEngineIntegration.InspectLayers(source, null);
@@ -266,7 +266,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count < 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --add-attachment <in.pdf> <out.pdf> <file> [<file> ...] [--description <text>] [--relationship data|source|alternative|supplement|unspecified]");
+                con.WriteLine("Usage: JPDFs.exe --add-attachment <in.pdf> <out.pdf> <file> [<file> ...] [--description <text>] [--relationship data|source|alternative|supplement|unspecified]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
@@ -319,7 +319,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --edit-attachment <in.pdf> <out.pdf> <name> [--rename <new name>] [--description <text>] [--mime <type>] [--relationship <name>] [--remove]");
+                con.WriteLine("Usage: JPDFs.exe --edit-attachment <in.pdf> <out.pdf> <name> [--rename <new name>] [--description <text>] [--mime <type>] [--relationship <name>] [--remove]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
@@ -360,7 +360,7 @@ namespace KillerPDF.Features
         // ============================================================
         private static int CliPortfolioView(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
-            const string usage = "Usage: KillerPDF.exe --portfolio-view <in.pdf> <out.pdf> (--view details|tile|hidden [--initial <attachment>] | --clear)";
+            const string usage = "Usage: JPDFs.exe --portfolio-view <in.pdf> <out.pdf> (--view details|tile|hidden [--initial <attachment>] | --clear)";
             if (pos.Count != 2) { con.WriteLine(usage); return 2; }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
             if (options.ContainsKey("--clear"))

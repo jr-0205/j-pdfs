@@ -1,9 +1,9 @@
 using System.IO;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Parsing;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Parsing;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed record PdfDataMergePlan(
     PdfDataMergeProfile Profile,
@@ -15,7 +15,7 @@ internal sealed record PdfDataMergeMacroPlan(PdfDataMergePlan Merge, IReadOnlyLi
 
 internal static class PdfDataMergeWorkflow
 {
-    private const string OutputNameField = "__KillerPDFOutputFileName";
+    private const string OutputNameField = "__JPDFsOutputFileName";
 
     internal static PdfDataMergeMacroPlan PlanMacro(PdfMacro macro,
         IReadOnlyList<IReadOnlyDictionary<string, string?>> records, string sourcePath,

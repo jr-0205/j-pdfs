@@ -1,0 +1,88 @@
+using JPDFs.Engine.Objects;
+
+namespace JPDFs.Engine.Rendering;
+
+public sealed partial class PdfPageRenderer
+{
+    private const byte PreserveNamedSpots = 128;
+
+    private GraphicsState RebindNamedColors(GraphicsState state, RasterSurface destination)
+    {
+        if (state.FillColorSpace is { } fill && (fill.HasProcessColorants || fill.HasIccSource || state.BlackPointCompensation))
+        {
+            ImageColorSpace space = fill.ForDestination(destination, state.BlackPointCompensation);
+            if (!ReferenceEquals(space, fill)) state = state with
+            {
+                FillColorSpace = space,
+                Fill = state.FillOperands is { } operands ? ReadDevicePaint(space, operands, out _)
+                    : state.FillComponents is { } values ? space.Convert(values) : space.InitialPaint(out _)
+            };
+        }
+        if (state.StrokeColorSpace is { } stroke && (stroke.HasProcessColorants || stroke.HasIccSource || state.BlackPointCompensation))
+        {
+            ImageColorSpace space = stroke.ForDestination(destination, state.BlackPointCompensation);
+            if (!ReferenceEquals(space, stroke)) state = state with
+            {
+                StrokeColorSpace = space,
+                Stroke = state.StrokeOperands is { } operands ? ReadDevicePaint(space, operands, out _)
+                    : state.StrokeComponents is { } values ? space.Convert(values) : space.InitialPaint(out _)
+            };
+        }
+        return state;
+    }
+
+    private GraphicsState ApplyOverprintSettings(GraphicsState state, PdfDictionary dictionary)
+    {
+        if (dictionary.TryGetValue(Name("OP"), out PdfObject? strokeValue)
+            && Resolve(strokeValue) is PdfBoolean stroke)
+            state = state with { StrokeOverprint = stroke.Value, FillOverprint = stroke.Value };
+        if (dictionary.TryGetValue(Name("op"), out PdfObject? fillValue)
+            && Resolve(fillValue) is PdfBoolean fill)
+            state = state with { FillOverprint = fill.Value };
+        if (dictionary.TryGetValue(Name("OPM"), out PdfObject? modeValue)
+            && Resolve(modeValue) is PdfInteger { Value: 0 or 1 } mode)
+            state = state with { OverprintMode = (int)mode.Value };
+        return state;
+    }
+
+    private static int ProcessChannel(string name) => name switch
+    {
+        "Cyan" => 0, "Magenta" => 1, "Yellow" => 2, "Black" => 3, "None" => -1, _ => -2
+    };
+
+    private static Color ProcessColor(int[] channels, double first, double second, double third, double fourth)
+    {
+        ReadOnlySpan<double> source = [first, second, third, fourth];
+        return ProcessColor(channels, source);
+    }
+
+    private static Color ProcessColor(int[] channels, ReadOnlySpan<double> source)
+    {
+        Span<double> ink = stackalloc double[4];
+        ink.Clear();
+        for (int index = 0; index < channels.Length; index++)
+            if (channels[index] >= 0) ink[channels[index]] = source[index];
+        return Color.Cmyk(ink[0], ink[1], ink[2], ink[3]);
+    }
+
+    private static Color OverprintColor(in Color color, ImageColorSpace? space, bool enabled, int mode) =>
+        space?.DoesNotPaint == true ? Color.NonPainting
+        : space?.RegistrationColor == true || space?.PaletteBase?.RegistrationColor == true
+            ? color with { OverprintComponents = 0 }
+        : enabled && space?.NativeProcessMask is byte mask
+            ? color with { OverprintComponents = (byte)((~mask & 15) | 16) }
+        : enabled && space?.ContainsSpotColorants == true
+            ? color with { OverprintComponents = (byte)(color.OverprintComponents | 16 | 64) }
+        : enabled && (space is { Components: 1, RegistrationColor: false, Palette: null }
+            || space is { Components: 3, Palette: null, HasProcessColorants: false }
+            || space is { Components: 4, IsIccBased: true, Palette: null }
+            || space?.PaletteBase is { Components: 3, HasProcessColorants: false, ContainsSpotColorants: false }
+            || space?.PaletteBase is { Components: 4, IsIccBased: true })
+            ? color with { OverprintComponents = PreserveNamedSpots }
+        : enabled && mode == 0 && space is { Components: 4, IsIccBased: false, Palette: null,
+            Converter: null, MultiConverter: null }
+            ? color with { OverprintComponents = PreserveNamedSpots }
+        : enabled && mode == 1 && space is { Components: 4, IsIccBased: false, Palette: null,
+            Converter: null, MultiConverter: null }
+            ? color with { OverprintComponents = (byte)(color.OverprintComponents | 16) } : color;
+}

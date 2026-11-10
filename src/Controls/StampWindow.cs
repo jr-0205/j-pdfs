@@ -1,6 +1,6 @@
 using System;
-using KillerPDF.Controls;
-using KillerPDF.Shell;
+using JPDFs.Controls;
+using JPDFs.Shell;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
@@ -10,7 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
     /// Combined "Stamp" tool, modeled on the Transform window: a live page preview on the left and an
@@ -508,7 +508,7 @@ namespace KillerPDF
 
         private void ChooseImage()
         {
-            var picker = new KillerPDF.Controls.ImageAssetPickerDialog(this);
+            var picker = new JPDFs.Controls.ImageAssetPickerDialog(this);
             if (picker.ShowDialog() == true && !string.IsNullOrEmpty(picker.SelectedPath))
             {
                 _wmImagePath = picker.SelectedPath;

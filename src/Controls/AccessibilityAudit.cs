@@ -9,14 +9,14 @@ using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerFamily.Accessibility
+namespace JpdfsUi.Accessibility
 {
     internal static class AccessibilityAudit
     {
         // Explicit local diagnostic output only. Normal startup does not collect a control report.
         internal static void Record(Window window)
         {
-            string? folder = Environment.GetEnvironmentVariable("KILLER_ACCESSIBILITY_REPORT");
+            string? folder = Environment.GetEnvironmentVariable("JPDFS_ACCESSIBILITY_REPORT");
             if (string.IsNullOrWhiteSpace(folder)) return;
             var lines = new List<string>
             {

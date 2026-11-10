@@ -5,11 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using KillerPdf.Engine.Signing;
-using KillerPDF.Services;
-using KillerPDF.Services.Signing;
+using JPDFs.Engine.Signing;
+using JPDFs.Services;
+using JPDFs.Services.Signing;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Sign Document from the command line: an approval signature from a .pfx file or a certificate
     // in the Windows store, with an optional trusted RFC 3161 timestamp and visible appearance.
@@ -19,7 +19,7 @@ namespace KillerPDF.Features
         private const string DefaultSignAppearanceText = "Digitally signed by {name}\nDate: {date}\nReason: {reason}\nLocation: {location}";
 
         private const string SignUsage =
-            "Usage: KillerPDF.exe --sign <in.pdf> <out.pdf> (--pfx <file.pfx> [--pfx-password <p>] | --cert <thumbprint or name>)\n"
+            "Usage: JPDFs.exe --sign <in.pdf> <out.pdf> (--pfx <file.pfx> [--pfx-password <p>] | --cert <thumbprint or name>)\n"
             + "         [--reason <text>] [--location <text>] [--contact <text>]\n"
             + "         [--timestamp] [--timestamp-server <url>]\n"
             + "         [--appearance <page>[:bottom-left|bottom-right|top-left|top-right]] [--appearance-text <text>]\n"

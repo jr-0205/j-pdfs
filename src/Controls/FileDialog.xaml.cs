@@ -10,9 +10,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>Open, Save or Folder. Picked at construction; changes the accept button and the
     /// rules. Folder hides the name and type fields, labels the button Select, and returns a
@@ -737,7 +737,7 @@ namespace KillerPDF.Controls
             if (PlacesList.SelectedItem is PickerPlace p) NavigateTo(p.Path);
         }
 
-        // ── Folder tree (ported from KillerShell, see Controls/FolderTree.cs) ────
+        // ── Folder tree (ported from JpdfsShell, see Controls/FolderTree.cs) ────
 
         /// <summary>Ready drives only - an empty optical drive or a dropped mapping would sit
         /// there as a node that throws the moment anyone touches it. The drives are probed on a
@@ -750,7 +750,7 @@ namespace KillerPDF.Controls
             FolderTreeCtl.ItemsSource = TreeRoots;
             _ = FillTreeRootsAsync();
 
-            // Edge fades follow the scroll position (KillerShell TreePanel.cs). ScrollChanged is
+            // Edge fades follow the scroll position (JpdfsShell TreePanel.cs). ScrollChanged is
             // handled at the TreeView rather than dug out of its template: it bubbles, so the
             // inner ScrollViewer is reached without needing to have found it first. Loaded and
             // SizeChanged cover the passes where nothing scrolled but the extent moved.
@@ -813,7 +813,7 @@ namespace KillerPDF.Controls
         /// Fade each edge only while there is something PAST it, ramped over the fade's own
         /// height: none at the very top, none at the very bottom, full in between. A proportional
         /// ramp rather than a flip - at one pixel of scroll it is one pixel's worth of fade, so
-        /// neither edge ever pops. (KillerShell TreePanel.SyncTreeEdgeFades, verbatim.)
+        /// neither edge ever pops. (JpdfsShell TreePanel.SyncTreeEdgeFades, verbatim.)
         /// </summary>
         private void SyncTreeEdgeFades()
         {
@@ -836,7 +836,7 @@ namespace KillerPDF.Controls
         /// Keep the bottom edge fade sitting on the tree's last visible ROW rather than on the
         /// horizontal scrollbar underneath it. The bar's real height is measured, not taken from
         /// SystemParameters - the themed template is not the system metric. Base 4 is the tree's
-        /// own bottom margin. (KillerShell TreePanel.SyncTreeFade, adapted.)
+        /// own bottom margin. (JpdfsShell TreePanel.SyncTreeFade, adapted.)
         /// </summary>
         private void SyncTreeFade()
         {
@@ -951,7 +951,7 @@ namespace KillerPDF.Controls
         /// <summary>
         /// Points the tree at a folder reached from somewhere else - places, the path box, a
         /// double-click. Expands the chain of ANCESTORS and selects the folder; the destination's
-        /// own expander is left exactly as the user had it (KillerShell's rule - forcing it
+        /// own expander is left exactly as the user had it (JpdfsShell's rule - forcing it
         /// collapsed the branch under the cursor and the whole tree jumped).
         /// </summary>
         private async Task RevealInTree(string folder, long version)
@@ -1056,7 +1056,7 @@ namespace KillerPDF.Controls
 
         private void ApplyShowHiddenButton()
         {
-            // E7B3 eye at rest, E890 while showing - KillerShell's build-proven pair
+            // E7B3 eye at rest, E890 while showing - JpdfsShell's build-proven pair
             // (ViewOptions.cs). Codepoints, never literal PUA glyphs (family rule).
             ShowHiddenBtn.Content = ((char)(_showHidden ? 0xE890 : 0xE7B3)).ToString();
             ShowHiddenBtn.Tag     = _showHidden ? "on" : null;

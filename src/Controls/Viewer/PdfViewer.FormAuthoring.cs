@@ -2,9 +2,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     public partial class PdfViewer
     {
@@ -49,11 +49,11 @@ namespace KillerPDF.Controls
             string? fieldName = null;
             try
             {
-                IReadOnlyList<KillerPdf.Engine.Documents.PdfPageInformation> pages =
+                IReadOnlyList<JPDFs.Engine.Documents.PdfPageInformation> pages =
                     PdfEngineIntegration.ReadPageInformation(_currentFile, _protection);
                 if ((uint)pageIndex >= (uint)pages.Count)
                     return;
-                KillerPdf.Engine.Documents.PdfPageInformation page = pages[pageIndex];
+                JPDFs.Engine.Documents.PdfPageInformation page = pages[pageIndex];
                 int rotation = _pageRotations.TryGetValue(pageIndex, out int storedRotation)
                     ? ((storedRotation % 360) + 360) % 360
                     : page.Rotation;
@@ -82,7 +82,7 @@ namespace KillerPDF.Controls
 
         // An edit of a damaged file that cannot be saved shows a normal error, not the crash dialog.
         private void ReportEditFailure(Exception error) =>
-            KillerDialog.Show(Window.GetWindow(this), string.Format(Loc("Str_Pages_Failed"), error.Message),
+            JpdfsDialog.Show(Window.GetWindow(this), string.Format(Loc("Str_Pages_Failed"), error.Message),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 }

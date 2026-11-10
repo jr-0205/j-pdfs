@@ -1,7 +1,7 @@
 using System.IO;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Owns an immutable engine document and lazily caches extraction for its pages.</summary>
 internal sealed class PdfContentDocument : IDisposable

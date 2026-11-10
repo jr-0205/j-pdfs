@@ -8,11 +8,11 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $repository=Split-Path -Parent $PSScriptRoot
 if(Test-Path -LiteralPath $EvidenceRoot){throw 'Use a fresh evidence directory.'}
 $root=Join-Path $EvidenceRoot 'fixture'
-foreach($directory in @('build','store','engine/KillerPdf.Engine','pdf-landing/engine','validation/benchmarks/1.9.1','bin/Release/net10.0-windows/publish/release-validation')){
+foreach($directory in @('build','store','engine/JPDFs.Engine','pdf-landing/engine','validation/benchmarks/1.9.1','bin/Release/net10.0-windows/publish/release-validation')){
     [IO.Directory]::CreateDirectory((Join-Path $root $directory))|Out-Null
 }
-foreach($name in @('release.ps1','KillerPDF.csproj','CHANGELOG.md','README.md','store/KillerPDF-Store-listing.csv','store/Submit-StoreRelease.ps1',
-    'engine/KillerPdf.Engine/KillerPdf.Engine.csproj','build/release-validation.ps1','build/payload-security.ps1','build/Update-EngineSiteFacts.ps1','build/Test-GuiStartup.ps1')){
+foreach($name in @('release.ps1','JPDFs.csproj','CHANGELOG.md','README.md','store/JPDFs-Store-listing.csv','store/Submit-StoreRelease.ps1',
+    'engine/JPDFs.Engine/JPDFs.Engine.csproj','build/release-validation.ps1','build/payload-security.ps1','build/Update-EngineSiteFacts.ps1','build/Test-GuiStartup.ps1')){
     Copy-Item -LiteralPath (Join-Path $repository $name) -Destination (Join-Path $root $name)
 }
 Get-ChildItem -LiteralPath (Join-Path $repository 'pdf-landing') -File|Where-Object{$_.Extension -in @('.html','.js')}|Copy-Item -Destination (Join-Path $root 'pdf-landing')
@@ -24,23 +24,23 @@ Get-ChildItem -LiteralPath (Join-Path $repository 'Strings') -File -Filter '*.xa
 $publish=Join-Path $root 'bin/Release/net10.0-windows/publish'
 $payload=Join-Path $EvidenceRoot 'payload'
 [IO.Directory]::CreateDirectory($payload)|Out-Null
-foreach($name in @('KillerPDF.App.exe','KillerPDF.App.dll','KillerPdf.Engine.dll')){[IO.File]::WriteAllBytes((Join-Path $payload $name),[byte[]]@(1,2,3))}
+foreach($name in @('JPDFs.App.exe','JPDFs.App.dll','JPDFs.Engine.dll')){[IO.File]::WriteAllBytes((Join-Path $payload $name),[byte[]]@(1,2,3))}
 $zip=Join-Path $EvidenceRoot 'payload.zip'
 [IO.Compression.ZipFile]::CreateFromDirectory($payload,$zip)
 $compiler=@(& dotnet --list-sdks|ForEach-Object{if($_ -match '^(?<version>[^ ]+) \[(?<root>.+)\]$'){Join-Path $Matches.root ($Matches.version+'/Roslyn/bincore/csc.dll')}})[-1]
 $source=Join-Path $EvidenceRoot 'Package.cs'
 [IO.File]::WriteAllText($source,'[assembly:System.Reflection.AssemblyVersion("1.9.2.0")] public class Package {}')
 $package=Join-Path $EvidenceRoot 'Package.dll'
-& dotnet exec $compiler -nologo -target:library ('-out:'+$package) ('-resource:'+$zip+',KillerLauncher.payload.zip') ('-r:'+ [object].Assembly.Location) $source
+& dotnet exec $compiler -nologo -target:library ('-out:'+$package) ('-resource:'+$zip+',JpdfsLauncher.payload.zip') ('-r:'+ [object].Assembly.Location) $source
 if($LASTEXITCODE -ne 0){throw 'Fixture compilation failed.'}
-foreach($name in @('KillerPDF.exe','KillerPDF-Portable.exe','KillerPDF-Store.exe')){Copy-Item -LiteralPath $package -Destination (Join-Path $publish $name)}
-Copy-Item -LiteralPath $zip -Destination (Join-Path $publish 'KillerPDF-1.9.2-src.zip')
-$sums=foreach($name in @('KillerPDF.exe','KillerPDF-Portable.exe','KillerPDF-Store.exe','KillerPDF-1.9.2-src.zip')){
+foreach($name in @('JPDFs.exe','JPDFs-Portable.exe','JPDFs-Store.exe')){Copy-Item -LiteralPath $package -Destination (Join-Path $publish $name)}
+Copy-Item -LiteralPath $zip -Destination (Join-Path $publish 'JPDFs-1.9.2-src.zip')
+$sums=foreach($name in @('JPDFs.exe','JPDFs-Portable.exe','JPDFs-Store.exe','JPDFs-1.9.2-src.zip')){
     $name+' '+(Get-FileHash -LiteralPath (Join-Path $publish $name)).Hash
 }
 [IO.File]::WriteAllLines((Join-Path $publish 'SHA256SUMS.txt'),[string[]]$sums)
 foreach($suite in @('engine','desktop')){
-    $assembly=if($suite -eq 'engine'){'KillerPdf.Engine.Tests.dll'}else{'KillerPDF.Tests.dll'}
+    $assembly=if($suite -eq 'engine'){'JPDFs.Engine.Tests.dll'}else{'JPDFs.Tests.dll'}
     $trx='<TestRun><TestDefinitions><UnitTest storage="C:/fixture/'+$assembly+'" /></TestDefinitions><Results><UnitTestResult outcome="Passed" /></Results><ResultSummary outcome="Completed"><Counters total="1" executed="1" passed="1" failed="0" notExecuted="0" /></ResultSummary></TestRun>'
     [IO.File]::WriteAllText((Join-Path $publish ('release-validation/'+$suite+'.trx')),$trx)
 }
@@ -79,7 +79,7 @@ $failure=$null
 $previousTemp=$env:TEMP
 $env:TEMP=$EvidenceRoot
 $previousSettings=@{}
-foreach($name in @('KILLER_STORE_TENANT_ID','KILLER_STORE_CLIENT_ID','KILLER_STORE_CLIENT_SECRET','KILLER_STORE_SELLER_ID')){
+foreach($name in @('JPDFS_STORE_TENANT_ID','JPDFS_STORE_CLIENT_ID','JPDFS_STORE_CLIENT_SECRET','JPDFS_STORE_SELLER_ID')){
     $previousSettings[$name]=[Environment]::GetEnvironmentVariable($name,'Process')
     [Environment]::SetEnvironmentVariable($name,'offline-fixture','Process')
 }

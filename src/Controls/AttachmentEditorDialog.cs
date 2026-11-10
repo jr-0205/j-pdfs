@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Authoring;
-using KillerPDF.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class AttachmentEditorDialog : Window
 {
@@ -102,7 +102,7 @@ internal sealed class AttachmentEditorDialog : Window
                 && remaining.Any(other => !ReferenceEquals(other, edit)
                     && string.Equals(other.FileName, edit.FileName, System.StringComparison.OrdinalIgnoreCase))))
         {
-            KillerDialog.Show(this, L("Str_Attachment_Invalid"),
+            JpdfsDialog.Show(this, L("Str_Attachment_Invalid"),
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

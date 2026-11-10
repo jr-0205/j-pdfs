@@ -16,8 +16,8 @@ destination is the page's final position. Each subsequent operation observes
 the order left by the previous operation.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
 
 static byte[] MoveFirstPageToEnd(PdfDocument document)
 {
@@ -47,9 +47,9 @@ isolated Form XObject. This example assumes an existing, unrotated US Letter pag
 with an origin of zero and no logical structure tree.
 
 ```csharp
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
 
 static byte[] AddReviewLabel(PdfDocument document)
 {
@@ -87,8 +87,8 @@ Open and authenticate both documents before import. The page editor imports
 dependent objects and resources rather than reusing source object numbers.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
 
 static byte[] AppendFirstPage(PdfDocument destination, PdfDocument source)
 {
@@ -146,7 +146,7 @@ changing the document, how many glyphs lie in an area and whether a
 size, or a font that cannot be decoded.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] ReplaceLine(PdfDocument document, PdfContentBounds region)
 {

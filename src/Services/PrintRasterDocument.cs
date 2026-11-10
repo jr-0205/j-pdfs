@@ -4,12 +4,12 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Preflights all print rasters on disk and retains at most two decoded pages.</summary>
 internal sealed class PrintRasterDocument : DocumentPaginator, IDisposable
 {
-    private readonly ProcessTempFiles files = new(Path.Combine(Path.GetTempPath(), "KillerPDF-print"));
+    private readonly ProcessTempFiles files = new(Path.Combine(Path.GetTempPath(), "JPDFs-print"));
     private readonly List<(string Path, int Width, int Height)> pages = [];
     private readonly LinkedList<(int Index, BitmapSource Bitmap)> cache = [];
     private readonly int copies;

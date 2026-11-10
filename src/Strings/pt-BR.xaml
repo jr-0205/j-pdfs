@@ -379,21 +379,9 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Escuro</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Claro</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Preto</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Sangue</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Ganância</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Cianótico</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat claro</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ectoplasma</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Decadência</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Luto</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat claro</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat escuro</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Granulação de filme</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Sepulcro</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Delírio</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Mal-estar</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">Ajustar à largura</sys:String>
@@ -1591,7 +1579,6 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_KS_DisabledStatus">Atalhos de teclado desativados. Pressione Ctrl+Shift+K para ativá-los.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Verificar atualizações ao iniciar</sys:String>
     <sys:String x:Key="Str_PasswordProtected">“{0}” é protegido por senha.</sys:String>
-    <sys:String x:Key="Str_About_Aka">AKA</sys:String>
     <sys:String x:Key="Str_Btn_Run">Executar</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Macros</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Macros salvas</sys:String>

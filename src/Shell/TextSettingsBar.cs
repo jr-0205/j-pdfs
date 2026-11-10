@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -778,7 +778,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_LoadImageFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_LoadImageFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -859,7 +859,7 @@ namespace KillerPDF.Shell
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_PasteFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
+                JpdfsDialog.Show(this, Loc("Str_Err_PasteFailed") + "\n" + ex.Message, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

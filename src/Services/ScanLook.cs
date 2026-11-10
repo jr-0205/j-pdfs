@@ -1,4 +1,4 @@
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Effects that make a flattened page look like a paper copy run through a scanner (#426):

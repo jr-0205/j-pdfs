@@ -1,12 +1,12 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Principal;
 using System.Windows;
-using KillerPDF.Features;
-using KillerPDF.Services;
+using JPDFs.Features;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 public partial class App
 {

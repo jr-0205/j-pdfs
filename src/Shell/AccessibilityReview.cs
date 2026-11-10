@@ -1,11 +1,11 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {

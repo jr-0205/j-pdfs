@@ -380,21 +380,9 @@ Scale them to a supported size? The pages keep their look and proportions.</sys:
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Dark</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Light</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Black</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Blood</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Greed</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Cyanotic</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat Light</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ectoplasm</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Decay</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Mourning</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat Light</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat Dark</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Film Grain</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Sepulchre</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Delirium</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Malaise</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">Fit Width</sys:String>
@@ -1601,7 +1589,6 @@ Scale them to a supported size? The pages keep their look and proportions.</sys:
     <sys:String x:Key="Str_KS_DisabledStatus">Keyboard shortcuts disabled. Press Ctrl+Shift+K to enable them.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Check for updates on startup</sys:String>
     <sys:String x:Key="Str_PasswordProtected">“{0}” is password protected.</sys:String>
-    <sys:String x:Key="Str_About_Aka">AKA</sys:String>
     <sys:String x:Key="Str_Btn_Run">Run</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Macros</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Saved macros</sys:String>

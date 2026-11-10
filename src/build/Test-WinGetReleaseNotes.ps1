@@ -13,7 +13,7 @@ $shaper = $ast.Find({ param($node)
 }, $false)
 if ($null -eq $shaper) { throw 'WinGet release-notes shaping is missing.' }
 . ([scriptblock]::Create($shaper.Extent.Text))
-$url = 'https://github.com/SteveTheKiller/KillerPDF/releases/tag/v1.9.0'
+$url = 'https://github.com/JPDFs/JPDFs/releases/tag/v1.9.0'
 function Assert-Notes([string]$Body, [string]$Name) {
     $notes = Get-WinGetReleaseNotes -Body $Body -ReleaseUrl $url
     if ($notes.Length -lt 1 -or $notes.Length -gt 10000) { throw "${Name}: $($notes.Length) characters." }

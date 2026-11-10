@@ -4,7 +4,7 @@ using System.Windows.Media.Imaging;
 using NTwain;
 using NTwain.Data;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed record TwainScanResult(IReadOnlyList<string> Pages,
     IReadOnlyList<Exception> Errors, bool Canceled)

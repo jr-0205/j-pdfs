@@ -1,0 +1,145 @@
+using System.Reflection;
+
+namespace JPDFs.Engine.Fonts;
+
+internal static class PdfStandardFontSubstitutes
+{
+    private static readonly Lazy<TrueTypeFont> SansRegular = Font("LiberationSans-Regular.ttf");
+    private static readonly Lazy<TrueTypeFont> SansBold = Font("LiberationSans-Bold.ttf");
+    private static readonly Lazy<TrueTypeFont> SansItalic = Font("LiberationSans-Italic.ttf");
+    private static readonly Lazy<TrueTypeFont> SansBoldItalic = Font("LiberationSans-BoldItalic.ttf");
+    private static readonly Lazy<TrueTypeFont> SerifRegular = Font("LiberationSerif-Regular.ttf");
+    private static readonly Lazy<TrueTypeFont> SerifBold = Font("LiberationSerif-Bold.ttf");
+    private static readonly Lazy<TrueTypeFont> SerifItalic = Font("LiberationSerif-Italic.ttf");
+    private static readonly Lazy<TrueTypeFont> SerifBoldItalic = Font("LiberationSerif-BoldItalic.ttf");
+    private static readonly Lazy<TrueTypeFont> MonoRegular = Font("LiberationMono-Regular.ttf");
+    private static readonly Lazy<TrueTypeFont> MonoBold = Font("LiberationMono-Bold.ttf");
+    private static readonly Lazy<TrueTypeFont> MonoItalic = Font("LiberationMono-Italic.ttf");
+    private static readonly Lazy<TrueTypeFont> MonoBoldItalic = Font("LiberationMono-BoldItalic.ttf");
+
+    private static readonly Dictionary<string, Lazy<TrueTypeFont>> Fonts =
+        new(StringComparer.Ordinal)
+        {
+            ["Helvetica"] = SansRegular,
+            ["Helvetica-Bold"] = SansBold,
+            ["Helvetica-Oblique"] = SansItalic,
+            ["Helvetica-BoldOblique"] = SansBoldItalic,
+            ["Times-Roman"] = SerifRegular,
+            ["Times-Bold"] = SerifBold,
+            ["Times-Italic"] = SerifItalic,
+            ["Times-BoldItalic"] = SerifBoldItalic,
+            ["Courier"] = MonoRegular,
+            ["Courier-Bold"] = MonoBold,
+            ["Courier-Oblique"] = MonoItalic,
+            ["Courier-BoldOblique"] = MonoBoldItalic
+        };
+
+    internal static TrueTypeFont Find(string fontName, long descriptorFlags = 0)
+    {
+        if (Fonts.TryGetValue(fontName, out Lazy<TrueTypeFont>? exact))
+            return exact.Value;
+
+        bool bold = (descriptorFlags & (1 << 18)) != 0 || Contains(fontName, "bold") || Contains(fontName, "semibold")
+            || Contains(fontName, "demi") || Contains(fontName, "black")
+            || Contains(fontName, "heavy");
+        bool italic = (descriptorFlags & 64) != 0 || Contains(fontName, "italic") || Contains(fontName, "oblique")
+            || fontName.EndsWith("-It", StringComparison.OrdinalIgnoreCase)
+            || Contains(fontName, "chancery");
+        bool knownSans = Contains(fontName, "arial") || Contains(fontName, "helv")
+            || Contains(fontName, "verdana") || Contains(fontName, "trebuchet");
+        bool mono = !knownSans && ((descriptorFlags & 1) != 0 || Contains(fontName, "courier") || Contains(fontName, "mono")
+            || Contains(fontName, "typewriter"));
+        bool serif = !mono && !knownSans && ((descriptorFlags & 2) != 0 || Contains(fontName, "times") || Contains(fontName, "serif")
+            || Contains(fontName, "minion") || Contains(fontName, "calluna")
+            || Contains(fontName, "century") || Contains(fontName, "schoolbook")
+            || Contains(fontName, "warnock"));
+
+        return (mono, serif, bold, italic) switch
+        {
+            (true, _, true, true) => MonoBoldItalic.Value,
+            (true, _, true, false) => MonoBold.Value,
+            (true, _, false, true) => MonoItalic.Value,
+            (true, _, false, false) => MonoRegular.Value,
+            (_, true, true, true) => SerifBoldItalic.Value,
+            (_, true, true, false) => SerifBold.Value,
+            (_, true, false, true) => SerifItalic.Value,
+            (_, true, false, false) => SerifRegular.Value,
+            (_, _, true, true) => SansBoldItalic.Value,
+            (_, _, true, false) => SansBold.Value,
+            (_, _, false, true) => SansItalic.Value,
+            _ => SansRegular.Value
+        };
+    }
+
+    internal static IReadOnlyList<TrueTypeFont> OcrTrainingFonts() =>
+    [
+        SansRegular.Value,
+        SansBold.Value,
+        SansItalic.Value,
+        SansBoldItalic.Value,
+        SerifRegular.Value,
+        SerifBold.Value,
+        SerifItalic.Value,
+        SerifBoldItalic.Value,
+        MonoRegular.Value,
+        MonoBold.Value,
+        MonoItalic.Value,
+        MonoBoldItalic.Value
+    ];
+
+    internal static string CanonicalMetricsName(string fontName)
+    {
+        if (Fonts.ContainsKey(fontName) || fontName is "Symbol" or "ZapfDingbats")
+            return fontName;
+
+        string compact = new([.. fontName.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant)]);
+        bool sans = compact.StartsWith("arial", StringComparison.Ordinal)
+            || compact.StartsWith("helv", StringComparison.Ordinal);
+        bool serif = compact.StartsWith("timesnewroman", StringComparison.Ordinal)
+            || compact.StartsWith("timesroman", StringComparison.Ordinal);
+        bool mono = compact.StartsWith("couriernew", StringComparison.Ordinal)
+            || compact.StartsWith("courierstd", StringComparison.Ordinal);
+        if (!sans && !serif && !mono) return fontName;
+
+        bool bold = Contains(fontName, "bold");
+        bool italic = Contains(fontName, "italic") || Contains(fontName, "oblique");
+        if (mono)
+            return (bold, italic) switch
+            {
+                (true, true) => "Courier-BoldOblique",
+                (true, false) => "Courier-Bold",
+                (false, true) => "Courier-Oblique",
+                _ => "Courier"
+            };
+        if (serif)
+            return (bold, italic) switch
+            {
+                (true, true) => "Times-BoldItalic",
+                (true, false) => "Times-Bold",
+                (false, true) => "Times-Italic",
+                _ => "Times-Roman"
+            };
+        return (bold, italic) switch
+        {
+            (true, true) => "Helvetica-BoldOblique",
+            (true, false) => "Helvetica-Bold",
+            (false, true) => "Helvetica-Oblique",
+            _ => "Helvetica"
+        };
+    }
+
+    private static bool Contains(string value, string part) =>
+        value.Contains(part, StringComparison.OrdinalIgnoreCase);
+
+    private static Lazy<TrueTypeFont> Font(string fileName) => new(() =>
+    {
+        Assembly assembly = typeof(PdfStandardFontSubstitutes).Assembly;
+        using Stream stream = assembly.GetManifestResourceStream(
+            "JPDFs.Engine.Fonts." + fileName)
+            ?? throw new InvalidOperationException(
+                $"The standard-font substitute {fileName} is missing.");
+        byte[] data = new byte[checked((int)stream.Length)];
+        stream.ReadExactly(data);
+        return TrueTypeFont.LoadOwnedForExtraction(data);
+    }, LazyThreadSafetyMode.ExecutionAndPublication);
+}

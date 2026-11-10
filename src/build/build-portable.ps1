@@ -13,8 +13,8 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'payload-security.ps1')
 
 $projectDir = Split-Path -Parent $PSScriptRoot
-$appProject = Join-Path $projectDir 'KillerPDF.csproj'
-$launcherProject = Join-Path $projectDir 'Packaging\KillerLauncher\KillerLauncher.csproj'
+$appProject = Join-Path $projectDir 'JPDFs.csproj'
+$launcherProject = Join-Path $projectDir 'Packaging\JpdfsLauncher\JpdfsLauncher.csproj'
 # The Store package is the installer with the portable edition's bundled runtime, because the
 # Microsoft Store installs silently on machines that may not have the .NET 10 Desktop Runtime.
 $isStore = $PackageKind -eq 'Store'
@@ -44,10 +44,10 @@ if ($isInstaller -and -not $isStore) {
 $versionXml = [xml](Get-Content -Raw -LiteralPath $appProject)
 $versionNode = $versionXml.SelectSingleNode('/Project/PropertyGroup/Version')
 $version = if ($versionNode) { [string]$versionNode.InnerText } else { '' }
-if (-not $version) { throw 'KillerPDF.csproj has no Version.' }
+if (-not $version) { throw 'JPDFs.csproj has no Version.' }
 $fileVersionNode = $versionXml.SelectSingleNode('/Project/PropertyGroup/FileVersion')
 $fileVersion = if ($fileVersionNode) { [string]$fileVersionNode.InnerText } else { '' }
-if (-not $fileVersion) { throw 'KillerPDF.csproj has no FileVersion.' }
+if (-not $fileVersion) { throw 'JPDFs.csproj has no FileVersion.' }
 
 if (-not $RepackOnly) {
     Write-Host "==> Building loose J-PDF's payload $version..." -ForegroundColor Cyan
@@ -55,7 +55,7 @@ if (-not $RepackOnly) {
         -r win-x64 `
         --self-contained $bundlesRuntime `
         -p:PublishReadyToRun=true `
-        -p:KillerPayloadBuild=true `
+        -p:JpdfsPayloadBuild=true `
         -p:PublishDir="$payloadDir\"
     if ($LASTEXITCODE -ne 0) { throw 'Payload build failed.' }
 
@@ -71,23 +71,23 @@ if (-not $RepackOnly) {
     if (-not [IO.File]::Exists($codecAssembly)) { throw "CoreJ2K ReadyToRun assembly is missing: $codecAssembly" }
     [IO.File]::Copy($codecAssembly, (Join-Path $payloadDir 'CoreJ2K.dll'), $true)
 
-    $engineProject = Join-Path $projectDir 'engine\KillerPdf.Engine\KillerPdf.Engine.csproj'
+    $engineProject = Join-Path $projectDir 'engine\JPDFs.Engine\JPDFs.Engine.csproj'
     $enginePublishDir = Join-Path $artifactRoot 'engine-r2r'
     & dotnet publish $engineProject -c $Configuration `
         -r win-x64 `
         --self-contained false `
         -p:PublishReadyToRun=true `
         -o $enginePublishDir
-    if ($LASTEXITCODE -ne 0) { throw 'KillerPdf.Engine ReadyToRun build failed.' }
-    $engineAssembly = Join-Path $enginePublishDir 'KillerPdf.Engine.dll'
-    if (-not [IO.File]::Exists($engineAssembly)) { throw "KillerPdf.Engine ReadyToRun assembly is missing: $engineAssembly" }
-    [IO.File]::Copy($engineAssembly, (Join-Path $payloadDir 'KillerPdf.Engine.dll'), $true)
+    if ($LASTEXITCODE -ne 0) { throw 'JPDFs.Engine ReadyToRun build failed.' }
+    $engineAssembly = Join-Path $enginePublishDir 'JPDFs.Engine.dll'
+    if (-not [IO.File]::Exists($engineAssembly)) { throw "JPDFs.Engine ReadyToRun assembly is missing: $engineAssembly" }
+    [IO.File]::Copy($engineAssembly, (Join-Path $payloadDir 'JPDFs.Engine.dll'), $true)
 
     # The File Explorer and Outlook preview handler (#410) ships with the installed edition only.
     # Its own files join the payload; the engine and fonts it needs are already there. The Store
     # package leaves it out because the handler loads the shared runtime, not the bundled one.
     if ($isInstaller -and -not $isStore) {
-        $previewProject = Join-Path $projectDir 'PreviewHandler\KillerPDF.PreviewHandler.csproj'
+        $previewProject = Join-Path $projectDir 'PreviewHandler\JPDFs.PreviewHandler.csproj'
         $previewPublishDir = Join-Path $artifactRoot 'preview-handler'
         & dotnet publish $previewProject -c $Configuration `
             -r win-x64 `
@@ -95,8 +95,8 @@ if (-not $RepackOnly) {
             -p:PublishReadyToRun=true `
             -o $previewPublishDir
         if ($LASTEXITCODE -ne 0) { throw 'Preview handler build failed.' }
-        foreach ($previewFile in 'KillerPDF.PreviewHandler.dll', 'KillerPDF.PreviewHandler.comhost.dll',
-                                 'KillerPDF.PreviewHandler.runtimeconfig.json', 'KillerPDF.PreviewHandler.deps.json') {
+        foreach ($previewFile in 'JPDFs.PreviewHandler.dll', 'JPDFs.PreviewHandler.comhost.dll',
+                                 'JPDFs.PreviewHandler.runtimeconfig.json', 'JPDFs.PreviewHandler.deps.json') {
             $previewPath = Join-Path $previewPublishDir $previewFile
             if (-not [IO.File]::Exists($previewPath)) { throw "Preview handler output is missing: $previewPath" }
             [IO.File]::Copy($previewPath, (Join-Path $payloadDir $previewFile), $true)
@@ -152,7 +152,7 @@ if ($payloadDifference.Count -gt 0) {
     $details = ($payloadDifference | ForEach-Object { "$($_.SideIndicator) $($_.InputObject)" }) -join [Environment]::NewLine
     throw "Payload file set changed. Review dependencies and update build\payload-files.txt deliberately:`n$details"
 }
-$requiredFiles = @('JPDFs.App.exe', 'KillerPdf.Engine.dll')
+$requiredFiles = @('JPDFs.App.exe', 'JPDFs.Engine.dll')
 if ($bundlesRuntime) { $requiredFiles += 'System.Text.Json.dll' }
 foreach ($required in $requiredFiles) {
     if ($actualPayloadNames -notcontains $required) {

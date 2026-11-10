@@ -2,10 +2,10 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerPDF.Services;
-using KillerPDF.Shell;
+using JPDFs.Services;
+using JPDFs.Shell;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// The family language picker (Killendar's): every language in two columns, native name on the

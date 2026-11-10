@@ -9,7 +9,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
     /// A small, themed RGB color picker: saturation/value square + hue strip, RGB and HTML-hex inputs,
@@ -67,17 +67,6 @@ namespace KillerPDF
         private void BuildUi()
         {
             var panel = new StackPanel { Margin = new Thickness(18, 14, 18, 16) };
-            // 98SE: the hand-rolled card (black outline + 1px AddBevels ring) never read as a
-            // classic window. Use the shared DialogFrame.Frame instead - the same classic caption
-            // bar and five-ring raised frame KillerDialog gets - and let the caption carry the
-            // title, so the in-panel accent heading is skipped.
-            if (Services.ThemeManager.Current == Services.Theme.SE98)
-            {
-                Content = DialogFrame.Frame(this, Owner, L("Str_Color_Pick"),
-                    () => { DialogResult = false; Close(); }, panel);
-            }
-            else
-            {
             var card = new Controls.PickerBorder
             {
                 Background = R("MenuBackgroundBrush"),
@@ -110,7 +99,6 @@ namespace KillerPDF
             };
             title.MouseLeftButtonDown += (_, e) => { if (e.ButtonState == MouseButtonState.Pressed) DragMove(); };
             panel.Children.Add(title);
-            }
             // SV square + hue strip
             var pickRow = new StackPanel { Orientation = Orientation.Horizontal };
             _svHue = new Rectangle { Width = SvW, Height = SvH };
@@ -373,7 +361,7 @@ namespace KillerPDF
             box.Padding = new Thickness(4, 0, 4, 0);
             return box;
         }
-        // A crosshair/target glyph drawn in vectors, to match the KillerPDF look.
+        // A crosshair/target glyph drawn in vectors, to match the JPDFs look.
         private static Grid CrosshairIcon()
         {
             var g = new Grid { Width = 14, Height = 14 };
@@ -415,14 +403,6 @@ namespace KillerPDF
         }
         private static Button MakeButton(string text, bool primary)
         {
-            // 98SE: the shared kit button already carries the beveled ChipFace treatment, so the
-            // dialog's OK / Cancel match the classic toolbar instead of the modern accent pair.
-            if (Services.ThemeManager.Current == Services.Theme.SE98)
-            {
-                var se = UiKit.Make(text, primary);
-                se.Height = 28; se.MinWidth = 74; se.Padding = new Thickness(12, 0, 12, 0);
-                return se;
-            }
             var btn = new Button { Content = text, Height = 28, MinWidth = 74, Padding = new Thickness(12, 0, 12, 0),
                 BorderThickness = new Thickness(1), Cursor = Cursors.Hand };
             var style = new Style(typeof(Button));

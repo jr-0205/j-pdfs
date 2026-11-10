@@ -14,9 +14,9 @@ This complete example creates a page, adds a note and a reply in one revision,
 and returns bytes for the host to save:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
 
 static byte[] CreateReviewExample()
 {
@@ -79,7 +79,7 @@ overload, so isolate large or untrusted batch work at the host process boundary.
 The following functions can live in the same host service as the example above:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static string ExportReview(byte[] pdf)
 {

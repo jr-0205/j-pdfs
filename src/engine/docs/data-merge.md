@@ -8,7 +8,7 @@ save generated files. `PdfDataRecordReader` supplies the records (see below).
 ## Expand one string
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static string ExpandGreeting()
 {
@@ -40,7 +40,7 @@ the size of a workbook. They do not run formulas or scripts.
 ## Define a reusable mapping
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfDataMergeProfile CreateRecipientProfile()
 {
@@ -75,7 +75,7 @@ the same configuration; a host must supply records and execute the merge.
 ## Preview a record against a template
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfDataMergePreview PreviewRecipient(PdfDocument template,
     IReadOnlyDictionary<string, string?> record)
@@ -101,7 +101,7 @@ save policy. Validate the final name and destination before writing a file.
 ## Generate editable or flattened PDFs
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static IReadOnlyList<PdfDataMergeDocumentResult> GenerateRecipients(
     PdfDocument template, IEnumerable<IReadOnlyDictionary<string, string?>> records,

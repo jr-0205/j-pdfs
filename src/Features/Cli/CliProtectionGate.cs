@@ -1,9 +1,9 @@
 using System.IO;
-using KillerPDF.Services;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
+using JPDFs.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
 
-namespace KillerPDF.Features;
+namespace JPDFs.Features;
 
 /// <summary>What the command line tells a protected input, from the same answers the app reads. The
 /// dispatcher asks once for the verb it is about to run, so no verb carries a gate of its own.</summary>

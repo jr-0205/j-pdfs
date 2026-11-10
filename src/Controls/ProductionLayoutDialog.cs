@@ -3,10 +3,10 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class ProductionLayoutDialog : Window
 {
@@ -190,7 +190,7 @@ internal sealed class ProductionLayoutDialog : Window
     private void Safely(Action action)
     {
         try { action(); }
-        catch (Exception error) { KillerDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + error.Message); }
+        catch (Exception error) { JpdfsDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + error.Message); }
     }
     private static string L(string key) => Application.Current.TryFindResource(key) as string ?? key;
 }

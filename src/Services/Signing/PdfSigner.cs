@@ -1,12 +1,12 @@
 using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
 
-namespace KillerPDF.Services.Signing
+namespace JPDFs.Services.Signing
 {
-    /// <summary>Creates detached-CMS approval signatures through The KillerPDF.Engine.</summary>
+    /// <summary>Creates detached-CMS approval signatures through The JPDFs.Engine.</summary>
     internal sealed class PdfSigner
     {
         public sealed record SignInfo(string Reason, string Location, string Contact,
@@ -31,7 +31,7 @@ namespace KillerPDF.Services.Signing
                     "The selected certificate has no private key, so it cannot sign.");
 
             PdfDocument document = PdfDocument.Open(File.ReadAllBytes(inputPath));
-            var cmsSigner = new KillerCmsSigner(cert);
+            var cmsSigner = new JpdfsCmsSigner(cert);
             // A visible signature goes where the signer placed it, so an uncertified document gets a
             // new field there. Otherwise a prepared field the document carries is signed first.
             string newField = PdfDetachedSignatureWriter.FindAvailableSignatureFieldName(document, preferNewField: true);

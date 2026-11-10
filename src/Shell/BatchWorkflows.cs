@@ -1,10 +1,10 @@
 using System.IO;
 using System.Text;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -66,7 +66,7 @@ public partial class MainWindow
             {
                 if (!PrepareMacroRedaction()) return;
                 _macroRedaction.Marked.Clear();
-                if (_macroRedaction.Terms.Length == 0) { KillerDialog.Show(this, Loc("Str_Macro_RedactNothing")); return; }
+                if (_macroRedaction.Terms.Length == 0) { JpdfsDialog.Show(this, Loc("Str_Macro_RedactNothing")); return; }
             }
             var busy = ShowBusyOverlay(Loc("Str_Macro_Running"));
             CancellationToken token = BeginCancellableOp(title);

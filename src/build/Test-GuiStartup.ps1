@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $ExePath = (Resolve-Path -LiteralPath $ExePath).Path
 if (-not $EvidenceDirectory) {
-    $EvidenceDirectory = Join-Path ([IO.Path]::GetTempPath()) ('KillerPDF-gui-check-' + [guid]::NewGuid().ToString('N'))
+    $EvidenceDirectory = Join-Path ([IO.Path]::GetTempPath()) ('JPDFs-gui-check-' + [guid]::NewGuid().ToString('N'))
 }
 [IO.Directory]::CreateDirectory($EvidenceDirectory) | Out-Null
 $report = Join-Path $EvidenceDirectory 'startup.log'
@@ -23,8 +23,8 @@ $start.CreateNoWindow = $true
 $start.WorkingDirectory = [IO.Path]::GetTempPath()
 $start.RedirectStandardOutput = $true
 $start.RedirectStandardError = $true
-$start.EnvironmentVariables['KILLERPDF_SMOKE_REPORT'] = $report
-$start.EnvironmentVariables.Remove('KILLERPDF_STARTUP_TRACE')
+$start.EnvironmentVariables['JPDFS_SMOKE_REPORT'] = $report
+$start.EnvironmentVariables.Remove('JPDFS_STARTUP_TRACE')
 $process = New-Object System.Diagnostics.Process
 $process.StartInfo = $start
 try {

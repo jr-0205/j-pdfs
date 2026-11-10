@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 internal sealed record RedactionMark(int PageIndex, double Left, double Bottom, double Right, double Top,
     string? OverlayText = null, Color? Fill = null, long AnnotationFlags = 4)

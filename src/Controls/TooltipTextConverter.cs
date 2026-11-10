@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace KillerFamily.Layout
+namespace JpdfsUi.Layout
 {
     /// <summary>Presentation preference shared by menu gestures and hover hints. Key bindings stay active.</summary>
     public sealed class ShortcutHints : INotifyPropertyChanged

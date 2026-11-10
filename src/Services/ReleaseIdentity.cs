@@ -4,7 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Security;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Decides whether an update image is a newer release of this app from the same publisher as the
@@ -38,7 +38,7 @@ namespace KillerPDF.Services
             { throw new SecurityException("The update is not a " + AppInfo.DisplayName + " executable.", error); }
             Verify(name, version, Assembly.GetExecutingAssembly().GetName().Version!,
                 (installed.valid, installed.subject), (incoming.valid, incoming.subject), requireInstalledSignature);
-            // KillerShell's same-publisher rule: a signed copy only takes a replacement from the same
+            // JpdfsShell's same-publisher rule: a signed copy only takes a replacement from the same
             // publisher, and a copy whose own signature is present but fails is refused outright
             // instead of being treated as an unsigned local build.
             string current;
@@ -86,7 +86,7 @@ namespace KillerPDF.Services
         {
             VerifySigner(installedSigner, incomingSigner, requireInstalledSignature);
             string requested = NormalizeVersion(version);
-            if (incoming.Name != AppInfo.DisplayName || incoming.Version == null
+            if (incoming.Name != AppInfo.AssemblyName || incoming.Version == null
                 || NormalizeVersion(incoming.Version.ToString()) != requested
                 || Version.Parse(requested) <= Version.Parse(NormalizeVersion(installed.ToString())))
                 throw new SecurityException("The update's product or release version does not match a newer " + AppInfo.DisplayName + " release.");

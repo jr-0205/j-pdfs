@@ -78,7 +78,7 @@ scripts:
     failure_behavior: Throw on an incorrect runner result.
     mutates: temporary-files-and-test-owned-process-only
   preset_selection_smoke:
-    path: tests/KillerPDF.UiSmoke/PresetSelectionSmoke.cs
+    path: tests/JPDFs.UiSmoke/PresetSelectionSmoke.cs
     purpose: Verify populated preset selected and unselected text through real WPF controls in 13 themes.
     inputs: Built app DLL, matching App.xaml, fresh evidence directory and --startup-smoke.
     outputs: PNGs and a result containing the tested assembly hash.
@@ -94,21 +94,21 @@ scripts:
     mutates: temporary-fixture-files-and-test-owned-windows-only
 
   window_lifecycle_smoke:
-    path: tests/KillerPDF.UiSmoke/WindowLifecycleSmoke.cs
+    path: tests/JPDFs.UiSmoke/WindowLifecycleSmoke.cs
     purpose: Verify closing one document window promotes a surviving primary window and preserves its real Save As workflow and document identity.
     inputs: Built app DLL, matching App.xaml, fresh evidence directory and --startup-smoke.
     outputs: Stage diagnostics and a result containing the tested assembly hash.
     failure_behavior: Return nonzero on an incorrect primary window, missing working files, wrong saved page identity or changed source files.
     mutates: temporary-fixture-files-and-test-owned-windows-only
   window_session_smoke:
-    path: tests/KillerPDF.UiSmoke/WindowSessionSmoke.cs
+    path: tests/JPDFs.UiSmoke/WindowSessionSmoke.cs
     purpose: Verify combined document restoration, original-window geometry, manually closed tabs and remembered-file privacy across document windows.
     inputs: Built app DLL, matching App.xaml, fresh evidence directory and --session-isolation on an owned UI VM.
     outputs: Stage diagnostics and a result containing the tested assembly hash.
     failure_behavior: Return nonzero on incorrect restored documents, geometry, privacy or changed source files.
     mutates: temporary-fixture-files-and-test-owned-windows-only
   print_cancellation_smoke:
-    path: tests/KillerPDF.DocumentStateSmoke/Program.cs
+    path: tests/JPDFs.DocumentStateSmoke/Program.cs
     purpose: Exercise real print cancellation before preparation, during rendering and at the virtual printer output picker.
     inputs: Test-owned loose app DLL and matching engine, App.xaml, fresh evidence folder, print-cancel case and --startup-smoke; native case also requires an interactive VM operator.
     outputs: Console milestones, result.txt and tested app identity.
@@ -116,7 +116,7 @@ scripts:
     mutates: temporary-fixture-files-test-owned-windows-processes-and-virtual-print-job-only
 
   session_ending_smoke:
-    path: tests/KillerPDF.UiSmoke/SessionEndingSmoke.cs
+    path: tests/JPDFs.UiSmoke/SessionEndingSmoke.cs
     purpose: Verify dirty secondary-window Cancel and Save behavior plus later-window cancellation and tray-safe approved closure.
     inputs: Built app DLL, matching App.xaml, fresh evidence directory and --session-isolation on an owned UI VM.
     outputs: Stage diagnostics, result.txt with app hash, and the external runner process receipt.
@@ -124,7 +124,7 @@ scripts:
     mutates: temporary-fixture-files-and-test-owned-windows-only
 
   reference_repair_notice_smoke:
-    path: tests/KillerPDF.UiSmoke/ReferenceRepairNoticeSmoke.cs
+    path: tests/JPDFs.UiSmoke/ReferenceRepairNoticeSmoke.cs
     purpose: Verify that successful protection reports broken-reference repairs and omits the notice for pristine input.
     inputs: Built app DLL, matching App.xaml, fresh evidence directory and --startup-smoke on an owned UI VM.
     outputs: Detector controls, modal text, result.txt with app hash and external process receipt.
@@ -132,7 +132,7 @@ scripts:
     mutates: temporary-fixture-files-and-test-owned-windows-only
 
   reduction_repair_notice_smoke:
-    path: tests/KillerPDF.UiSmoke/ReductionRepairNoticeSmoke.cs
+    path: tests/JPDFs.UiSmoke/ReductionRepairNoticeSmoke.cs
     purpose: Verify repair notices through the real Reduce File Size menu, options, picker and success status.
     inputs: Built app DLL, matching App.xaml, fresh evidence directory and --startup-smoke on an owned UI VM.
     outputs: Detector controls, workflow logs, status text, result.txt with app hash and external process receipt.

@@ -2,10 +2,10 @@
 # Library only. Exact first-party targets; third-party files are never signed here.
 # The preview handler (#410) ships in the installed payload only, so it is signed when present;
 # build-portable.ps1 already fails when the installed payload lacks it.
-$script:InstalledOnlyFirstPartyFiles = @('KillerPDF.PreviewHandler.dll', 'KillerPDF.PreviewHandler.comhost.dll')
+$script:InstalledOnlyFirstPartyFiles = @('JPDFs.PreviewHandler.dll', 'JPDFs.PreviewHandler.comhost.dll')
 
 function Get-FirstPartyPayloadFiles([string]$PayloadDirectory) {
-    foreach ($name in @('JPDFs.App.exe', 'JPDFs.App.dll', 'KillerPdf.Engine.dll')) {
+    foreach ($name in @('JPDFs.App.exe', 'JPDFs.App.dll', 'JPDFs.Engine.dll')) {
         $path = Join-Path $PayloadDirectory $name
         if (-not [IO.File]::Exists($path)) { throw "First-party payload file is missing: $path" }
         $path
@@ -60,10 +60,10 @@ function Assert-EmbeddedFirstPartySignatures([string]$PackagePath) {
     try {
         # Load from bytes so the package file is not locked by this PowerShell process afterward.
         $assembly = [Reflection.Assembly]::Load([IO.File]::ReadAllBytes([IO.Path]::GetFullPath($PackagePath)))
-        $stream = $assembly.GetManifestResourceStream('KillerLauncher.payload.zip')
+        $stream = $assembly.GetManifestResourceStream('JpdfsLauncher.payload.zip')
         if (-not $stream) { throw "Missing embedded payload: $PackagePath" }
         $archive = [IO.Compression.ZipArchive]::new($stream, [IO.Compression.ZipArchiveMode]::Read)
-        foreach ($name in @('JPDFs.App.exe', 'JPDFs.App.dll', 'KillerPdf.Engine.dll') + $script:InstalledOnlyFirstPartyFiles) {
+        foreach ($name in @('JPDFs.App.exe', 'JPDFs.App.dll', 'JPDFs.Engine.dll') + $script:InstalledOnlyFirstPartyFiles) {
             $entry = $archive.GetEntry($name)
             if (-not $entry) {
                 if ($script:InstalledOnlyFirstPartyFiles -contains $name) { continue }

@@ -2,10 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPDF.Services;
-using KillerFamily.Accessibility;
+using JPDFs.Services;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Separation preview (#264): each ink plate of a page on its own, drawn as the ink it puts down,
 // black for full coverage and white for none, next to the page with all inks.

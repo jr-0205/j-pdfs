@@ -3,10 +3,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using KillerPdf.Engine.Authoring;
-using KillerPDF.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 // Fillable text field presets (#340). Lists the saved presets for renaming, reordering and
 // deleting. Opened with a preset to save, the Name box names that new preset instead. Nothing is
@@ -209,7 +209,7 @@ internal sealed class TextFieldPresetsDialog : Window
         if (!string.Equals(name, selected.Name, StringComparison.OrdinalIgnoreCase)
             && _presets.Presets.Any(preset => string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase)))
         {
-            KillerDialog.Show(this, string.Format(L("Str_FieldPreset_NameTaken"), name), "J-PDF's",
+            JpdfsDialog.Show(this, string.Format(L("Str_FieldPreset_NameTaken"), name), "J-PDF's",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return false;
         }
@@ -251,7 +251,7 @@ internal sealed class TextFieldPresetsDialog : Window
                 string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase));
             if (existing is not null)
             {
-                if (KillerDialog.Show(this, string.Format(L("Str_FieldPreset_Replace"), existing.Name),
+                if (JpdfsDialog.Show(this, string.Format(L("Str_FieldPreset_Replace"), existing.Name),
                         "J-PDF's", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                     return;
                 _presets = _presets.Replace(existing.Name, preset);

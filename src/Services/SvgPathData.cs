@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal enum VectorVerb { Move, Line, Cubic, Close }
 

@@ -9,7 +9,7 @@ using Microsoft.Win32;
 //
 // One value per app under the per-user Run key, named after the app, holding the quoted path of
 // the running exe plus a start argument. Off until the user turns it on from the About card, and
-// nothing is written until then. KillerShot starts with --tray, which opens no window; the other
+// nothing is written until then. JpdfsShot starts with --tray, which opens no window; the other
 // apps start with --minimized, which opens the main window minimized on the taskbar.
 //
 // ---- Wiring it up -------------------------------------------------------------------------
@@ -22,7 +22,7 @@ using Microsoft.Win32;
 //      and before Show.
 //   5. Uninstall: call Remove.
 // ============================================================
-namespace KillerFamily.Deployment
+namespace JpdfsUi.Deployment
 {
     internal static class StartupRegistration
     {
@@ -109,7 +109,7 @@ namespace KillerFamily.Deployment
                 window.StateChanged -= OnStateChanged;
                 if (window.WindowState != WindowState.Normal) return;
                 if (maximized) window.WindowState = WindowState.Maximized;
-                else KillerFamily.Windowing.WorkAreaFit.Fit(window, keepMargin: false);
+                else JpdfsUi.Windowing.WorkAreaFit.Fit(window, keepMargin: false);
             }
             window.StateChanged += OnStateChanged;
         }

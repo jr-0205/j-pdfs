@@ -4,9 +4,9 @@ using System.IO.Compression;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// Document to PDF (#74): reads a Word .docx package into sections of paragraphs, lists, tables,

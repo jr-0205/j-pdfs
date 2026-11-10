@@ -2,13 +2,13 @@
 
 **Status:** Accepted
 **Date:** 2026-08-25
-**Decider:** Steve the Killer
+**Decider:** J-PDF's
 
 ## Context
 
-KillerPDF 1.8 moves the Windows application to .NET 10. The current public executable contains the complete self-contained Windows Desktop runtime so it can install or run portably on a clean Windows computer without prerequisites.
+JPDFs 1.8 moves the Windows application to .NET 10. The current public executable contains the complete self-contained Windows Desktop runtime so it can install or run portably on a clean Windows computer without prerequisites.
 
-The self-contained payload is approximately 161 MB before compression and produces an approximately 69 MB executable. A framework-dependent build of the same application contains 21 files, occupies approximately 23 MB before compression, and compresses to approximately 10 MB. Most of the difference is the private .NET and WPF runtime rather than KillerPDF application code.
+The self-contained payload is approximately 161 MB before compression and produces an approximately 69 MB executable. A framework-dependent build of the same application contains 21 files, occupies approximately 23 MB before compression, and compresses to approximately 10 MB. Most of the difference is the private .NET and WPF runtime rather than JPDFs application code.
 
 One package cannot simultaneously provide the smallest routine download and complete offline portability. Unsupported WPF trimming reduced the compressed payload, but it introduces reflection and XAML compatibility risks that are not acceptable for the primary release package.
 
@@ -16,10 +16,10 @@ One package cannot simultaneously provide the smallest routine download and comp
 
 Publish two official Windows packages:
 
-1. **KillerPDF Installer** is the default download. It contains the framework-dependent application, detects the required .NET 10 Windows Desktop Runtime, and guides the user through installing that prerequisite when it is absent.
-2. **KillerPDF Portable** is the offline, self-contained package. It includes the required runtime and continues to work without installation, administrator rights, network access, or a separately installed .NET runtime.
+1. **JPDFs Installer** is the default download. It contains the framework-dependent application, detects the required .NET 10 Windows Desktop Runtime, and guides the user through installing that prerequisite when it is absent.
+2. **JPDFs Portable** is the offline, self-contained package. It includes the required runtime and continues to work without installation, administrator rights, network access, or a separately installed .NET runtime.
 
-Both packages are built from the same source revision, carry the same KillerPDF version, install or launch the same application features, and pass the same application and engine test gates. The package type changes deployment only, not the document engine or user feature set.
+Both packages are built from the same source revision, carry the same JPDFs version, install or launch the same application features, and pass the same application and engine test gates. The package type changes deployment only, not the document engine or user feature set.
 
 The website and package managers should present the installer as the normal choice. Release pages should retain the portable package and label it clearly as the larger offline option.
 

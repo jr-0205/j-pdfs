@@ -1,8 +1,8 @@
 using System.IO;
 using System.Windows;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Document to PDF (#74): a Word or Excel file opens as a new, unsaved PDF, the same way
     // Import opens images.
@@ -28,14 +28,14 @@ namespace KillerPDF.Shell
             catch (OfficeNotInstalledException ex)
             {
                 SetStatus("");
-                KillerDialog.Show(this, string.Format(Loc("Str_Convert_NeedsOffice"), ex.Application), "J-PDF's",
+                JpdfsDialog.Show(this, string.Format(Loc("Str_Convert_NeedsOffice"), ex.Application), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             catch (Exception ex)
             {
                 SetStatus("");
-                KillerDialog.Show(this, Loc("Str_Convert_Failed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Convert_Failed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -57,7 +57,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Convert_Failed") + "\n" + ex.Message, "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Convert_Failed") + "\n" + ex.Message, "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

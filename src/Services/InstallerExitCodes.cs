@@ -6,7 +6,7 @@ using System.Security;
 using System.Security.Principal;
 using System.Threading;
 
-namespace KillerFamily.Deployment
+namespace JpdfsUi.Deployment
 {
     internal static class InstallerExitCodes
     {
@@ -83,7 +83,7 @@ namespace KillerFamily.Deployment
         {
             if (string.IsNullOrWhiteSpace(product) || ContainsPathSeparator(product))
                 throw new ArgumentException("A product name is required.", nameof(product));
-            var mutex = new Mutex(false, @"Global\KillerTools-Install-" + product);
+            var mutex = new Mutex(false, @"Global\JpdfsTools-Install-" + product);
             bool owned;
             try
             {

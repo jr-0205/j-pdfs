@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Shown after a redaction is applied: the hidden information to remove as well, and whether to
 // save the result as a new _Redacted copy so the original file stays untouched.

@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Moved from Shell/PageSelection.cs; the namespace and class line are the only changes. Window
     // members spelled bare here resolve through PdfViewer.Bridge.cs.

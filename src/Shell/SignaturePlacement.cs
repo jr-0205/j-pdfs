@@ -2,13 +2,13 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
-using KillerPDF.Controls;
+using JPDFs.Controls;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
-    private const string SignatureDragFormat = "KillerPDF.SignaturePlacement";
+    private const string SignatureDragFormat = "JPDFs.SignaturePlacement";
     private sealed record SignatureDragOrigin(PdfViewer Viewer, object Document, SavedSignature Signature, Point Press);
     private SignatureDragOrigin? _signatureDragOrigin;
     private bool _signatureDragRunning;

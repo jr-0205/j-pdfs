@@ -2,10 +2,10 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using KillerPdf.Engine.Authoring;
-using KillerPDF.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Fillable text field presets (#340): save a field's size and look, insert it again anywhere,
     // in this document or any other. The presets live in the user's app data.
@@ -26,7 +26,7 @@ namespace KillerPDF.Controls
         }
 
         private void ShowFieldPresetError(Exception error) =>
-            KillerDialog.Show(Window.GetWindow(this), Loc("Str_FieldPreset_Failed") + "\n" + error.Message,
+            JpdfsDialog.Show(Window.GetWindow(this), Loc("Str_FieldPreset_Failed") + "\n" + error.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
 
         /// <summary>Opens the preset list. With <paramref name="pending"/>, the user names that new
@@ -92,10 +92,10 @@ namespace KillerPDF.Controls
             string? fieldName = null;
             try
             {
-                IReadOnlyList<KillerPdf.Engine.Documents.PdfPageInformation> pages =
+                IReadOnlyList<JPDFs.Engine.Documents.PdfPageInformation> pages =
                     PdfEngineIntegration.ReadPageInformation(_currentFile, _protection);
                 if ((uint)pageIndex >= (uint)pages.Count) return;
-                KillerPdf.Engine.Documents.PdfPageInformation page = pages[pageIndex];
+                JPDFs.Engine.Documents.PdfPageInformation page = pages[pageIndex];
                 int rotation = _pageRotations.TryGetValue(pageIndex, out int storedRotation)
                     ? ((storedRotation % 360) + 360) % 360
                     : page.Rotation;

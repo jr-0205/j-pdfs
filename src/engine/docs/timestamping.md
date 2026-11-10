@@ -1,6 +1,6 @@
 # RFC 3161 timestamp integration
 
-KillerPDF.Engine supports two different timestamp roles:
+JPDFs.Engine supports two different timestamp roles:
 
 - A signature timestamp token is an unsigned attribute inside a detached CMS
   approval or certification signature. The engine can request and embed it, or
@@ -17,7 +17,7 @@ field is descriptive document data and is not independent time evidence.
 A signature field can declare an optional or required timestamp authority URL:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
 const string tsaUrl = "https://tsa.example.test/rfc3161";
 
@@ -55,8 +55,8 @@ to `TimestampTransport` when set. Otherwise it is posted to `TimestampServerUrl`
 over HTTP or HTTPS through `PdfTimestampAuthority.HttpTransport`.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
 
 static byte[] SignAndTimestamp(
     byte[] sourceBytes,
@@ -100,8 +100,8 @@ the returned RFC 3161 token as the signature-timestamp unsigned attribute, and
 returns the complete DER CMS value.
 
 ```csharp
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Signing;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Signing;
 
 static byte[] SignApprovalWithTimestamp(
     byte[] sourceBytes,

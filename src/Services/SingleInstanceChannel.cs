@@ -5,7 +5,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed class SingleInstanceChannel(string applicationName, string accountId, int sessionId)
 {

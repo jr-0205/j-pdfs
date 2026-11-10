@@ -4,10 +4,10 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 using Microsoft.Win32.SafeHandles;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 public sealed class WatchedFolderService : IDisposable
 {
@@ -586,7 +586,7 @@ public sealed class WatchedFolderService : IDisposable
             throw new InvalidOperationException("InvalidMacro");
     }
 
-    private const string StepIssueKey = "KillerPDF.WatchedFolderStepIssue";
+    private const string StepIssueKey = "JPDFs.WatchedFolderStepIssue";
 
     private static InvalidOperationException StepProblem(string code, int index, PdfMacroOperation operation)
     {

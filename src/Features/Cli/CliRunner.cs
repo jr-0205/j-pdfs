@@ -15,18 +15,18 @@ using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Writing;
-using KillerPDF.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Writing;
+using JPDFs.Services;
 // The scrubs, bitmap helpers, and import helpers all live in Services
-// (BitmapHelpers.cs and PdfImport.cs; KillerUI refactor,
+// (BitmapHelpers.cs and PdfImport.cs; JpdfsUiKit refactor,
 // 2026-07-31), called qualified below. No Features-to-Shell reaches remain in this file.
 // OpenBatchConsole and FlattenBatchDetail are shared with the batch runner.
-using static KillerPDF.Features.BatchRunner;
+using static JPDFs.Features.BatchRunner;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // ============================================================
     // Command-line interface
@@ -36,7 +36,7 @@ namespace KillerPDF.Features
     // BEFORE the single-instance mutex, so CLI runs work while a GUI instance
     // is open, never forward to it, and never show a window. A launch with no
     // recognized command flag falls through to the normal GUI (including the
-    // classic "KillerPDF.exe file.pdf" file-association open).
+    // classic "JPDFs.exe file.pdf" file-association open).
     //
     // Each command reuses the same pipeline its GUI equivalent runs - the
     // merge named-destination rewrite, the pre-save scrubs, the engine
@@ -84,7 +84,7 @@ namespace KillerPDF.Features
         {
             exitCode = 0;
             if (args is null || args.Length == 0) return false;
-            args = KillerFamily.CommandLine.CommandLineEntry.GetArguments(args,
+            args = JpdfsUi.CommandLine.CommandLineEntry.GetArguments(args,
             [
                 "batch-resave", "batch-render", "help", "version", "verify", "merge",
                 "extract-pages", "split", "optimize", "number-pages", "bates", "preflight",
@@ -573,7 +573,7 @@ namespace KillerPDF.Features
             "                                           marks it INCOMPLETE and counts it, keeping its log row OK",
             "",
             "Exit codes: 0 success, 1 operation failed, 2 bad usage, 3 findings or nothing to do (where noted).",
-            "Runs headless and works while the KillerPDF window is open.",
+            "Runs headless and works while the JPDFs window is open.",
         ]);
 
         private static int CliVerifyPayload(TextWriter output)
@@ -665,7 +665,7 @@ namespace KillerPDF.Features
             // One input is allowed too, so a single image becomes a PDF.
             if (pos.Count < 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --merge <out.pdf> <in1> [<in2> ...]   (PDFs and images)");
+                con.WriteLine("Usage: JPDFs.exe --merge <out.pdf> <in1> [<in2> ...]   (PDFs and images)");
                 return 2;
             }
             string outPath = Path.GetFullPath(pos[0]);
@@ -681,8 +681,8 @@ namespace KillerPDF.Features
             byte[] merged = PdfEngineIntegration.MergeFiles(inputs, out IReadOnlyList<string> warnings);
             CliEnsureParentDir(outPath);
             AtomicFileOutput.Write(outPath, merged);
-            int pageCount = KillerPdf.Engine.Documents.PdfDocumentInformation
-                .Read(KillerPdf.Engine.Documents.PdfDocument.Open(merged)).PageCount;
+            int pageCount = JPDFs.Engine.Documents.PdfDocumentInformation
+                .Read(JPDFs.Engine.Documents.PdfDocument.Open(merged)).PageCount;
             foreach (string warning in warnings) con.WriteLine("Warning: " + warning);
             con.WriteLine($"Merged {inputs.Count} files ({pageCount} pages) -> {outPath}");
             return 0;
@@ -697,14 +697,14 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --extract-pages <in.pdf> <pages> <out.pdf>   (pages like 1-3,5,9-12)");
+                con.WriteLine("Usage: JPDFs.exe --extract-pages <in.pdf> <pages> <out.pdf>   (pages like 1-3,5,9-12)");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), spec = pos[1], outPath = Path.GetFullPath(pos[2]);
             if (!File.Exists(inPath)) { con.WriteLine($"Input not found: {inPath}"); return 2; }
 
             byte[] source = File.ReadAllBytes(inPath);
-            int pageCount = KillerPdf.Engine.Documents.PdfDocumentInformation
+            int pageCount = JPDFs.Engine.Documents.PdfDocumentInformation
                 .Read(PdfEngineIntegration.OpenForReading(source)).PageCount;
             var indices = CliParsePageRange(spec, pageCount, out string err);
             if (indices is null) { con.WriteLine(err); return 2; }
@@ -721,7 +721,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --split <in.pdf> <outputFolder> "
+                con.WriteLine("Usage: JPDFs.exe --split <in.pdf> <outputFolder> "
                     + "[--every <n> | --parts <n> | --bookmarks <level> | --max-size <n[KB|MB]>] "
                     + "[--name <template>] [--overwrite]");
                 return 2;
@@ -910,7 +910,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --optimize <in.pdf> <out.pdf> "
+                con.WriteLine("Usage: JPDFs.exe --optimize <in.pdf> <out.pdf> "
                     + "[--strip <list>] [--images <dpi>] [--jpeg-quality <n>] [--invalidate-signatures] [--report] [--password <p>]");
                 return 2;
             }
@@ -1056,7 +1056,7 @@ namespace KillerPDF.Features
             string verb = booklet ? "--booklet" : "--nup";
             if (pos.Count != 2)
             {
-                con.WriteLine($"Usage: KillerPDF.exe {verb} <in.pdf> <out.pdf> "
+                con.WriteLine($"Usage: JPDFs.exe {verb} <in.pdf> <out.pdf> "
                     + (booklet ? string.Empty : "--grid <cols>x<rows> ")
                     + "[--sheet <name|WxH>] [--margin <n>] [--gutter <n>] "
                     + (booklet ? "[--creep <n>] [--binding long|short] " : string.Empty)
@@ -1153,7 +1153,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --auto-bookmarks <in.pdf> <out.pdf> "
+                con.WriteLine("Usage: JPDFs.exe --auto-bookmarks <in.pdf> <out.pdf> "
                     + "[--min-size <points>] [--depth <n>] [--pattern <regex>]");
                 return 2;
             }
@@ -1259,7 +1259,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 1)
             {
-                con.WriteLine("Usage: KillerPDF.exe --preflight <in.pdf> "
+                con.WriteLine("Usage: JPDFs.exe --preflight <in.pdf> "
                     + "[--profile general|attachments|print|<profile.json>] [--json] "
                     + "[--password <password>]");
                 return 2;
@@ -1322,7 +1322,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 1)
             {
-                con.WriteLine("Usage: KillerPDF.exe --accessibility <in.pdf> [--json]");
+                con.WriteLine("Usage: JPDFs.exe --accessibility <in.pdf> [--json]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]);
@@ -1356,7 +1356,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count is < 1 or > 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --attachments <in.pdf> [<outputFolder>] [--json] [--password <p>]");
+                con.WriteLine("Usage: JPDFs.exe --attachments <in.pdf> [<outputFolder>] [--json] [--password <p>]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]);
@@ -1422,7 +1422,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --number-pages <in.pdf> <out.pdf> "
+                con.WriteLine("Usage: JPDFs.exe --number-pages <in.pdf> <out.pdf> "
                     + "[--template <text>] [--pages <range>] [--edge header|footer] "
                     + "[--align left|center|right] [--number-format <format>] [--font-size <n>]");
                 return 2;
@@ -1510,7 +1510,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count < 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --bates <outputFolder> <in1.pdf> [in2.pdf ...] "
+                con.WriteLine("Usage: JPDFs.exe --bates <outputFolder> <in1.pdf> [in2.pdf ...] "
                     + "[--start <n>] [--digits <n>] [--prefix <text>] [--suffix <text>] "
                     + "[--edge header|footer] [--align left|center|right] [--font-size <n>]");
                 return 2;
@@ -1618,13 +1618,13 @@ namespace KillerPDF.Features
         // ============================================================
         // Without a password: the same lossless engine rewrite the GUI uses at
         // open time (owner/permissions encryption), with the Import-rebuild
-        // fallback. With a password, The KillerPDF.Engine authenticates and
+        // fallback. With a password, The JPDFs.Engine authenticates and
         // fully rewrites the document without its encryption dictionary.
         private static int CliDecrypt(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --decrypt <in.pdf> <out.pdf> [--password <password>]");
+                con.WriteLine("Usage: JPDFs.exe --decrypt <in.pdf> <out.pdf> [--password <password>]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outPath = Path.GetFullPath(pos[1]);
@@ -1697,7 +1697,7 @@ namespace KillerPDF.Features
 
             try
             {
-                IReadOnlyList<KillerPdf.Engine.Documents.PdfPageInformation> pages =
+                IReadOnlyList<JPDFs.Engine.Documents.PdfPageInformation> pages =
                     PdfEngineIntegration.ReadPageInformation(workPath, null);
                 var rotations = new int[pages.Count];
                 var dims = new (double WPt, double HPt)[pages.Count];
@@ -1765,7 +1765,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --to-image <in.pdf> <outputFolder> [--dpi <n>] [--format png|jpg] [--pages <range>] [--transparent] [--allow-incomplete] [--overwrite]");
+                con.WriteLine("Usage: JPDFs.exe --to-image <in.pdf> <outputFolder> [--dpi <n>] [--format png|jpg] [--pages <range>] [--transparent] [--allow-incomplete] [--overwrite]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outDir = Path.GetFullPath(pos[1]);
@@ -1845,7 +1845,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --flatten <in.pdf> <out.pdf> [--dpi <n>] [--color-mode color|grayscale|black-white] [--threshold <0-255>] [--compression lossless|jpeg] [--jpeg-quality <1-100>] [--scanned-look all|tilt,paper,grain,soft-focus,shadow] [--allow-incomplete]");
+                con.WriteLine("Usage: JPDFs.exe --flatten <in.pdf> <out.pdf> [--dpi <n>] [--color-mode color|grayscale|black-white] [--threshold <0-255>] [--compression lossless|jpeg] [--jpeg-quality <1-100>] [--scanned-look all|tilt,paper,grain,soft-focus,shadow] [--allow-incomplete]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outPath = Path.GetFullPath(pos[1]);
@@ -1989,7 +1989,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 1)
             {
-                con.WriteLine("Usage: KillerPDF.exe --print <in.pdf> [--printer <name>] [--pages <range>] [--copies <n>] [--duplex none|long|short] [--reverse] [--password <p>] [--allow-incomplete]");
+                con.WriteLine("Usage: JPDFs.exe --print <in.pdf> [--printer <name>] [--pages <range>] [--copies <n>] [--duplex none|long|short] [--reverse] [--password <p>] [--allow-incomplete]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]);
@@ -2109,7 +2109,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --ocr <in.pdf> <out.pdf> [--lang <code>]   (default eng)");
+                con.WriteLine("Usage: JPDFs.exe --ocr <in.pdf> <out.pdf> [--lang <code>]   (default eng)");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outPath = Path.GetFullPath(pos[1]);
@@ -2155,7 +2155,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --scan-to-text <in.pdf> <out.pdf> [--lang <code>] [--review <folder>] [--keep-scanned <file>]");
+                con.WriteLine("Usage: JPDFs.exe --scan-to-text <in.pdf> <out.pdf> [--lang <code>] [--review <folder>] [--keep-scanned <file>]");
                 con.WriteLine("  --review writes p<page>-w<word>.png, the word as scanned beside it as text, and review.json listing them,");
                 con.WriteLine("  least certain first. --keep-scanned reads page:word ids, one or more per line, to keep as scanned.");
                 return 2;
@@ -2246,7 +2246,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 4 || !int.TryParse(pos[2], out int degrees) || degrees is not (90 or 180 or 270))
             {
-                con.WriteLine("Usage: KillerPDF.exe --rotate-pages <in.pdf> <pages> <90|180|270> <out.pdf>");
+                con.WriteLine("Usage: JPDFs.exe --rotate-pages <in.pdf> <pages> <90|180|270> <out.pdf>");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[3], out string source, out string output, out int pageCount, con)) return 2;
@@ -2261,7 +2261,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --delete-pages <in.pdf> <pages> <out.pdf>");
+                con.WriteLine("Usage: JPDFs.exe --delete-pages <in.pdf> <pages> <out.pdf>");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[2], out string source, out string output, out int pageCount, con)) return 2;
@@ -2280,7 +2280,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 4 || !int.TryParse(pos[2], out int position))
             {
-                con.WriteLine("Usage: KillerPDF.exe --move-pages <in.pdf> <pages> <position> <out.pdf>");
+                con.WriteLine("Usage: JPDFs.exe --move-pages <in.pdf> <pages> <position> <out.pdf>");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[3], out string source, out string output, out int pageCount, con)) return 2;
@@ -2299,7 +2299,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3 || !int.TryParse(pos[1], out int position))
             {
-                con.WriteLine("Usage: KillerPDF.exe --insert-blank <in.pdf> <position> <out.pdf> [--width <points>] [--height <points>]");
+                con.WriteLine("Usage: JPDFs.exe --insert-blank <in.pdf> <position> <out.pdf> [--width <points>] [--height <points>]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[2], out string source, out string output, out int pageCount, con)) return 2;
@@ -2321,7 +2321,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3 || !int.TryParse(pos[1], out int page))
             {
-                con.WriteLine("Usage: KillerPDF.exe --duplicate-page <in.pdf> <page> <out.pdf>");
+                con.WriteLine("Usage: JPDFs.exe --duplicate-page <in.pdf> <page> <out.pdf>");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[2], out string source, out string output, out int pageCount, con)) return 2;
@@ -2339,7 +2339,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 1 || !File.Exists(pos[0]))
             {
-                con.WriteLine("Usage: KillerPDF.exe --document-info <in.pdf>");
+                con.WriteLine("Usage: JPDFs.exe --document-info <in.pdf>");
                 return 2;
             }
             string path = Path.GetFullPath(pos[0]);
@@ -2357,7 +2357,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2 || !File.Exists(pos[0]) || string.IsNullOrWhiteSpace(pos[1]))
             {
-                con.WriteLine("Usage: KillerPDF.exe --search-text <in.pdf> <query>");
+                con.WriteLine("Usage: JPDFs.exe --search-text <in.pdf> <query>");
                 return 2;
             }
             string path = Path.GetFullPath(pos[0]);

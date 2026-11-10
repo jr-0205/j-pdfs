@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.IO;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     // Metadata, bookmark, comment and page-box edits, each writing a new PDF through the same
     // service calls as the windows that make these edits by hand.
@@ -13,7 +13,7 @@ namespace KillerPDF.Features
         // --set-metadata <in.pdf> <out.pdf> [--title t] [--author a] [--subject s] [--keywords k] [--creator c]
         private static int CliSetMetadata(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
-            const string usage = "Usage: KillerPDF.exe --set-metadata <in.pdf> <out.pdf> [--title <text>] [--author <text>] [--subject <text>] [--keywords <text>] [--creator <text>]";
+            const string usage = "Usage: JPDFs.exe --set-metadata <in.pdf> <out.pdf> [--title <text>] [--author <text>] [--subject <text>] [--keywords <text>] [--creator <text>]";
             string[] fields = ["--title", "--author", "--subject", "--keywords", "--creator"];
             if (pos.Count != 2 || !fields.Any(options.ContainsKey)) { con.WriteLine(usage); return 2; }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
@@ -39,7 +39,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --set-bookmarks <in.pdf> <out.pdf> <bookmarks.json> [--replace]");
+                con.WriteLine("Usage: JPDFs.exe --set-bookmarks <in.pdf> <out.pdf> <bookmarks.json> [--replace]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out _, con)) return 2;
@@ -55,7 +55,7 @@ namespace KillerPDF.Features
         // --add-comment <in.pdf> <out.pdf> --page <n> --text <t> [--x <pt>] [--y <pt>] [--author <name>]
         private static int CliAddComment(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
-            const string usage = "Usage: KillerPDF.exe --add-comment <in.pdf> <out.pdf> --page <n> --text <comment> [--x <points>] [--y <points>] [--author <name>]";
+            const string usage = "Usage: JPDFs.exe --add-comment <in.pdf> <out.pdf> --page <n> --text <comment> [--x <points>] [--y <points>] [--author <name>]";
             if (pos.Count != 2 || !options.TryGetValue("--text", out string? text) || string.IsNullOrWhiteSpace(text)
                 || !options.TryGetValue("--page", out string? pageText) || !int.TryParse(pageText, out int page))
             { con.WriteLine(usage); return 2; }
@@ -63,7 +63,7 @@ namespace KillerPDF.Features
             if (page < 1 || page > pageCount) { con.WriteLine($"--page must be 1-{pageCount}"); return 2; }
             if (!CliPoint(options, "--x", out double? x, con) || !CliPoint(options, "--y", out double? y, con)) return 2;
             options.TryGetValue("--author", out string? author);
-            var addition = new CommentAddition(page - 1, text, "KillerPDF-" + Guid.NewGuid().ToString("N"), null, x, y);
+            var addition = new CommentAddition(page - 1, text, "JPDFs-" + Guid.NewGuid().ToString("N"), null, x, y);
             CliWriteEditedCopy(source, output, path => PdfEngineIntegration.ApplyCommentEdits(path, [addition], author));
             con.WriteLine($"Added a comment on page {page} -> {output}");
             return 0;
@@ -74,7 +74,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --delete-comments <in.pdf> <out.pdf> [--pages <range>]");
+                con.WriteLine("Usage: JPDFs.exe --delete-comments <in.pdf> <out.pdf> [--pages <range>]");
                 return 2;
             }
             if (!CliInspectEditInput(pos[0], pos[1], out string source, out string output, out int pageCount, con)) return 2;
@@ -113,8 +113,8 @@ namespace KillerPDF.Features
         // --crop <in.pdf> <out.pdf> --clear [--pages <range>]
         private static int CliCrop(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
-            const string usage = "Usage: KillerPDF.exe --crop <in.pdf> <out.pdf> --box <x,y,width,height> [--pages <range>] [--media]\n"
-                + "       KillerPDF.exe --crop <in.pdf> <out.pdf> --clear [--pages <range>]\n"
+            const string usage = "Usage: JPDFs.exe --crop <in.pdf> <out.pdf> --box <x,y,width,height> [--pages <range>] [--media]\n"
+                + "       JPDFs.exe --crop <in.pdf> <out.pdf> --clear [--pages <range>]\n"
                 + "  values are PDF points from the page's lower left; --media resizes the page itself";
             bool clear = options.ContainsKey("--clear"), media = options.ContainsKey("--media");
             options.TryGetValue("--box", out string? boxText);

@@ -29,7 +29,7 @@ using System.Windows.Interop;
 //   4. A window with its own WM_NCHITTEST handler calls HitTest from that handler instead of
 //      relying on hook order.
 // ============================================================
-namespace KillerFamily.Windowing
+namespace JpdfsUi.Windowing
 {
     public static class SnapLayouts
     {

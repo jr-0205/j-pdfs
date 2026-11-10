@@ -1,11 +1,11 @@
 using System.IO;
 using System.Windows;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -31,7 +31,7 @@ public partial class MainWindow
             or NotSupportedException or System.Text.Json.JsonException or IOException
             or UnauthorizedAccessException)
         {
-            KillerDialog.Show(this, Loc("Str_Err_PreflightProfile") + "\n" + error.Message,
+            JpdfsDialog.Show(this, Loc("Str_Err_PreflightProfile") + "\n" + error.Message,
                 "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
@@ -59,7 +59,7 @@ public partial class MainWindow
             ("Str_DocInfo_Subject", PdfPreflightMetadataField.Subject, info.Subject),
             ("Str_DocInfo_Keywords", PdfPreflightMetadataField.Keywords, info.Keywords)
         }.Where(item => string.IsNullOrWhiteSpace(item.Item3)).ToArray();
-        if (commands.Length == 0) { KillerDialog.Show(this, Loc("Str_Repair_NoChanges")); return; }
+        if (commands.Length == 0) { JpdfsDialog.Show(this, Loc("Str_Repair_NoChanges")); return; }
         OpenExchangeCommands("Str_Repair_Metadata", commands.Select(item =>
             (item.Item1, (Action)(() =>
             {
@@ -116,7 +116,7 @@ public partial class MainWindow
             byte[] proposed = build(PdfDocument.Open(original));
             if (original.AsSpan().SequenceEqual(proposed))
             {
-                KillerDialog.Show(this, Loc("Str_Repair_NoChanges"));
+                JpdfsDialog.Show(this, Loc("Str_Repair_NoChanges"));
                 return;
             }
             string before = accessibility

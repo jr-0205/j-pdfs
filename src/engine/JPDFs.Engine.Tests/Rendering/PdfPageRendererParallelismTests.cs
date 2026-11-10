@@ -1,0 +1,273 @@
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Objects;
+using JPDFs.Engine.Rendering;
+using JPDFs.Engine.Writing;
+using Xunit;
+
+namespace JPDFs.Engine.Tests.Rendering;
+
+public sealed class PdfPageRendererParallelismTests
+{
+    private static PdfDocument LargePage()
+    {
+        // A big image over a big fill, both larger than the row-parallel threshold at 1400 px.
+        var pixels = new byte[300 * 200 * 3];
+        for (int index = 0; index < pixels.Length; index++) pixels[index] = (byte)(index * 7 + index / 300);
+        PdfImage image = PdfImage.FromRgb(300, 200, pixels);
+        var content = new PdfContentStreamBuilder()
+            .SetFillRgb(0.9, 0.3, 0.1).Rectangle(10, 10, 580, 700).Fill()
+            .SetFillRgb(0.1, 0.4, 0.8).Transform(1, 0.2, -0.1, 1, 40, 60).Rectangle(0, 0, 400, 300).Fill()
+            .DrawImage(image, 30, 200, 550, 500);
+        return PdfDocument.Open(new PdfDocumentBuilder().AddPage(612, 792, content).Build());
+    }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(6)]
+    public void Render_ParallelRowsProduceTheSequentialPixels(int threads)
+    {
+        PdfDocument document = LargePage();
+        var sequential = new PdfRenderOptions(1400, 1811, includeAnnotations: false,
+            includeFormFields: false) { CacheResult = false };
+        var parallel = new PdfRenderOptions(1400, 1811, includeAnnotations: false,
+            includeFormFields: false) { CacheResult = false, MaximumParallelism = threads };
+
+        PdfRenderedPage expected = new PdfPageRenderer(document).Render(0, sequential);
+        PdfRenderedPage actual = new PdfPageRenderer(document).Render(0, parallel);
+
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void Render_ParallelCmykConversionProducesTheSequentialPixels()
+    {
+        var content = new PdfContentStreamBuilder()
+            .SetFillCmyk(0.15, 0.8, 0.35, 0.1).Rectangle(0, 0, 612, 792).Fill()
+            .SetFillCmyk(0.8, 0.1, 0.25, 0.05).Rectangle(100, 100, 412, 592).Fill();
+        PdfDocument document = PdfDocument.Open(
+            new PdfDocumentBuilder().AddPage(612, 792, content).Build());
+        var sequential = new PdfRenderOptions(1400, 1811, includeAnnotations: false,
+            includeFormFields: false) { CacheResult = false };
+        var parallel = sequential with { MaximumParallelism = 4 };
+
+        PdfRenderedPage expected = new PdfPageRenderer(document).Render(0, sequential);
+        PdfRenderedPage actual = new PdfPageRenderer(document).Render(0, parallel);
+
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void Render_ParallelNativeCmykImageProducesTheSequentialPixels()
+    {
+        var samples = new byte[300 * 200 * 4];
+        for (int index = 0; index < samples.Length; index++)
+            samples[index] = (byte)(index * 11 + index / 300);
+        PdfImage image = PdfImage.FromCmyk(300, 200, samples);
+        var content = new PdfContentStreamBuilder()
+            .DrawImage(image, 30, 120, 550, 550);
+        PdfDocument document = PdfDocument.Open(
+            new PdfDocumentBuilder().AddPage(612, 792, content).Build());
+        var sequential = new PdfRenderOptions(1400, 1811, includeAnnotations: false,
+            includeFormFields: false) { CacheResult = false };
+        var parallel = sequential with { MaximumParallelism = 4 };
+
+        PdfRenderedPage expected = new PdfPageRenderer(document).Render(0, sequential);
+        PdfRenderedPage actual = new PdfPageRenderer(document).Render(0, parallel);
+
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void Render_ParallelMaskedImageProducesTheSequentialPixels()
+    {
+        var samples = new byte[300 * 200 * 4];
+        for (int index = 0; index < samples.Length; index += 4)
+        {
+            samples[index] = (byte)(index * 3);
+            samples[index + 1] = (byte)(index * 5);
+            samples[index + 2] = (byte)(index * 7);
+            samples[index + 3] = (byte)(32 + index / 4 % 224);
+        }
+        PdfImage image = PdfImage.FromRgba(300, 200, samples);
+        var content = new PdfContentStreamBuilder()
+            .SetFillCmyk(0.15, 0.8, 0.35, 0.1).Rectangle(0, 0, 612, 792).Fill()
+            .DrawImage(image, 30, 120, 550, 550);
+        PdfDocument document = PdfDocument.Open(
+            new PdfDocumentBuilder().AddPage(612, 792, content).Build());
+        var sequential = new PdfRenderOptions(1400, 1811, includeAnnotations: false,
+            includeFormFields: false) { CacheResult = false };
+        var parallel = sequential with { MaximumParallelism = 4 };
+
+        PdfRenderedPage expected = new PdfPageRenderer(document).Render(0, sequential);
+        PdfRenderedPage actual = new PdfPageRenderer(document).Render(0, parallel);
+
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void Render_ParallelTranslucentCmykGroupMatchesSequentialPixelsAcrossRenders()
+    {
+        var samples = new byte[256 * 256 * 4];
+        for (int index = 0; index < samples.Length; index += 4)
+        {
+            samples[index] = (byte)(index / 4 * 3);
+            samples[index + 1] = (byte)(index / 4 * 5);
+            samples[index + 2] = (byte)(index / 4 * 7);
+            samples[index + 3] = (byte)(32 + index / 4 % 224);
+        }
+        PdfImage image = PdfImage.FromRgba(256, 256, samples);
+        var form = new PdfFormXObject(512, 512,
+            new PdfContentStreamBuilder().DrawImage(image, 0, 0, 512, 512),
+            isolatedTransparencyGroup: true,
+            transparencyGroupColorSpace: PdfTransparencyGroupColorSpace.Cmyk);
+        byte[] source = new PdfDocumentBuilder().AddPage(512, 512,
+            new PdfContentStreamBuilder().DrawForm(form, 0, 0)).Build();
+        var sequential = new PdfRenderOptions(1024, 1024, false, false)
+        {
+            CacheResult = false,
+            MaximumParallelism = 1
+        };
+        byte[] expected = new PdfPageRenderer(PdfDocument.Open(source))
+            .Render(0, sequential).Pixels.ToArray();
+
+        for (int pass = 0; pass < 12; pass++)
+        {
+            PdfRenderedPage actual = new PdfPageRenderer(PdfDocument.Open(source))
+                .Render(0, sequential with { MaximumParallelism = 4 });
+            Assert.Empty(actual.Diagnostics);
+            Assert.Equal(expected, actual.Pixels.ToArray());
+        }
+    }
+
+    [Fact]
+    public void Render_ParallelAxialShadingMatchesSequentialPixelsAcrossRenders()
+    {
+        var shading = new PdfAxialGradient(0, 0, 512, 512,
+        [
+            new PdfGradientStop(0, new PdfRgbColor(0, 0, 0)),
+            new PdfGradientStop(0.5, new PdfRgbColor(1, 0, 0)),
+            new PdfGradientStop(1, new PdfRgbColor(1, 1, 1))
+        ]);
+        byte[] source = new PdfDocumentBuilder().AddPage(512, 512,
+            new PdfContentStreamBuilder().Rectangle(32, 32, 448, 448).Clip()
+                .PaintShading(shading)).Build();
+        var sequential = new PdfRenderOptions(1024, 1024, false, false)
+        {
+            CacheResult = false,
+            MaximumParallelism = 1
+        };
+        byte[] expected = new PdfPageRenderer(PdfDocument.Open(source))
+            .Render(0, sequential).Pixels.ToArray();
+
+        foreach (int workers in new[] { 2, 4, 8 })
+        for (int pass = 0; pass < 3; pass++)
+        {
+            PdfRenderedPage actual = new PdfPageRenderer(PdfDocument.Open(source))
+                .Render(0, sequential with { MaximumParallelism = workers });
+            Assert.Empty(actual.Diagnostics);
+            Assert.Equal(expected, actual.Pixels.ToArray());
+        }
+    }
+
+    [Fact]
+    public void Render_ParallelAxialShadingInCmykGroupMatchesSequentialPixels()
+    {
+        var shading = new PdfAxialGradient(0, 0, 512, 512,
+        [
+            new PdfGradientStop(0, new PdfRgbColor(0, 0, 1)),
+            new PdfGradientStop(0.5, new PdfRgbColor(1, 0, 0)),
+            new PdfGradientStop(1, new PdfRgbColor(1, 1, 0))
+        ]);
+        var form = new PdfFormXObject(512, 512,
+            new PdfContentStreamBuilder().PaintShading(shading),
+            isolatedTransparencyGroup: true,
+            transparencyGroupColorSpace: PdfTransparencyGroupColorSpace.Cmyk);
+        byte[] source = new PdfDocumentBuilder().AddPage(512, 512,
+            new PdfContentStreamBuilder().DrawForm(form, 0, 0)).Build();
+        var sequential = new PdfRenderOptions(1024, 1024, false, false)
+        {
+            CacheResult = false,
+            MaximumParallelism = 1
+        };
+        byte[] expected = new PdfPageRenderer(PdfDocument.Open(source))
+            .Render(0, sequential).Pixels.ToArray();
+
+        for (int pass = 0; pass < 12; pass++)
+        {
+            PdfRenderedPage actual = new PdfPageRenderer(PdfDocument.Open(source))
+                .Render(0, sequential with { MaximumParallelism = 4 });
+            Assert.Empty(actual.Diagnostics);
+            Assert.Equal(expected, actual.Pixels.ToArray());
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Render_ParallelProfiledGroupMatchesSequentialColors(bool cmyk)
+    {
+        var shading = new PdfAxialGradient(0, 0, 512, 512,
+        [
+            new PdfGradientStop(0, new PdfRgbColor(0.1, 0.8, 0.3)),
+            new PdfGradientStop(1, new PdfRgbColor(0.9, 0.1, 0.7))
+        ]);
+        var form = new PdfFormXObject(512, 512,
+            new PdfContentStreamBuilder().PaintShading(shading));
+        var source = PdfDocument.Open(new PdfDocumentBuilder().AddPage(512, 512,
+            new PdfContentStreamBuilder().SetFillRgb(0.8, 0.6, 0.2).Rectangle(0, 0, 512, 512).Fill()
+                .SetGraphicsState(new PdfGraphicsState(blendMode: PdfBlendMode.Difference))
+                .DrawForm(form, 0, 0)).Build());
+        PdfName Name(string name) => new(System.Text.Encoding.ASCII.GetBytes(name));
+        var catalog = (PdfDictionary)source.Resolve((PdfIndirectReference)source.Trailer[Name("Root")]);
+        var pages = (PdfDictionary)source.Resolve((PdfIndirectReference)catalog[Name("Pages")]);
+        var pageReference = (PdfIndirectReference)((PdfArray)pages[Name("Kids")])[0];
+        var page = (PdfDictionary)source.Resolve(pageReference);
+        var resources = (PdfDictionary)page[Name("Resources")];
+        var forms = (PdfDictionary)resources[Name("XObject")];
+        var formReference = (PdfIndirectReference)forms.Values.Single();
+        var stream = (PdfStream)source.Resolve(formReference);
+        var update = new PdfIncrementalUpdateBuilder(source);
+        update.ReplaceObject(formReference.ObjectNumber, new PdfStream(new PdfDictionary(stream.Dictionary.Append(
+            new(Name("Group"), new PdfDictionary([new(Name("S"), Name("Transparency"))])))), stream.EncodedData.Span));
+        PdfArray Values(params double[] values) => new(values.Select(value => (PdfObject)new PdfReal(value)));
+        var profile = cmyk ? new PdfArray([Name("ICCBased"), update.AddObject(new PdfStream(
+            new PdfDictionary([new(Name("N"), new PdfInteger(4))]), PdfBlackPointControlTests.CmykProfile()))])
+            : new PdfArray([Name("CalRGB"), new PdfDictionary([
+            new(Name("WhitePoint"), Values(.9642, 1, .8249)),
+            new(Name("Gamma"), Values(2.2, 2.2, 2.2)),
+            new(Name("Matrix"), Values(.4360747,.2225045,.0139322,.3850649,.7168786,.0971045,.1430604,.0606169,.7138633))])]);
+        update.ReplaceObject(pageReference.ObjectNumber, new PdfDictionary(page.Append(
+            new(Name("Group"), new PdfDictionary([new(Name("S"), Name("Transparency")), new(Name("CS"), profile)])))));
+        byte[] data = update.Build();
+        var options = new PdfRenderOptions(1024, 1024) { CacheResult = false };
+        var expected = new PdfPageRenderer(PdfDocument.Open(data)).Render(0, options);
+        Assert.Empty(expected.Diagnostics);
+        for (int pass = 0; pass < 3; pass++)
+        {
+            var actual = new PdfPageRenderer(PdfDocument.Open(data))
+                .Render(0, options with { MaximumParallelism = 4 });
+            Assert.Empty(actual.Diagnostics);
+            Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+        }
+    }
+
+    [Fact]
+    public void Render_ParallelRowsHonorCancellation()
+    {
+        PdfDocument document = LargePage();
+        var options = new PdfRenderOptions(1400, 1811, includeAnnotations: false,
+            includeFormFields: false) { CacheResult = false, MaximumParallelism = 4 };
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() =>
+            new PdfPageRenderer(document).Render(0, options, source.Token));
+    }
+
+    [Fact]
+    public void Options_DefaultParallelismIsOne()
+    {
+        Assert.Equal(1, new PdfRenderOptions(10, 10).MaximumParallelism);
+    }
+}

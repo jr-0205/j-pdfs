@@ -1,8 +1,8 @@
-# KillerPDF 1.8.4 corpus benchmark
+# JPDFs 1.8.4 corpus benchmark
 
 Test date: 2026-09-07
 
-The official KillerPDF 1.8.4 release payload produced the same result as the recorded 1.8.3 baseline for every input. No previously successful input became a skip or failure. All five measured passes agreed on every file's status and diagnostic detail. The damaged-file gate had zero crashes and zero timeouts.
+The official JPDFs 1.8.4 release payload produced the same result as the recorded 1.8.3 baseline for every input. No previously successful input became a skip or failure. All five measured passes agreed on every file's status and diagnostic detail. The damaged-file gate had zero crashes and zero timeouts.
 
 ## Results
 
@@ -37,13 +37,13 @@ These timings come from separate release sessions. The 1.8.3 record used a frame
 - Payload executable SHA-256: `AA0DEC2B1941B04A049AABABD05E6AEF8A922D805F073377DE7F5B236CEAF9E4`.
 - Application DLL SHA-256: `822F40F4DBEC8482E55A3BAE8D244C088562F2BF43023610505ACA4DAA8C53FA`.
 - Engine DLL SHA-256: `0D0DAB9F48BCC6B8E674AAD76276F6187166DC5DC85BC15A6F547BC5C1F7C288`.
-- Runner: `KillerPDF-Corpus/scripts/benchmark_corpus.ps1`, existing local collections, downloads disabled.
+- Runner: `JPDFs-Corpus/scripts/benchmark_corpus.ps1`, existing local collections, downloads disabled.
 - One warmup and five measured passes per normal collection, run sequentially.
 - All 80 damaged inputs tested individually with a 30-second timeout.
 - No other builds or test jobs ran during measured passes.
-- Full per-file logs remain outside the application repository at `C:\Users\steve\code\KillerPDF-Corpus-Work\baseline-v1.8.4-20260907`.
-- Extracted release payload remains outside the application repository at `C:\Users\steve\code\KillerPDF-Corpus-Work\release-1.8.4-payload-20260907`.
+- Full per-file logs remain outside the application repository at `C:\Users\steve\code\JPDFs-Corpus-Work\baseline-v1.8.4-20260907`.
+- Extracted release payload remains outside the application repository at `C:\Users\steve\code\JPDFs-Corpus-Work\release-1.8.4-payload-20260907`.
 
-The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the release-level measurements. The comparison baseline is [KillerPDF 1.8.3](../1.8.3/CORPUS.md).
+The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the release-level measurements. The comparison baseline is [JPDFs 1.8.3](../1.8.3/CORPUS.md).
 
 This run tests batch opening and saving plus malformed-input process safety. It does not replace interactive rendering checks or a separate qpdf/veraPDF before-and-after conformance sweep.

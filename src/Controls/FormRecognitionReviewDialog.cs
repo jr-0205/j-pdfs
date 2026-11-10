@@ -2,11 +2,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Rendering;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Rendering;
+using JPDFs.Services;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class FormRecognitionReviewDialog : Window
 {
@@ -166,7 +166,7 @@ internal sealed class FormRecognitionReviewDialog : Window
         if (selected.Length == 0 || selected.Any(row => string.IsNullOrWhiteSpace(row.Name.Text))
             || selected.Select(row => row.Name.Text.Trim()).Distinct(StringComparer.Ordinal).Count() != selected.Length)
         {
-            KillerDialog.Show(this, L("Str_FormTools_InvalidNames"), Title,
+            JpdfsDialog.Show(this, L("Str_FormTools_InvalidNames"), Title,
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -177,7 +177,7 @@ internal sealed class FormRecognitionReviewDialog : Window
         try { _ = result.ApplyAccepted(_document); }
         catch (Exception error)
         {
-            KillerDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + error.Message,
+            JpdfsDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + error.Message,
                 Title, MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

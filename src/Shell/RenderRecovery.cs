@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Windows;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // #456: when WPF's render thread fails the window goes black for good. App saves every
     // unsaved tab aside through here, restarts, and the new window reopens them unsaved.
@@ -308,7 +308,7 @@ namespace KillerPDF.Shell
             RebuildTabStrip();
             // With nothing reopened there are no recovered copies to review. Each document keeps its
             // own line, even when two share a name.
-            KillerDialog.Show(this, incomplete.Count > 0
+            JpdfsDialog.Show(this, incomplete.Count > 0
                     ? string.Format(Loc(reopened > 0 ? "Str_Dlg_RenderRecoveryIncomplete" : "Str_Dlg_RenderRecoveryNotReopened"),
                         RenderFailureRecovery.JoinNotes(incomplete), Path.GetDirectoryName(manifest))
                     : reopened > 0

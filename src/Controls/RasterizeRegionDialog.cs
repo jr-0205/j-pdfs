@@ -5,7 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 // Rasterize Region (#369). The page is shown as it looks in the viewer; the user drags a box
 // around the part to turn into an image and sees what inside it will change before applying.

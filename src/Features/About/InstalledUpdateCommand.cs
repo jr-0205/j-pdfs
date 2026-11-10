@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text;
 
-namespace KillerPDF.Features;
+namespace JPDFs.Features;
 
 internal static class InstalledUpdateCommand
 {
@@ -16,6 +16,6 @@ internal static class InstalledUpdateCommand
         string directory = Path.GetDirectoryName(Path.GetFullPath(installedExecutable))
             ?? throw new ArgumentException("The installation directory is unavailable.", nameof(installedExecutable));
         string destination = Convert.ToBase64String(Encoding.UTF8.GetBytes(directory));
-        return $"{installArgument} /install-dir64:{destination} " + KillerLauncher.UpdateRelaunchArguments.Encode(reopenFile);
+        return $"{installArgument} /install-dir64:{destination} " + JpdfsLauncher.UpdateRelaunchArguments.Encode(reopenFile);
     }
 }

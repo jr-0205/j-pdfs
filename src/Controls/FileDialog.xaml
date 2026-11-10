@@ -4,11 +4,11 @@
      and Open/Save behavior. The property surface deliberately mirrors the Win32 dialogs
      (Title, Filter, FilterIndex, FileName, InitialDirectory, DefaultExt, ...) so a call site
      changes by one word. -->
-<Window x:Class="KillerPDF.Controls.FileDialog"
+<Window x:Class="JPDFs.Controls.FileDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:a11y="clr-namespace:KillerFamily.Accessibility"
-        xmlns:kui="clr-namespace:KillerPDF.Controls"
+        xmlns:a11y="clr-namespace:JpdfsUi.Accessibility"
+        xmlns:kui="clr-namespace:JPDFs.Controls"
         Title="J-PDF's"
         Width="720" Height="520" MinWidth="560" MinHeight="420"
         WindowStyle="None" ResizeMode="CanResize" ShowInTaskbar="False"
@@ -97,7 +97,7 @@
          rectangle. That is fixed below and is a real bug, it just was not this one.
          (2026-07-30, four attempts) -->
     <!-- RootFade, not RootBorder, is what the open/close animation drives - and it starts at 0,
-         the same way KillerShell's RootGrid does. The fade used to run on RootBorder alone, but
+         the same way JpdfsShell's RootGrid does. The fade used to run on RootBorder alone, but
          the shadow layer below is a SIBLING carrying the identical BackgroundBrush and geometry,
          with no starting opacity: it slammed in solid on the first frame and only the card faded
          on top of it, so the dialog read as blinking into existence rather than fading. Fading the
@@ -258,7 +258,7 @@
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
-                    <!-- E7B3 (off) / E890 (on) - KillerShell's build-proven pair (ViewOptions.cs). -->
+                    <!-- E7B3 (off) / E890 (on) - JpdfsShell's build-proven pair (ViewOptions.cs). -->
                     <Button x:Name="ShowHiddenBtn"  Style="{StaticResource PickerViewBtn}" Content="&#xE7B3;" ToolTip="{DynamicResource Str_TT_ShowHidden}"  Click="ShowHidden_Click"  Margin="0,0,6,0"/>
                     <Button x:Name="ViewListBtn"    Style="{StaticResource PickerViewBtn}" Content="&#xE8FD;" ToolTip="{DynamicResource Str_TT_ViewList}"    Click="ViewList_Click"/>
                     <Button x:Name="ViewIconsBtn"   Style="{StaticResource PickerViewBtn}" Content="&#xE80A;" ToolTip="{DynamicResource Str_TT_ViewIcons}"   Click="ViewIcons_Click"   Margin="2,0"/>
@@ -280,7 +280,7 @@
                      call - the pane carried a fill anyway, so square shadowless edges read as a
                      bug, not flatness). Shadow on a SEPARATE border so text keeps ClearType.
 
-                     KillerShell's own arrangement, not Explorer's: the tree fills the panel and
+                     JpdfsShell's own arrangement, not Explorer's: the tree fills the panel and
                      the pinned places sit BELOW it, the same slot its favorites drawer occupies,
                      so the two apps read identically. Draggable divider between. -->
                 <Border Grid.Column="0" IsHitTestVisible="False"
@@ -326,7 +326,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                    <!-- KillerShell's divider verbatim (MainWindow.xaml, terms/filters split):
+                    <!-- JpdfsShell's divider verbatim (MainWindow.xaml, terms/filters split):
                          invisible grab band, 1px CardBorderBrush line, accent on hover and
                          while dragging. -->
                     <GridSplitter Grid.Row="1" Height="0" Visibility="Collapsed" HorizontalAlignment="Stretch" Background="Transparent"
@@ -383,9 +383,9 @@
                             </HierarchicalDataTemplate>
                         </TreeView.ItemTemplate>
                     </TreeView>
-                    <!-- Edge fades, KillerShell's tree pattern verbatim (MainWindow.xaml): the
+                    <!-- Edge fades, JpdfsShell's tree pattern verbatim (MainWindow.xaml): the
                          overlay IS the surface - BackgroundBrush plus the same grain, exactly as
-                         KillerShell's, now that the pane is flat on the card - under an opacity
+                         JpdfsShell's, now that the pane is flat on the card - under an opacity
                          mask, so rows dissolve into an exact match instead of a flat band.
                          Hit-test-transparent; each edge only shows while there is something PAST
                          it, ramped in code (SyncTreeEdgeFades). Right inset clears the

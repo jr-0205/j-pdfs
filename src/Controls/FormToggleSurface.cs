@@ -8,7 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>The drawn marks of a document's check boxes and radio buttons, by field name and page,
     /// so that every control of a name shows the one state the save writes, on whichever page it sits.</summary>

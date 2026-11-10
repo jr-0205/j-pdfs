@@ -379,21 +379,9 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Sötét</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Világos</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Fekete</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Vér</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Kapzsiság</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Cianotikus</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat világos</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ektoplazma</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Bomlás</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Gyász</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat világos</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat sötét</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Filmszemcse</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Sír</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Delírium</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Rosszullét</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">Szélességhez igazítás</sys:String>
@@ -1578,7 +1566,6 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_KS_DisabledStatus">Billentyűparancsok kikapcsolva. A bekapcsolásukhoz nyomd meg a Ctrl+Shift+K billentyűkombinációt.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Frissítések keresése indításkor</sys:String>
     <sys:String x:Key="Str_PasswordProtected">A(z) „{0}” jelszóval védett.</sys:String>
-    <sys:String x:Key="Str_About_Aka">Más néven</sys:String>
     <sys:String x:Key="Str_Btn_Run">Futtatás</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Makrók</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Mentett makrók</sys:String>

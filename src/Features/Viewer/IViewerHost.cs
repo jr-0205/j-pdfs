@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
-using KillerPDF.Controls;
+using JPDFs.Controls;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     /// <summary>
     /// What a document viewer needs from the window around it.
@@ -11,7 +11,7 @@ namespace KillerPDF.Features
     /// EXTENDS IShellServices, per the family rule in that file - the shell implements Window /
     /// Loc / SetStatus once, not once per feature. Those three cover the viewer's two heaviest
     /// call groups on their own (Loc 70 uses, SetStatus 68) plus the modal-dialog owner that
-    /// TextEditing and Links need for KillerDialog (3 uses).
+    /// TextEditing and Links need for JpdfsDialog (3 uses).
     ///
     /// DERIVED FROM MEASUREMENT, not guessed: every member here came from grepping what the nine
     /// files bound for the viewer control (Viewport, Zoom, Annotations, Selection, TextEditing,
@@ -119,7 +119,7 @@ namespace KillerPDF.Features
         System.Windows.Media.Effects.DropShadowEffect AnnotBarShadow();
         void FadeOverlayOut(UIElement element);
         void FadeOutAndRemoveBar(Border? bar);
-        string WordsToText(System.Collections.Generic.IEnumerable<KillerPdf.Engine.Documents.PdfExtractedWord> words);
+        string WordsToText(System.Collections.Generic.IEnumerable<JPDFs.Engine.Documents.PdfExtractedWord> words);
         MenuItem MakeMenuItem(string header, RoutedEventHandler click, string? gesture, string? glyph);
         /// <summary>A command's current key as menu text, localized and following custom
         /// shortcuts. Takes keyboard map names such as "Ctrl:W".</summary>

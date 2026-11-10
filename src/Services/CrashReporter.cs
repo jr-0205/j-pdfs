@@ -4,10 +4,10 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>
-    /// Writes structured crash logs to %LOCALAPPDATA%\KillerPDF\Logs\ and maintains
+    /// Writes structured crash logs to %LOCALAPPDATA%\JPDFs\Logs\ and maintains
     /// a rolling buffer of recent status-bar messages for post-mortem context.
     /// </summary>
     internal static class CrashReporter

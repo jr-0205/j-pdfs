@@ -13,7 +13,7 @@ if (Test-Path -LiteralPath $work) { throw 'Use a new work directory under scratc
 $null = New-Item -ItemType Directory -Path $work
 $project = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup></Project>'
 [IO.File]::WriteAllText((Join-Path $work 'Probe.csproj'),$project)
-[IO.File]::Copy((Join-Path $PSScriptRoot 'KillerPDF.UiSmoke/RailShadowProbe.cs.txt'),(Join-Path $work 'Program.cs'))
+[IO.File]::Copy((Join-Path $PSScriptRoot 'JPDFs.UiSmoke/RailShadowProbe.cs.txt'),(Join-Path $work 'Program.cs'))
 $appXaml = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../App.xaml'))
 & dotnet build (Join-Path $work 'Probe.csproj')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

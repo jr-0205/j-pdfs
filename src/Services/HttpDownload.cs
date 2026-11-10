@@ -1,7 +1,7 @@
 using System.IO;
 using System.Net.Http;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Streams an HTTP response with a size limit and a whole-transfer deadline.</summary>
 public static class HttpDownload

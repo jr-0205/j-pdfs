@@ -12,7 +12,7 @@ Use a feature-specific step factory where available so its settings use the
 expected schema. This macro exports the first page as text:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfMacro CreateTextExportMacro()
 {
@@ -44,7 +44,7 @@ validation, and saving; creating that starter does not create a PDF/A file.
 ## Preview names and collisions
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfMacroPreview PreviewTextExport(PdfMacro macro, bool outputExists)
 {
@@ -66,7 +66,7 @@ when saving. Preview names are labels, not validated filesystem destinations.
 ## Supply an operation callback
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfMacroRunReport RunTextExports(byte[][] sources,
     CancellationToken cancellationToken = default)

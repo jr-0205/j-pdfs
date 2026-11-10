@@ -13,7 +13,7 @@ used for estimating, fabrication, construction, or compliance work.
 Create a profile from two PDF-space points and a known real distance:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 PdfMeasurementProfile profile = PdfMeasurementProfile.Calibrate(
     "First floor",
@@ -97,9 +97,9 @@ label with the profile precision, and pass the same profile to the editor:
 
 ```csharp
 using System.Globalization;
-using KillerPdf.Engine.Authoring;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Editing;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Editing;
 
 static byte[] AddWallMeasurement(
     byte[] sourceBytes,

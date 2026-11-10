@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>
 /// Picks the words that make up the line a Text tool click lands on. Rectangles are in the reading

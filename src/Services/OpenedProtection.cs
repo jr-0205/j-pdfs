@@ -1,8 +1,8 @@
 using System.IO;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Security;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Security;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Whether a print may go ahead, at what resolution, and whether a password was tried and failed.</summary>
 internal sealed record PrintAnswer(bool MayPrint, double Dpi, bool WrongPassword);

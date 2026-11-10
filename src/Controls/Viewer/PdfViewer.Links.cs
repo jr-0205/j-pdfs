@@ -11,9 +11,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Moved from Shell/Links.cs; the namespace and class line are the only changes. Window members
     // spelled bare here resolve through PdfViewer.Bridge.cs.
@@ -61,7 +61,7 @@ namespace KillerPDF.Controls
         private bool ConfirmOpenLink(string url)
         {
             if (App.GetSetting(ConfirmLinksSetting) != "1") return true;
-            var (result, dontAsk) = KillerDialog.ShowWithCheckbox(
+            var (result, dontAsk) = JpdfsDialog.ShowWithCheckbox(
                 Host!.Window,
                 $"{Loc("Str_LinkConfirmBody")}\n\n{url}",
                 Loc("Str_LinkDontAsk"),
@@ -231,7 +231,7 @@ namespace KillerPDF.Controls
                 double pageHeightPt = page.Height;
                 if (pageWidthPt  <= 0) pageWidthPt  = 595.28;
                 if (pageHeightPt <= 0) pageHeightPt = 841.89;
-                foreach (KillerPdf.Engine.Documents.PdfLinkInfo link in
+                foreach (JPDFs.Engine.Documents.PdfLinkInfo link in
                     session.LinkReader.ReadPage(pageIndex))
                 {
                     var (cx, cy, cw, ch) = PdfRectToCanvas(
@@ -341,7 +341,7 @@ namespace KillerPDF.Controls
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(Host!.Window, $"{Loc("Str_LinkRemoveFailed")}\n{ex.Message}", "J-PDF's",
+                JpdfsDialog.Show(Host!.Window, $"{Loc("Str_LinkRemoveFailed")}\n{ex.Message}", "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

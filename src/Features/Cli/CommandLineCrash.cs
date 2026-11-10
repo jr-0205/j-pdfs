@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace KillerPDF.Features;
+namespace JPDFs.Features;
 
 /// <summary>
 /// A command-line run promises never to show a window. While one owns the process, a crash is

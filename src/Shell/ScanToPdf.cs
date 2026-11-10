@@ -1,9 +1,9 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Interop;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     // Scan to PDF (#73): scan through TWAIN and open the pages as a new, unsaved document,
     // the same way Import opens images.
@@ -16,13 +16,13 @@ namespace KillerPDF.Shell
         {
             if (!TwainScan.ManagerInstalled)
             {
-                KillerDialog.Show(this, Loc("Str_Scan_NoManager"), "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Scan_NoManager"), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             IntPtr window = new WindowInteropHelper(this).Handle;
-            string folder = Path.Combine(Path.GetTempPath(), $"KillerPDF-scan-{DateTime.Now:yyyyMMdd-HHmmss-fff}");
+            string folder = Path.Combine(Path.GetTempPath(), $"JPDFs-scan-{DateTime.Now:yyyyMMdd-HHmmss-fff}");
             TwainScanResult result;
             try
             {
@@ -30,7 +30,7 @@ namespace KillerPDF.Shell
                 IReadOnlyList<NTwain.DataSource> sources = scan.Sources;
                 if (sources.Count == 0)
                 {
-                    KillerDialog.Show(this, Loc("Str_Scan_NoScanners"), "J-PDF's",
+                    JpdfsDialog.Show(this, Loc("Str_Scan_NoScanners"), "J-PDF's",
                         MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
@@ -47,7 +47,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 SetStatus("");
-                KillerDialog.Show(this, Loc("Str_Scan_Failed") + "\n" + ex.Message + ScanRecoveryMessage(folder), "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Scan_Failed") + "\n" + ex.Message + ScanRecoveryMessage(folder), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -60,7 +60,7 @@ namespace KillerPDF.Shell
             if (!result.Completed)
             {
                 SetStatus(completion);
-                KillerDialog.Show(this, completion + "\n"
+                JpdfsDialog.Show(this, completion + "\n"
                     + string.Join("\n", result.Errors.Select(error => error.Message))
                     + ScanRecoveryMessage(folder), "J-PDF's", MessageBoxButton.OK,
                     result.Errors.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
@@ -91,7 +91,7 @@ namespace KillerPDF.Shell
             catch (Exception ex)
             {
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Scan_Failed") + "\n" + ex.Message + ScanRecoveryMessage(folder), "J-PDF's",
+                JpdfsDialog.Show(this, Loc("Str_Scan_Failed") + "\n" + ex.Message + ScanRecoveryMessage(folder), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

@@ -4,10 +4,10 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerPDF.Services;
-using KillerPdf.Engine.Documents;
+using JPDFs.Services;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 // The Measure tool. Distance is two points (click twice, or drag); Perimeter clicks out a path and
 // finishes on a double-click, Enter, or a click back on its first point (which closes it); Area
@@ -674,7 +674,7 @@ public partial class PdfViewer
         const int Limit = 20000;
         var vertices = new List<PdfMeasurementPoint>();
         var segments = new List<PdfMeasurementSegment>();
-        using var document = KillerPDF.Services.PdfContentDocument.Open(path, protection);
+        using var document = JPDFs.Services.PdfContentDocument.Open(path, protection);
         if (pageIndex >= document.NumberOfPages) return new MeasureSnapGeometry(vertices, segments);
         PdfPageContent page = document.GetPage(pageIndex + 1);
         foreach (PdfExtractedPath drawn in page.Paths)
@@ -720,7 +720,7 @@ public partial class PdfViewer
         }
         return new MeasureSnapGeometry(vertices, segments);
 
-        static PdfMeasurementPoint Measure(KillerPdf.Engine.Authoring.PdfPoint point) => new(point.X, point.Y);
+        static PdfMeasurementPoint Measure(JPDFs.Engine.Authoring.PdfPoint point) => new(point.X, point.Y);
     }
 
     // ── Showing measurements ─────────────────────────────────────────────────────────────────
@@ -1024,7 +1024,7 @@ public partial class PdfViewer
                 continue;
             double perUnit = RedactionGeometry.PointsPerCanvasUnit(pw, ph, ch, rot);
             if (!(perUnit > 0)) continue;
-            Point Canvas(KillerPdf.Engine.Authoring.PdfPoint point) =>
+            Point Canvas(JPDFs.Engine.Authoring.PdfPoint point) =>
                 RedactionGeometry.PageToCanvas(point.X, point.Y, point.X, point.Y, pw, ph, cw, ch, rot).TopLeft;
             var measurement = new MeasurementAnnotation
             {
@@ -1075,10 +1075,10 @@ public partial class PdfViewer
                     continue;
                 double perUnit = RedactionGeometry.PointsPerCanvasUnit(pw, ph, ch, rot);
                 if (!(perUnit > 0)) continue;
-                KillerPdf.Engine.Authoring.PdfPoint Page(Point point)
+                JPDFs.Engine.Authoring.PdfPoint Page(Point point)
                 {
                     var (x, y) = RedactionGeometry.CanvasPointToPage(point, pw, ph, cw, ch, rot);
-                    return new KillerPdf.Engine.Authoring.PdfPoint(x, y);
+                    return new JPDFs.Engine.Authoring.PdfPoint(x, y);
                 }
                 // The label point is saved wherever it shows, so other viewers put it in the same spot.
                 Point label = measurement.LabelCenter ?? MeasurementGeometry.AutoLabelCenter(measurement);
@@ -1092,7 +1092,7 @@ public partial class PdfViewer
                     (PdfMeasurementKind)(int)measurement.Kind, [.. measurement.Points.Select(Page)],
                     measurement.Closed, profile,
                     MeasurementGeometry.Label(measurement, perUnit, CultureInfo.CurrentCulture),
-                    new KillerPdf.Engine.Authoring.PdfRgbColor(measurement.ColorR / 255.0, measurement.ColorG / 255.0,
+                    new JPDFs.Engine.Authoring.PdfRgbColor(measurement.ColorR / 255.0, measurement.ColorG / 255.0,
                         measurement.ColorB / 255.0),
                     Math.Max(0.1, measurement.StrokeWidth * perUnit), measurement.ColorA / 255.0, Page(label),
                     Math.Clamp(measurement.LabelSize * perUnit, 1, 144),

@@ -1,11 +1,11 @@
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Features
+namespace JPDFs.Features
 {
     /// <summary>
     /// The document-search state machine: runs SearchService over the working file, keeps the
     /// per-page rect map and the flat reading-ordered match list, and steps the match cursor.
-    /// Moved out of Search.cs (MainWindow) in the KillerUI refactor.
+    /// Moved out of Search.cs (MainWindow) in the JpdfsUiKit refactor.
     ///
     /// Holds no controls. Talks to the window only through <see cref="ISearchHost"/>; the search
     /// bar UI, debounce, and the highlight painting stay in the shell half (Shell/Search.cs).

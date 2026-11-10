@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Windows.Threading;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// What the sidebar's Comments panel needs from this viewer: its measurements in page order,

@@ -5,7 +5,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 public partial class PdfViewer
 {

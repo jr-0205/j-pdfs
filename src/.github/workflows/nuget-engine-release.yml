@@ -54,13 +54,13 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Repair commit must be on main.' }
             # The tests do not ship in the package, so a repair may fix a test that only failed on
             # this Linux runner; the packaged engine code must still match the release tag.
-            git diff --exit-code $tag $source -- engine ':!engine/CHANGELOG.md' ':!engine/KillerPdf.Engine/KillerPdf.Engine.csproj' ':!engine/KillerPdf.Engine.Tests'
+            git diff --exit-code $tag $source -- engine ':!engine/CHANGELOG.md' ':!engine/JPDFs.Engine/JPDFs.Engine.csproj' ':!engine/JPDFs.Engine.Tests'
             if ($LASTEXITCODE -ne 0) { throw 'Engine code differs from the released source.' }
           }
           git checkout --detach $source
           if ($LASTEXITCODE -ne 0) { throw 'Release source checkout failed.' }
-          [xml]$app = Get-Content 'KillerPDF.csproj'
-          [xml]$engine = Get-Content 'engine/KillerPdf.Engine/KillerPdf.Engine.csproj'
+          [xml]$app = Get-Content 'JPDFs.csproj'
+          [xml]$engine = Get-Content 'engine/JPDFs.Engine/JPDFs.Engine.csproj'
           if ($app.SelectSingleNode('/Project/PropertyGroup/Version').InnerText -ne $version -or
               $engine.SelectSingleNode('/Project/PropertyGroup/Version').InnerText -ne $version) {
             throw 'App, engine, and release versions must match.'
@@ -72,13 +72,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore engine/KillerPdf.Engine.Tests/KillerPdf.Engine.Tests.csproj
+        run: dotnet restore engine/JPDFs.Engine.Tests/JPDFs.Engine.Tests.csproj
 
       - name: Test
-        run: dotnet test engine/KillerPdf.Engine.Tests/KillerPdf.Engine.Tests.csproj -c Release --no-restore
+        run: dotnet test engine/JPDFs.Engine.Tests/JPDFs.Engine.Tests.csproj -c Release --no-restore
 
       - name: Pack
-        run: dotnet pack engine/KillerPdf.Engine/KillerPdf.Engine.csproj -c Release --no-restore -o artifacts/nuget
+        run: dotnet pack engine/JPDFs.Engine/JPDFs.Engine.csproj -c Release --no-restore -o artifacts/nuget
 
       - name: Preserve packages
         uses: actions/upload-artifact@v4
@@ -91,7 +91,7 @@ jobs:
         id: nuget-login
         uses: NuGet/login@v1
         with:
-          user: StevetheKiller
+          user: JPDFs
 
       - name: Publish package and symbols
         shell: pwsh
@@ -99,7 +99,7 @@ jobs:
           ENGINE_VERSION: ${{ steps.release.outputs.version }}
           NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: |
-          dotnet nuget push "artifacts/nuget/KillerPdf.Engine.$env:ENGINE_VERSION.nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push "artifacts/nuget/JPDFs.Engine.$env:ENGINE_VERSION.nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet nuget push "artifacts/nuget/KillerPdf.Engine.$env:ENGINE_VERSION.snupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push "artifacts/nuget/JPDFs.Engine.$env:ENGINE_VERSION.snupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
           exit $LASTEXITCODE

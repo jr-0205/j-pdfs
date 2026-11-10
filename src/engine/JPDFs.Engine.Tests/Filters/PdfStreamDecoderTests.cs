@@ -1,0 +1,1313 @@
+using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text;
+using JPDFs.Engine.Filters;
+using JPDFs.Engine.Objects;
+using Xunit;
+
+namespace JPDFs.Engine.Tests.Filters;
+
+public sealed class PdfStreamDecoderTests
+{
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DecodeKnownLengthStream_PreservesSmallFlateRecoveryAndLimits(bool recovery)
+    {
+        byte[] samples = new byte[65536];
+        new Random(892).NextBytes(samples);
+        byte[] encoded = Compress(samples);
+        byte[] badChecksum = (byte[])encoded.Clone();
+        badChecksum[^1] ^= 1;
+        byte[][] cases = [encoded, encoded[..^1], encoded[..^4],
+            encoded[..(encoded.Length / 2)], encoded[2..^4],
+            [32, 32, .. encoded], [.. encoded, 13, 10], [], badChecksum];
+        foreach (byte[] data in cases)
+        foreach (int expected in new[] { 16383, 16384, samples.Length, samples.Length + 17 })
+        foreach (int limit in new[] { expected - 1, samples.Length + 32 })
+        foreach (int predictor in new[] { 1, 2 })
+        {
+            PdfStream stream = Stream(data, Pair("Filter", Name("FlateDecode")),
+                Pair("DecodeParms", new PdfDictionary([
+                    Pair("Predictor", new PdfInteger(predictor)),
+                    Pair("Columns", new PdfInteger(1024))])));
+            var (ordinaryBytes, ordinaryError) = Capture(() => recovery
+                ? PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, value => value, limit)
+                : PdfStreamDecoder.Decode(stream, value => value, limit));
+            var (directBytes, directError) = Capture(() => PdfStreamDecoder.DecodeKnownLengthStream(stream,
+                value => value, limit, expected, recovery, 16384));
+            Assert.Equal(ordinaryError, directError);
+            Assert.True(ordinaryBytes.AsSpan().SequenceEqual(directBytes));
+        }
+
+        static (byte[] Bytes, Type? Error) Capture(Func<byte[]> action)
+        {
+            try { return (action(), null); }
+            catch (PdfFilterException error) { return ([], error.GetType()); }
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DecodeImageSamples_PreservesFlateRecoveryAndSizeLimits(bool recovery)
+    {
+        byte[] samples = new byte[2 * 1024 * 1024];
+        new Random(182).NextBytes(samples);
+        byte[] encoded = Compress(samples);
+        byte[] badChecksum = (byte[])encoded.Clone();
+        badChecksum[^1] ^= 1;
+        byte[][] cases = [encoded, encoded[..^1], encoded[..^4],
+            encoded[..(encoded.Length / 2)], encoded[2..^4],
+            [32, 32, .. encoded], [.. encoded, 13, 10], [], badChecksum];
+        foreach (byte[] data in cases)
+        foreach (int expected in new[] { 1024 * 1024 - 1, 1024 * 1024,
+            samples.Length, samples.Length + 17 })
+        foreach (int limit in new[] { expected - 1, samples.Length + 32 })
+        foreach (int predictor in new[] { 1, 2 })
+        {
+            PdfStream stream = Stream(data, Pair("Filter", Name("FlateDecode")),
+                Pair("DecodeParms", new PdfDictionary([
+                    Pair("Predictor", new PdfInteger(predictor)),
+                    Pair("Columns", new PdfInteger(1024))])));
+            var (ordinaryBytes, ordinaryError) = Capture(() => recovery
+                ? PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, value => value, limit)
+                : PdfStreamDecoder.Decode(stream, value => value, limit));
+            var (directBytes, directError) = Capture(() => PdfStreamDecoder.DecodeImageSamples(stream,
+                value => value, limit, expected, recovery));
+            Assert.Equal(ordinaryError, directError);
+            Assert.True(ordinaryBytes.AsSpan().SequenceEqual(directBytes));
+        }
+
+        static (byte[] Bytes, Type? Error) Capture(Func<byte[]> action)
+        {
+            try { return (action(), null); }
+            catch (PdfFilterException error) { return ([], error.GetType()); }
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    public void Decode_CcittRunsPreservePartialBytesAndBothPolarities(int start)
+    {
+        string[] white = ["00110101", "000111", "0111", "1000", "1011", "1100", "1110", "1111"];
+        (int Length, string Code)[] runs = [(0, "0000110111"), (1, "010"), (2, "11"),
+            (7, "00011"), (8, "000101"), (9, "000100"), (16, "0000010111"),
+            (63, "000001100111"), (64, "00000011110000110111"),
+            (1728, "00000011001010000110111")];
+        foreach ((int length, string code) in runs)
+        foreach (bool blackIs1 in new[] { false, true })
+        {
+            int columns = start + length + 5;
+            string line = white[start] + code + white[5];
+            string bits = string.Concat(Enumerable.Repeat(line, 3));
+            byte[] encoded = new byte[(bits.Length + 7) / 8];
+            for (int bit = 0; bit < bits.Length; bit++)
+                if (bits[bit] == '1') encoded[bit / 8] |= (byte)(128 >> (bit % 8));
+            int stride = (columns + 7) / 8;
+            byte[] expected = [.. Enumerable.Repeat(blackIs1 ? (byte)0 : (byte)255, stride * 3)];
+            for (int row = 0; row < 3; row++)
+            for (int column = start; column < start + length; column++)
+            {
+                byte mask = (byte)(128 >> (column % 8));
+                if (blackIs1) expected[row * stride + column / 8] |= mask;
+                else expected[row * stride + column / 8] &= (byte)~mask;
+            }
+            Assert.Equal(expected, PdfCcittFaxDecoder.Decode(encoded,
+                new PdfCcittFaxOptions(0, columns, 3, false, false, blackIs1), expected.Length));
+        }
+    }
+
+    [Theory]
+    [InlineData(1048575)]
+    [InlineData(1048576)]
+    [InlineData(1048577)]
+    [InlineData(2359295)]
+    [InlineData(2359296)]
+    [InlineData(2359297)]
+    public void Decode_LargeFlatePreservesBytesAndEnforcesExactLimit(int length)
+    {
+        byte[] expected = new byte[length];
+        new Random(357).NextBytes(expected);
+        PdfStream stream = Stream(Compress(expected), Pair("Filter", Name("FlateDecode")));
+
+        Assert.Equal(expected, PdfStreamDecoder.Decode(stream, length));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream, length - 1));
+        Assert.Equal(expected.AsSpan(0, length - 1).ToArray(),
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, value => value, length - 1));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Decode_LargeFlateRecoveryPreservesPayloadWithMissingOrInvalidChecksum(bool missing)
+    {
+        byte[] expected = new byte[2 * 1024 * 1024 + 73];
+        new Random(190).NextBytes(expected);
+        byte[] encoded = Compress(expected);
+        if (missing) encoded = encoded[..^4];
+        else encoded[^1] ^= 1;
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("FlateDecode")));
+
+        if (!missing) Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal(expected,
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, value => value));
+    }
+
+    [Fact]
+    public void Decode_AllowsBoundedPngPredictorRowBytesBeforeReconstruction()
+    {
+        byte[] predicted = [0, 1, 2, 3, 4, 0, 5, 6, 7, 8];
+        byte[] compressed = Compress(predicted);
+        var stream = new PdfStream(new PdfDictionary([
+            Pair("Filter", Name("FlateDecode")),
+            Pair("DecodeParms", new PdfDictionary([
+                Pair("Predictor", new PdfInteger(15)),
+                Pair("Columns", new PdfInteger(4))]))]), compressed);
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, maximumDecodedBytes: 8);
+
+        Assert.Equal(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }, decoded);
+    }
+
+    [Fact]
+    public void Decode_AllowsBoundedIntermediateBytesInMultiFilterPipeline()
+    {
+        byte[] expected = [0x41];
+        byte[] compressed = Compress(expected);
+        byte[] hexadecimal = Encoding.ASCII.GetBytes(
+            Convert.ToHexString(compressed) + ">");
+        var stream = new PdfStream(new PdfDictionary([
+            Pair("Filter", new PdfArray([
+                Name("ASCIIHexDecode"), Name("FlateDecode")]))]), hexadecimal);
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, maximumDecodedBytes: 1);
+
+        Assert.Equal(expected, decoded);
+    }
+
+    [Fact]
+    public void Decode_CompatibilityRecoveryTreatsEmptyParameterArrayAsOmitted()
+    {
+        PdfStream stream = Stream("34313E>"u8.ToArray(),
+            Pair("Filter", new PdfArray([
+                Name("ASCIIHexDecode"), Name("ASCIIHexDecode")])),
+            Pair("DecodeParms", new PdfArray([])));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal([0x41], PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream));
+    }
+
+    [Fact]
+    public void Decode_EnforcesFinalLimitAfterBoundedMultiFilterIntermediate()
+    {
+        byte[] compressed = Compress([0x41, 0x42]);
+        byte[] hexadecimal = Encoding.ASCII.GetBytes(
+            Convert.ToHexString(compressed) + ">");
+        var stream = new PdfStream(new PdfDictionary([
+            Pair("Filter", new PdfArray([
+                Name("ASCIIHexDecode"), Name("FlateDecode")]))]), hexadecimal);
+
+        PdfFilterException error = Assert.Throws<PdfFilterException>(() =>
+            PdfStreamDecoder.Decode(stream, maximumDecodedBytes: 1));
+
+        Assert.Contains("safety limit", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decode_ReturnsUnfilteredBytes()
+    {
+        byte[] source = [0x00, 0xFF, 0x41];
+
+        Assert.Equal(source, PdfStreamDecoder.Decode(Stream(source)));
+    }
+
+    [Fact]
+    public void Decode_IgnoresDecodeParametersWithoutAFilter()
+    {
+        byte[] source = [0x00, 0xFF, 0x41];
+        PdfStream stream = Stream(source, Pair("DecodeParms", Dictionary()));
+
+        Assert.Equal(source, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_EnforcesOutputLimitForUnfilteredBytes()
+    {
+        PdfStream stream = Stream(new byte[101]);
+
+        PdfFilterException error = Assert.Throws<PdfFilterException>(
+            () => PdfStreamDecoder.Decode(stream, 100));
+
+        Assert.Contains("safety limit", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decode_InflatesZlibData()
+    {
+        byte[] expected = Encoding.ASCII.GetBytes("PDF 2.0 object stream");
+        PdfStream stream = Stream(Compress(expected), Pair("Filter", Name("FlateDecode")));
+
+        Assert.Equal(expected, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_InflatesBrotliData()
+    {
+        byte[] expected = Encoding.ASCII.GetBytes("PDF 2.0 Brotli stream");
+        PdfStream stream = Stream(CompressBrotli(expected), Pair("Filter", Name("BrotliDecode")));
+
+        Assert.Equal(expected, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_EnforcesOutputLimitForBrotliData()
+    {
+        byte[] expected = new byte[10_000];
+        PdfStream stream = Stream(CompressBrotli(expected), Pair("Filter", Name("BrotliDecode")));
+
+        PdfFilterException error = Assert.Throws<PdfFilterException>(
+            () => PdfStreamDecoder.Decode(stream, expected.Length - 1));
+
+        Assert.Contains("safety limit", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decode_RejectsInvalidBrotliData()
+    {
+        PdfStream stream = Stream("not brotli"u8.ToArray(), Pair("Filter", Name("BrotliDecode")));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_CompatibilityRecoveryIgnoresInvalidZlibChecksum()
+    {
+        byte[] expected = Encoding.ASCII.GetBytes("recover a broken Adler checksum");
+        byte[] encoded = Compress(expected);
+        encoded[^1] ^= 0x01;
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("FlateDecode")));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal(expected,
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, value => value));
+    }
+
+    [Fact]
+    public void Decode_CompatibilityRecoveryTreatsUnrecoverableDeflateDataAsEmpty()
+    {
+        PdfStream stream = Stream([0x78, 0x9C, 0xFF, 0xFF, 0, 0, 0, 0],
+            Pair("Filter", Name("FlateDecode")));
+
+        Assert.Throws<PdfFilterException>(() =>
+            PdfStreamDecoder.Decode(stream, value => value));
+        Assert.Empty(PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, value => value));
+    }
+
+    [Fact]
+    public void Decode_CompatibilityRecoveryKeepsDataInflatedBeforeCorruption()
+    {
+        byte[] plain = Encoding.ASCII.GetBytes(string.Join(' ',
+            Enumerable.Range(0, 6000).Select(index => (index * 7919 % 10007).ToString())));
+        byte[] encoded = Compress(plain);
+        // Corrupt the middle so inflation fails part-way through.
+        int corruptStart = encoded.Length * 6 / 10;
+        for (int index = corruptStart; index < corruptStart + 32; index++) encoded[index] ^= 0x5A;
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("FlateDecode")));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream, value => value));
+        byte[] recovered = PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, value => value);
+
+        Assert.True(recovered.Length >= 500, $"Recovered only {recovered.Length} bytes.");
+        Assert.Equal(plain.Take(500), recovered.Take(500));
+    }
+
+    [Fact]
+    public void Decode_ResolvesIndirectFilterParametersAndScalarValues()
+    {
+        byte[] expected = Encoding.ASCII.GetBytes("indirect stream metadata");
+        var objects = new Dictionary<int, PdfObject>
+        {
+            [1] = new PdfIndirectReference(2, 0),
+            [2] = Name("FlateDecode"),
+            [3] = new PdfIndirectReference(4, 0),
+            [4] = Dictionary(Pair("Predictor", new PdfIndirectReference(5, 0))),
+            [5] = new PdfInteger(1)
+        };
+        PdfStream stream = Stream(Compress(expected),
+            Pair("Filter", new PdfIndirectReference(1, 0)),
+            Pair("DecodeParms", new PdfIndirectReference(3, 0)));
+
+        Assert.Equal(expected, PdfStreamDecoder.Decode(stream, reference => objects[reference.ObjectNumber]));
+    }
+
+    [Fact]
+    public void Decode_RejectsIndirectFilterCycles()
+    {
+        var objects = new Dictionary<int, PdfObject>
+        {
+            [1] = new PdfIndirectReference(2, 0),
+            [2] = new PdfIndirectReference(1, 0)
+        };
+        PdfStream stream = Stream([], Pair("Filter", new PdfIndirectReference(1, 0)));
+
+        PdfFilterException error = Assert.Throws<PdfFilterException>(() =>
+            PdfStreamDecoder.Decode(stream, reference => objects[reference.ObjectNumber]));
+
+        Assert.Contains("cycle", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decode_DecodesAsciiHexIncludingOddFinalNibble()
+    {
+        PdfStream stream = Stream("61 62 6>"u8.ToArray(),
+            Pair("Filter", Name("ASCIIHexDecode")));
+
+        Assert.Equal("ab`"u8.ToArray(), PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_RecoveryAcceptsEmptyAsciiHexWithoutEndMarker()
+    {
+        PdfStream stream = Stream([], Pair("Filter", Name("AHx")));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Empty(PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, 0));
+    }
+
+    [Theory]
+    [InlineData("6162", "6162")]
+    [InlineData("61 62 6", "616260")]
+    [InlineData("6!1z6?2>", "6162")]
+    [InlineData("6!1z6?2", "6162")]
+    [InlineData("6!1>6263", "61")]
+    [InlineData("xA?b!C", "ABC0")]
+    public void Decode_RecoveryPreservesAsciiHexDigitsAndOutputLimit(string encoded, string hex)
+    {
+        PdfStream stream = Stream(Encoding.ASCII.GetBytes(encoded), Pair("Filter", Name("ASCIIHexDecode")));
+        byte[] expected = Convert.FromHexString(hex);
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal(expected, PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, expected.Length));
+        Assert.Throws<PdfFilterException>(() =>
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, expected.Length - 1));
+    }
+
+    [Fact]
+    public void Decode_DecodesAscii85ZeroTuple()
+    {
+        PdfStream stream = Stream("z~>"u8.ToArray(),
+            Pair("Filter", Name("ASCII85Decode")));
+
+        Assert.Equal(new byte[4], PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_RecoveryAcceptsEmptyAscii85WithoutEndMarker()
+    {
+        PdfStream stream = Stream([], Pair("Filter", Name("A85")));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Empty(PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, 0));
+    }
+
+    [Theory]
+    [InlineData("z", "00000000")]
+    [InlineData("!!!!!", "00000000")]
+    [InlineData("03!0=6;", "2F54782042")]
+    public void Decode_RecoveryAcceptsAscii85TuplesWithoutEndMarker(string encoded, string hex)
+    {
+        PdfStream stream = Stream(Encoding.ASCII.GetBytes(encoded), Pair("Filter", Name("A85")));
+        byte[] expected = Convert.FromHexString(hex);
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal(expected, PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, expected.Length));
+        Assert.Throws<PdfFilterException>(() =>
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, expected.Length - 1));
+    }
+
+    [Theory]
+    [InlineData("!!!!!v!!!!!!!!!~>")]
+    [InlineData("!!!!!uuuuu!!!!!~>")]
+    [InlineData("!!!!!!z!!!!!!!!~>")]
+    [InlineData("!!!!!!~!!!!!!!!~>")]
+    public void Decode_RecoveryReplacesDamagedAscii85TuplesAndContinues(string encoded)
+    {
+        PdfStream stream = Stream(Encoding.ASCII.GetBytes(encoded),
+            Pair("Filter", Name("ASCII85Decode")));
+        byte[] expected = [0, 0, 0, 0, 32, 32, 32, 32, 0, 0, 0, 0];
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal(expected, PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream));
+        Assert.Throws<PdfFilterException>(() =>
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream, expected.Length - 1));
+    }
+
+    [Theory]
+    [InlineData("z~")]
+    public void Decode_RecoveryPreservesAscii85TupleValidation(string encoded)
+    {
+        PdfStream stream = Stream(Encoding.ASCII.GetBytes(encoded), Pair("Filter", Name("A85")));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream));
+    }
+
+    [Fact]
+    public void Decode_DecodesRunLengthLiteralAndRepeatRuns()
+    {
+        PdfStream stream = Stream([2, (byte)'A', (byte)'B', (byte)'C', 254, (byte)'Z', 128],
+            Pair("Filter", Name("RunLengthDecode")));
+
+        Assert.Equal("ABCZZZ", Encoding.ASCII.GetString(PdfStreamDecoder.Decode(stream)));
+    }
+
+    [Fact]
+    public void Decode_RunLengthPreservesMaximumRunsAndIgnoresDataAfterEnd()
+    {
+        byte[] literal = [.. Enumerable.Range(0, 128).Select(value => (byte)value)];
+        PdfStream stream = Stream([127, .. literal, 129, 211, 128, 129],
+            Pair("Filter", Name("RunLengthDecode")));
+        Assert.Equal([.. literal, .. Enumerable.Repeat((byte)211, 128)],
+            PdfStreamDecoder.Decode(stream, 256));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream, 255));
+    }
+
+    [Theory]
+    [InlineData(new byte[] { })]
+    [InlineData(new byte[] { 0 })]
+    [InlineData(new byte[] { 129 })]
+    [InlineData(new byte[] { 0, 42 })]
+    [InlineData(new byte[] { 129, 42 })]
+    public void Decode_RunLengthRejectsTruncatedRunsOrMissingEnd(byte[] encoded)
+    {
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("RunLengthDecode")));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_RunLengthAcceptsEmptyDataWithEndMarker()
+    {
+        PdfStream stream = Stream([128], Pair("Filter", Name("RunLengthDecode")));
+        Assert.Empty(PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_DecodesLzwCodesWithClearAndEndMarkers()
+    {
+        PdfStream stream = Stream(PackNineBitCodes(256, 'A', 'B', 'C', 257),
+            Pair("Filter", Name("LZWDecode")));
+
+        Assert.Equal("ABC", Encoding.ASCII.GetString(PdfStreamDecoder.Decode(stream)));
+    }
+
+    [Fact]
+    public void Decode_AppliesLosslessFilterPipelineInDeclaredOrder()
+    {
+        byte[] expected = "chained PDF filters"u8.ToArray();
+        byte[] compressed = Compress(expected);
+        byte[] hexadecimal = Encoding.ASCII.GetBytes(
+            Convert.ToHexString(compressed) + ">");
+        PdfStream stream = Stream(hexadecimal,
+            Pair("Filter", new PdfArray([Name("ASCIIHexDecode"), Name("FlateDecode")])));
+
+        Assert.Equal(expected, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_DoesNotApplyPredictorsToFiltersThatDoNotDefineThem()
+    {
+        var parameters = new PdfDictionary([
+            Pair("Predictor", new PdfInteger(2)),
+            Pair("Columns", new PdfInteger(3))
+        ]);
+        PdfStream stream = Stream("010101>"u8.ToArray(),
+            Pair("Filter", Name("ASCIIHexDecode")),
+            Pair("DecodeParms", parameters));
+
+        Assert.Equal(new byte[] { 1, 1, 1 }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_ReversesPngUpPrediction()
+    {
+        byte[] predicted = [2, 10, 20, 30, 2, 5, 5, 5];
+        PdfDictionary parameters = Dictionary(
+            Pair("Predictor", new PdfInteger(12)),
+            Pair("Columns", new PdfInteger(3)));
+        PdfStream stream = Stream(
+            Compress(predicted),
+            Pair("Filter", Name("FlateDecode")),
+            Pair("DecodeParms", parameters));
+
+        Assert.Equal(new byte[] { 10, 20, 30, 15, 25, 35 }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_RejectsPngRowFilterThatContradictsFixedPredictor()
+    {
+        PdfDictionary parameters = Dictionary(
+            Pair("Predictor", new PdfInteger(12)),
+            Pair("Columns", new PdfInteger(3)));
+        PdfStream stream = Stream(
+            Compress([1, 10, 20, 30]),
+            Pair("Filter", Name("FlateDecode")),
+            Pair("DecodeParms", parameters));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_AllowsMixedRowFiltersForOptimumPngPredictor()
+    {
+        PdfDictionary parameters = Dictionary(
+            Pair("Predictor", new PdfInteger(15)),
+            Pair("Columns", new PdfInteger(3)));
+        PdfStream stream = Stream(
+            Compress([0, 1, 2, 3, 2, 1, 1, 1]),
+            Pair("Filter", Name("FlateDecode")),
+            Pair("DecodeParms", parameters));
+
+        Assert.Equal([1, 2, 3, 2, 3, 4], PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_ReversesTiffPrediction()
+    {
+        byte[] predicted = [10, 10, 10, 40, 10, 10];
+        PdfDictionary parameters = Dictionary(
+            Pair("Predictor", new PdfInteger(2)),
+            Pair("Columns", new PdfInteger(3)));
+        PdfStream stream = Stream(
+            Compress(predicted),
+            Pair("Filter", Name("FlateDecode")),
+            Pair("DecodeParms", parameters));
+
+        Assert.Equal(new byte[] { 10, 20, 30, 40, 50, 60 }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_ReversesPackedFourBitTiffPrediction()
+    {
+        PdfDictionary parameters = Dictionary(
+            Pair("Predictor", new PdfInteger(2)),
+            Pair("BitsPerComponent", new PdfInteger(4)),
+            Pair("Columns", new PdfInteger(4)));
+        PdfStream stream = Stream(Compress([0x12, 0x48]),
+            Pair("Filter", Name("FlateDecode")), Pair("DecodeParms", parameters));
+
+        Assert.Equal(new byte[] { 0x13, 0x7F }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Theory]
+    [InlineData(8, 1)]
+    [InlineData(8, 3)]
+    [InlineData(8, 4)]
+    [InlineData(16, 1)]
+    [InlineData(16, 3)]
+    [InlineData(16, 4)]
+    public void Decode_ByteAlignedTiffPredictionPreservesChannelsAndRowBoundaries(int bits, int colors)
+    {
+        foreach (int columns in new[] { 1, 17, 257 })
+        {
+            const int rows = 9;
+            int maximum = (1 << bits) - 1;
+            int samplesPerRow = columns * colors;
+            int[] values = [.. Enumerable.Range(0, samplesPerRow * rows).Select(index => (index * 7919 + index / samplesPerRow * 65521) & maximum)];
+            byte[] expected = new byte[values.Length * (bits / 8)];
+            byte[] predicted = new byte[expected.Length];
+            for (int sample = 0; sample < values.Length; sample++)
+            {
+                Write(expected, sample, values[sample]);
+                int previous = sample % samplesPerRow < colors ? 0 : values[sample - colors];
+                Write(predicted, sample, (values[sample] - previous) & maximum);
+            }
+            PdfDictionary parameters = Dictionary(Pair("Predictor", new PdfInteger(2)),
+                Pair("BitsPerComponent", new PdfInteger(bits)), Pair("Colors", new PdfInteger(colors)),
+                Pair("Columns", new PdfInteger(columns)));
+            PdfStream stream = Stream(Compress(predicted), Pair("Filter", Name("FlateDecode")),
+                Pair("DecodeParms", parameters));
+            Assert.Equal(expected, PdfStreamDecoder.Decode(stream));
+
+            void Write(byte[] target, int sample, int value)
+            {
+                if (bits == 8) target[sample] = (byte)value;
+                else
+                {
+                    target[sample * 2] = (byte)(value >> 8);
+                    target[sample * 2 + 1] = (byte)value;
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(8)]
+    [InlineData(16)]
+    public void Decode_ByteAlignedTiffPredictionRejectsIncompleteRows(int bits)
+    {
+        PdfDictionary parameters = Dictionary(Pair("Predictor", new PdfInteger(2)),
+            Pair("BitsPerComponent", new PdfInteger(bits)), Pair("Colors", new PdfInteger(3)),
+            Pair("Columns", new PdfInteger(5)));
+        PdfStream stream = Stream(Compress(new byte[15 * (bits / 8) - 1]),
+            Pair("Filter", Name("FlateDecode")), Pair("DecodeParms", parameters));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_EnforcesOutputLimitWhileInflating()
+    {
+        PdfStream stream = Stream(Compress(new byte[10_000]), Pair("Filter", Name("FlateDecode")));
+
+        PdfFilterException error = Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream, 100));
+        Assert.Contains("safety limit", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decode_EnforcesOutputLimitForCryptPassThrough()
+    {
+        PdfStream stream = Stream(new byte[101], Pair("Filter", Name("Crypt")));
+
+        PdfFilterException error = Assert.Throws<PdfFilterException>(
+            () => PdfStreamDecoder.Decode(stream, 100));
+
+        Assert.Contains("safety limit", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decode_AllowsCryptPassThroughAtOutputLimit()
+    {
+        byte[] source = new byte[100];
+        PdfStream stream = Stream(source, Pair("Filter", Name("Crypt")));
+
+        Assert.Equal(source, PdfStreamDecoder.Decode(stream, 100));
+    }
+
+    [Fact]
+    public void Decode_DecodesBaselineAndExtendedSequentialJpegToRgbSamples()
+    {
+        byte[] jpeg = Convert.FromBase64String(
+            "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAIAAgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDwyiiivw8/0oP/2Q==");
+        PdfStream stream = Stream(jpeg, Pair("Filter", Name("DCTDecode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 8 * 8 * 3);
+
+        Assert.Equal(8 * 8 * 3, decoded.Length);
+        Assert.All(decoded.Chunk(3), pixel =>
+        {
+            Assert.InRange(pixel[0], 235, 245);
+            Assert.InRange(pixel[1], 15, 25);
+            Assert.InRange(pixel[2], 5, 15);
+        });
+        int frameMarker = Enumerable.Range(1, jpeg.Length - 1)
+            .Single(index => jpeg[index - 1] == 0xFF && jpeg[index] == 0xC0);
+        jpeg[frameMarker] = 0xC1;
+        PdfStream extended = Stream(jpeg, Pair("Filter", Name("DCTDecode")));
+
+        Assert.Equal(decoded, PdfStreamDecoder.Decode(extended, 8 * 8 * 3));
+
+        int scanMarker = Enumerable.Range(1, jpeg.Length - 1)
+            .Single(index => jpeg[index - 1] == 0xFF && jpeg[index] == 0xDA);
+        int componentCount = jpeg[scanMarker + 3];
+        jpeg[scanMarker + 5 + componentCount * 2] = 0;
+        PdfStream malformedScan = Stream(jpeg, Pair("Filter", Name("DCTDecode")));
+
+        Assert.Throws<PdfFilterException>(() =>
+            PdfStreamDecoder.Decode(malformedScan, 8 * 8 * 3));
+        Assert.Equal(decoded, PdfStreamDecoder.DecodeWithCompatibilityRecovery(
+            malformedScan, 8 * 8 * 3));
+    }
+
+    [Fact]
+    public void Decode_DecodesSubsampledJpegWithPartialEdgeBlocks()
+    {
+        byte[] jpeg = Convert.FromBase64String(
+            "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAQCAwMDAgQDAwMEBAQEBQkGBQUFBQsICAYJDQsNDQ0LDAwOEBQRDg8TDwwMEhgSExUWFxcXDhEZGxkWGhQWFxb/2wBDAQQEBAUFBQoGBgoWDwwPFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhb/wAARCAANABEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5z8KfDb7v+j/pXpfhT4bfd/0f9K9j8KeFNN+Xj/x2vS/CnhPTfl4/8dry8Hm8tD57gnxFre7qz58/4Vt/07/pRX1b/wAIpp3p/wCO0V639ryP2b/iItbuz//Z");
+        PdfStream stream = Stream(jpeg, Pair("Filter", Name("DCTDecode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 17 * 13 * 3);
+
+        Assert.Equal(17 * 13 * 3, decoded.Length);
+        AssertPixelNear(decoded, 17, 0, 0, 0, 1, 0);
+        AssertPixelNear(decoded, 17, 8, 6, 104, 115, 99);
+        AssertPixelNear(decoded, 17, 16, 12, 209, 225, 198);
+    }
+
+    [Fact]
+    public void Decode_DecodesOnePixelRedJpeg()
+    {
+        byte[] jpeg = Convert.FromHexString(string.Concat(
+            "ffd8ffe000104a46494600010100000100010000ffdb004300030202020202030202020303030304",
+            "060404040404080606050609080a0a090809090a0c0f0c0a0b0e0b09090d110d0e0f101011100a0c",
+            "12131210130f101010ffdb00430103030304030408040408100b090b101010101010101010101010",
+            "1010101010101010101010101010101010101010101010101010101010101010101010101010ffc0",
+            "0011080001000103011100021101031101ffc40014000100000000000000000000000000000008ff",
+            "c40014100100000000000000000000000000000000ffc40015010101000000000000000000000000",
+            "00000709ffc40014110100000000000000000000000000000000ffda000c03010002110311003f00",
+            "3a03154dffd9"));
+        PdfStream stream = Stream(jpeg, Pair("Filter", Name("DCTDecode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 3);
+
+        AssertPixelNear(decoded, 1, 0, 0, 255, 0, 0);
+
+        PdfStream filtered = Stream(
+            Encoding.ASCII.GetBytes(Convert.ToHexString(jpeg) + ">"),
+            Pair("Filter", new PdfArray([
+                Name("ASCIIHexDecode"), Name("DCTDecode")])),
+            Pair("DecodeParms", new PdfArray([])));
+        JpegDecodedImage recovered = PdfStreamDecoder.DecodeJpegImage(
+            filtered, value => value, 3, 1, compatibilityRecovery: true);
+
+        Assert.Equal(1, recovered.Width);
+        Assert.Equal(1, recovered.Height);
+        AssertPixelNear(recovered.Samples, 1, 0, 0, 255, 0, 0);
+    }
+
+    [Fact]
+    public void Decode_DecodesSingleComponentJpegWithSubsampledFrameGeometry()
+    {
+        var jpeg = new List<byte> { 0xFF, 0xD8, 0xFF, 0xDB, 0x00, 0x43, 0x00 };
+        jpeg.AddRange(Enumerable.Repeat((byte)1, 64));
+        jpeg.AddRange([
+            0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0x08, 0x00, 0x08,
+            0x01, 0x01, 0x22, 0x00,
+            0xFF, 0xC4, 0x00, 0x26,
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3F, 0x00,
+            0x3F, 0xFF, 0xD9
+        ]);
+        PdfStream stream = Stream([.. jpeg], Pair("Filter", Name("DCTDecode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 64);
+
+        Assert.Equal(64, decoded.Length);
+        Assert.All(decoded, sample => Assert.Equal(128, sample));
+
+        PdfStream malformed = Stream([.. jpeg],
+            Pair("Filter", Name("DCTDecode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("ColorTransform", new PdfInteger(1)))));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(malformed, 64));
+        Assert.Equal(decoded,
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(malformed, 64));
+    }
+
+    [Fact]
+    public void Decode_TransformsFourComponentJpegToCmyk()
+    {
+        var jpeg = new List<byte> { 0xFF, 0xD8, 0xFF, 0xDB, 0x00, 0x43, 0x00 };
+        jpeg.AddRange(Enumerable.Repeat((byte)1, 64));
+        jpeg.AddRange([
+            0xFF, 0xC0, 0x00, 0x14, 0x08, 0x00, 0x01, 0x00, 0x01,
+            0x04, 0x01, 0x11, 0x00, 0x02, 0x11, 0x00,
+            0x03, 0x11, 0x00, 0x04, 0x11, 0x00,
+            0xFF, 0xC4, 0x00, 0x26,
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0xFF, 0xDA, 0x00, 0x0E, 0x04,
+            0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00,
+            0x00, 0x3F, 0x00, 0x00, 0xFF, 0xD9
+        ]);
+        PdfStream stream = Stream([.. jpeg],
+            Pair("Filter", Name("DCTDecode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("ColorTransform", new PdfInteger(1)))));
+
+        Assert.Equal([127, 127, 127, 128], PdfStreamDecoder.Decode(stream, 4));
+    }
+
+    [Fact]
+    public void Decode_RejectsJpegBeyondOutputLimit()
+    {
+        byte[] jpeg = Convert.FromBase64String(
+            "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAIAAgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDwyiiivw8/0oP/2Q==");
+        PdfStream stream = Stream(jpeg, Pair("Filter", Name("DCTDecode")));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream, 8 * 8 * 3 - 1));
+    }
+
+    [Fact]
+    public void Decode_DecodesJpeg2000WithoutApplyingContainerColorMapping()
+    {
+        byte[] jpeg2000 = Convert.FromBase64String(
+            "AAAADGpQICANCocKAAAAHGZ0eXBqcDIgAAAAAGpwMiBqcHhianB4IAAAAB5ycmVxAfj4AAUAAYAABUAADCAAEhAANwgAAAAAAFhqcDJoAAAAFmloZHIAAADsAAAA7AABBwcBAAAAAA9jb2xyAQIBAAAADAAAABNwY2xyAAEEBwcHBwD//wAAAAAYY21hcAAAAQAAAAEBAAABAgAAAQMAAAC7anAyY/9P/1EAKQAAAAAA7AAAAOwAAAAAAAAAAAAAAOwAAADsAAAAAAAAAAAAAQcBAf9SAAwAAQABAAUDAwAB/1wAE0BASEhQSEhQSEhQSEhQSEhQ/5AACgAAAAAAFgAG/5PfgCgRUFSjb/+QAAoAAAAAAA8BBv+TgP+QAAoAAAAAAA8CBv+TgP+QAAoAAAAAAA8DBv+TgP+QAAoAAAAAAA8EBv+TgP+QAAoAAAAAAA8FBv+TgP/Z");
+        PdfStream stream = Stream(jpeg2000, Pair("Filter", Name("JPXDecode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 236 * 236);
+
+        Assert.Equal(new byte[236 * 236], decoded);
+    }
+
+    [Fact]
+    public void Decode_RejectsJpeg2000BeyondOutputLimit()
+    {
+        byte[] jpeg2000 = Convert.FromBase64String(
+            "AAAADGpQICANCocKAAAAHGZ0eXBqcDIgAAAAAGpwMiBqcHhianB4IAAAAB5ycmVxAfj4AAUAAYAABUAADCAAEhAANwgAAAAAAFhqcDJoAAAAFmloZHIAAADsAAAA7AABBwcBAAAAAA9jb2xyAQIBAAAADAAAABNwY2xyAAEEBwcHBwD//wAAAAAYY21hcAAAAQAAAAEBAAABAgAAAQMAAAC7anAyY/9P/1EAKQAAAAAA7AAAAOwAAAAAAAAAAAAAAOwAAADsAAAAAAAAAAAAAQcBAf9SAAwAAQABAAUDAwAB/1wAE0BASEhQSEhQSEhQSEhQSEhQ/5AACgAAAAAAFgAG/5PfgCgRUFSjb/+QAAoAAAAAAA8BBv+TgP+QAAoAAAAAAA8CBv+TgP+QAAoAAAAAAA8DBv+TgP+QAAoAAAAAAA8EBv+TgP+QAAoAAAAAAA8FBv+TgP/Z");
+        PdfStream stream = Stream(jpeg2000, Pair("Filter", Name("JPXDecode")));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream, 236 * 236 - 1));
+    }
+
+    [Fact]
+    public void Decode_ReconstructsProgressiveJpegScans()
+    {
+        PdfStream stream = Stream(ProgressiveGrayJpeg(),
+            Pair("Filter", Name("DCTDecode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 64);
+
+        Assert.Equal(64, decoded.Length);
+        Assert.All(decoded.Chunk(8), row =>
+            Assert.Equal(new byte[] { 255, 255, 235, 186, 133, 85, 47, 27 }, row));
+    }
+
+    [Fact]
+    public void Decode_RecoversProgressiveAcRefinementBeyondItsBand()
+    {
+        byte[] source = ProgressiveGrayJpeg();
+        source = [.. source.AsSpan(0, source.Length - 4), 0x40, 0xFF, 0xD9];
+        PdfStream stream = Stream(source, Pair("Filter", Name("DCTDecode")));
+
+        Assert.Equal(64, PdfStreamDecoder.Decode(stream, 64).Length);
+    }
+
+    [Fact]
+    public void Decode_RecoversProgressiveScanEndedByMarker()
+    {
+        byte[] source = ProgressiveGrayJpeg();
+        int scanCount = 0;
+        int scanData = -1;
+        for (int index = 0; index < source.Length - 3; index++)
+            if (source[index] == 0xFF && source[index + 1] == 0xDA
+                && ++scanCount == 3)
+            {
+                int length = source[index + 2] << 8 | source[index + 3];
+                scanData = index + 2 + length;
+                break;
+            }
+        Assert.True(scanData >= 0);
+        source = [.. source.AsSpan(0, scanData), .. source.AsSpan(scanData + 1)];
+        PdfStream stream = Stream(source, Pair("Filter", Name("DCTDecode")));
+
+        Assert.Equal(64, PdfStreamDecoder.Decode(stream, 64).Length);
+    }
+
+    [Fact]
+    public void Decode_ReconstructsOneDimensionalCcittScanLines()
+    {
+        PdfStream stream = Stream([0x89, 0xC0],
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(Pair("Columns", new PdfInteger(8)))));
+
+        Assert.Equal(new byte[] { 0b1110_0011 }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_UsesImageWidthWhenCcittColumnsAreOmitted()
+    {
+        PdfStream stream = Stream([0x89, 0xC0],
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("Width", new PdfInteger(8)),
+            Pair("DecodeParms", Dictionary()));
+
+        Assert.Equal(new byte[] { 0b1110_0011 }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_HonorsCcittEndOfLineAlignmentAndBlackPolarity()
+    {
+        PdfStream stream = Stream([0x00, 0x18, 0x9C],
+            Pair("Filter", Name("CCF")),
+            Pair("DecodeParms", Dictionary(
+                Pair("Columns", new PdfInteger(8)),
+                Pair("EndOfLine", new PdfBoolean(true)),
+                Pair("EncodedByteAlign", new PdfBoolean(true)),
+                Pair("BlackIs1", new PdfBoolean(true)))));
+
+        Assert.Equal(new byte[] { 0b0001_1100 }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_CompatibilityRecoveryIgnoresIncorrectCcittByteAlignment()
+    {
+        PdfStream stream = Stream([0xFF, 0xC0, 0x04, 0x00, 0x40],
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("K", new PdfInteger(-1)),
+                Pair("Columns", new PdfInteger(10)),
+                Pair("Rows", new PdfInteger(10)),
+                Pair("EncodedByteAlign", new PdfBoolean(true)),
+                Pair("BlackIs1", new PdfBoolean(true)))));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal(new byte[20], PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream));
+    }
+
+    [Theory]
+    [InlineData(0, "00189C", 0b1110_0011)]
+    [InlineData(1, "001C4E", 0b1110_0011)]
+    public void Decode_CompatibilityRecoveryFindsUndeclaredCcittEndOfLine(
+        int k, string encoded, byte expected)
+    {
+        PdfStream stream = Stream(Convert.FromHexString(encoded),
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("K", new PdfInteger(k)),
+                Pair("Columns", new PdfInteger(8)))));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal([expected],
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream));
+    }
+
+    [Fact]
+    public void Decode_ExpandsCcittMakeupRuns()
+    {
+        PdfStream stream = Stream([0x4D, 0x9A, 0x80],
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(Pair("Columns", new PdfInteger(1728)))));
+
+        Assert.Equal(Enumerable.Repeat((byte)255, 216), PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_ReconstructsGroup4HorizontalAndVerticalModes()
+    {
+        PdfStream stream = Stream([0x98, 0xA0],
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("K", new PdfInteger(-1)),
+                Pair("Columns", new PdfInteger(8)),
+                Pair("Rows", new PdfInteger(2)))));
+
+        Assert.Equal(new byte[] { 0xFF, 0b1110_0011 }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_ReconstructsGroup4PassModes()
+    {
+        PdfStream stream = Stream([0x31, 0x46],
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("K", new PdfInteger(-1)),
+                Pair("Columns", new PdfInteger(8)),
+                Pair("Rows", new PdfInteger(2)))));
+
+        Assert.Equal(new byte[] { 0b1110_0011, 0xFF }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_ReconstructsGroup4VerticalOffsets()
+    {
+        PdfStream stream = Stream([0x31, 0x5B, 0x80],
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("K", new PdfInteger(-1)),
+                Pair("Columns", new PdfInteger(8)),
+                Pair("Rows", new PdfInteger(2)))));
+
+        Assert.Equal(new byte[] { 0b1110_0011, 0b1111_0001 },
+            PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_ClipsCcittTransitionsAtScanLineBounds()
+    {
+        PdfStream stream = Stream(Convert.FromHexString(
+            "26A0B9E07341C9D6107184F4F47DBD049E82B26A2D25874BBA5FAEE97F6BD2FF6BE830B8C7FAFFEBFFFFAFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEF5C20712040FFE0020020"),
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("Width", new PdfInteger(52)),
+            Pair("Height", new PdfInteger(70)),
+            Pair("DecodeParms", Dictionary(
+                Pair("K", new PdfInteger(-1)),
+                Pair("Columns", new PdfInteger(52)))));
+
+        Assert.Equal(490, PdfStreamDecoder.Decode(stream).Length);
+    }
+
+    [Fact]
+    public void Decode_ReconstructsMixedGroup3Rows()
+    {
+        PdfStream stream = Stream([0x00, 0x1C, 0x4E],
+            Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("K", new PdfInteger(1)),
+                Pair("Columns", new PdfInteger(8)),
+                Pair("EndOfLine", new PdfBoolean(true)))));
+
+        Assert.Equal(new byte[] { 0b1110_0011 }, PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_RejectsMalformedOrUnboundedCcittData()
+    {
+        PdfStream malformed = Stream([0x00], Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(Pair("K", new PdfInteger(-1)))));
+        PdfStream bounded = Stream([0x89, 0xC0], Pair("Filter", Name("CCITTFaxDecode")),
+            Pair("DecodeParms", Dictionary(Pair("Columns", new PdfInteger(8)))));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(malformed));
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(bounded, 0));
+    }
+
+    [Fact]
+    public void Decode_RejectsMalformedJpegData()
+    {
+        PdfStream stream = Stream([0xFF, 0xD8, 0xFF, 0xD9],
+            Pair("Filter", Name("DCTDecode")));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void Decode_CompatibilityRecoveryUsesPngRowFilterThatContradictsFixedPredictor()
+    {
+        PdfDictionary parameters = Dictionary(
+            Pair("Predictor", new PdfInteger(10)),
+            Pair("Columns", new PdfInteger(3)));
+        PdfStream stream = Stream(
+            Compress([1, 10, 10, 10]),
+            Pair("Filter", Name("FlateDecode")),
+            Pair("DecodeParms", parameters));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+        Assert.Equal([10, 20, 30],
+            PdfStreamDecoder.DecodeWithCompatibilityRecovery(stream));
+    }
+
+    [Fact]
+    public void Decode_DecodesJbig2ImageData()
+    {
+        byte[] encoded = Convert.FromBase64String(
+            "l0pCMg0KGgoBAAAAAQAAAAAAAQAAAAAYAAEAAAABAAAAAenL9AAmrwS/8Hgv4ABAAAAAATAAAQAAABMAAABAAAAAOAAAAAAAAAAAAQAAAAAAAgABAQAAABwAAQAAAAIAAAAC5c34AHnghBCB8IIQhhB58ACAAAAAAwdCAAIBAAAAMQAAACUAAAAIAAAABAAAAAEADAkAEAAAAAUBEAAAAAAAAAAAAAAAAAAAAAxABwhwQdAAAAAEJwABAAAALAAAADYAAAAsAAAABAAAAAsAASagcc6n//////////////////////////jwAAAABRABAQAAAC0BBAQAAAAPINGEYRhF8vl8jxHDnkXy+X1ChQqqhGIv7uxEYiI1KgqDudzud4AAAAAGFyAFAQAAAFcAAAAgAAAAJAAAABAAAAAPAAEAAAAIAAAACQAAAAAAAAAABAAAAKqqqqqACACANtVVa1rUAEAELulS0tLSiqVKACACI+CVJLSSikqSVJLSSikqSUAEAEAAAAAHMQABAAAAAA==");
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("JBIG2Decode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 448);
+
+        Assert.Equal(448, decoded.Length);
+        Assert.Equal("D806F2E73907D03B1DEFBB7AFADCEE5962D80A009A844D3170D8B3F8F446A2FD",
+            Convert.ToHexString(SHA256.HashData(decoded)));
+    }
+
+    [Fact]
+    public void Decode_DecodesJbig2HalftoneSkipGrid()
+    {
+        byte[] encoded = Convert.FromBase64String(
+            "AAAAADAAAQAAABMAAAGPAAABkAAAAAAAAAAAAQAAAAAAARABAQAAAjcAEBAAAACLp3iV9RV6xxQAfD3b6q9Lds5cUkm2suMbPa81dd/i/0kos0NHrU8zbVYD0g4whtgChKqnovXdSdlVHIAR8uTW8pO+NZj3LudRoXmCquakRE+AboQ4zIRFhgJtjXexmr8RQEf5pP0GPHC1Bu1lhBArjlmjPgtXNWonG5ryL1BKZvgA+KupMAC+fRx8eyFpk8erY6tyu12rPHxrL5C0jtlkhjrOfTaYhXvj1H4BC7BnA0jcnINCL3brzkG8Bq88HqgdgiAJKk+88+YhuHU+Z1Hgw0PfahJO36Dim01EPydSMfU2iyJRGeXcc2wxEoEmmal6mHa0ADSlXcVuI13vQMZEmOJLzBLNVykWHwvCSL+Oavj+CaDv3F6866fOWr19pycDp790BtT5FbEHDPz/QRBTIAbMHscKYLRYchmWAgEuaG64kUt1WrOAlAUrLebjz5RPOiC150ml97wgiGefAlbDEDRrm+kiIDBv178lOIhHoHtj1BenrXnG4GIBB67PlgF+kTSZXvsLMHPaRMeDoBjRjAUQ7D88luwOn3P6v4s7LukeZqagZv8zsMlANlnnPngDGZA84FaPJtkX4cm94JKx6VobrwRu3fXMNiA9tAtyD1JO23YqyU1JbM/PA3Wt6vqzrdpXV7TbGR6wv/bsy5DAKHz5n+Oth7LfCIpB7/OWYULhwPlEJKLquMXgvRc59F1lVNb7hjyaUv7WP17PaJA6ZWtLZwU4L0hhPydFFFWL/6wAAAACFyABAQAAAQoAAAGPAAABkAAAAAAAAAAAAAgAAAArAAAAKf//jhgAACi4DAAEAKrftCyNle4F28+oYwSrKqmpsaoNurPPKv62axkTWI1IeaOSkUTsD1TydFKxZn/z7C+E2qrSTD2WhIP7jcGmo9g2E0LhNUZyB4IIeFgQ27gvfZYrzX55TqBww7vIfRBQqb8f3z/SwGmpGymKi9xuO+qcFIqLP6+hErz0/iUGBkCJ56niuRRoBL+dWYYTyuK6KNilopwdPJkpXTDWAEw/+NzMC4yDJr8pAmwzC3j7j91kB6FvUpa2XXOfioTZbrytv43G8Rg7KTMoJvEEou+Uv76wSX9AuOG9hUj9QP83/Zc8pr//rA==");
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("JBIG2Decode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 20_000);
+
+        Assert.Equal(20_000, decoded.Length);
+        Assert.Equal("F195624B2FC5505FDBBD3473C58EAF6B22B4F376B57CED779A4357D8BD12BC4F",
+            Convert.ToHexString(SHA256.HashData(decoded)));
+    }
+
+    [Fact]
+    public void Decode_DecodesJbig2HalftoneWithLargePatterns()
+    {
+        byte[] encoded = Convert.FromBase64String(
+            "AAAAADAAAQAAABMAAAGPAAABkAAAAAAAAAAAAQAAAAAAARABAQAAACYAFxcAAAABcsa0KXZCFw25XcIej97e542rg239MHJ3lEA2K7X/rAAAAAIXIAEBAAAAKQAAABcAAAAXAAAANwAAAHAAAAAAAAMAAAABAAAAAAAAAAAAAAAAP/+sAAAAAxABAQAAADcAFxcAAAABcsaQwnDkQWh6G/1L3vSRZLGmgljBmcOvZVjGc+T4eVzQjP1/J/xsNpaVSQy7U/+sAAAABBcgAwEAAAApAAAAFwAAABcAAABAAAABDQAgAAAAAwAAAAEAAAAAAAAAAAAAAAC//6wAAAAFEAEBAAAAlABkZAAAAAGkGvykLQndoIxtl1zNjGjL0j54s3pjZTNjLfLWJf3RpslhM+BRBGt7VMl035A9Tl0A3ZUOcmucvgb/CWrkna+W+CJ0bkREn/mI2gm51gClTPBw1TEvM4BAKxV32CqoEanJSx92TJAaeAKnjM+RtQ3astajQ8MquV+IMIrY9EvhAT979XaQ/danMz5//6wAAAAGFyAFAQAAACkAAABkAAAAZAAAAIcAAABkAEAAAAACAAAAAQAAAAAAAAAAAAAAAL//rAAAAAcQAQEAAABhAHiCAAAAAaTFnRHMqvkl2RWD2xYnWmi22PgU5M9Pc8pDB8HknkPTWNK6eXHtYkqkkpER6aFofguwubXfmxSvubB2lNUg9gLZBV9lGtLDVSDWGh6eVAxFTbLYdACuXAP/rAAAAAgXIAcBAAAAKQAAAHgAAACCAAAA6AAAAEYAkAAAAAMAAAABAAAAAAAAAAAAAAAAP/+sAAAACRABAQAAAK0AeHgAAAABovDNXqdpQkbcxATcT8X00zRYAuT1+q50tOHbPyRzFOoQZOp2b2B0qV5GC1m3h49nkX6/mbfjE0GRvKeJDvhIevTVGx84rZx+Ji3EzB2tYVfkpjsXAfuoDD6QPk3lkDu2nQaMET1RPDNKBqliva7z7AgEml1iDSaCCYT6p/3Lhxr03YD82nnmanSLS4mLg0SJeFzFU5/HbMaI6MwRD4Ux+1CvLjb/rAAAAAoXIAkBAAAAKQAAAHgAAAB4AAAA6AAAAMgAsAAAAAMAAAABAAAAAAAAAAAAAAAAv/+s");
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("JBIG2Decode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 20_000);
+
+        Assert.Equal(20_000, decoded.Length);
+        Assert.Equal("F195624B2FC5505FDBBD3473C58EAF6B22B4F376B57CED779A4357D8BD12BC4F",
+            Convert.ToHexString(SHA256.HashData(decoded)));
+    }
+
+    [Fact]
+    public void Decode_DecodesJbig2HuffmanTextRefinement()
+    {
+        byte[] encoded = Convert.FromBase64String(
+            "AAAAADAAAQAAABMAAAGPAAABkAAAAAAAAAAAAQAAAAAAAQABAQAAAYQAAQAAAAQAAAAE8l5P+BTyGOEHCDp0/T9P//+17XtWoYUMKPD0Pnf4ZPJA4QcIOnT9P0///7Xte1ahhQwo//+SfTruu67ruv3X///2vatWoaj88b8AAAAM/ySA+UooQcIOnT9P0/Wtd1rX1p1p+E6wsJ1pwtacLCcLCdYRBtHcILrcJPCV0E9BXp6CvT0rwnwr16vCfCuwnwrtPhXYT2uGE3DC4t+37f9/f2va9q1DChhR//z4AAACV8AAAAW/1kD/KQcIhjdQQdB0Hh08Og973h73fd8O3bh4bkSDShuHtw9u3eG92/bvb97ft7t3t/d/b9u9933u+773fd9277t7t33fd7ft+3e3b9v2933fd7++73/37//d//93///////////////r66+q+uq6r60vS9LwlWl6Wq6rquq61QXpVpelBYWCULCULCUJQlC1pQtKsJQlCChBQgoQUgwUoQUEClAHEIKEFQVBapYVBa1hYWFhWFhWFhWQUbSMFDChkexccAEAAAAAAgcgAQEAAABbAAABjwAAAZAAAAAAAAAAAAAAFwAA/////wAAAAQAEAAAAAAAAAAAAAAAAAAAEASfIWhny6+jnawfwIKsIMCqHgRkEZF/PvIOzVgTvrDBkCLt7SnztUltP/+sQA==");
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("JBIG2Decode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 20_000);
+
+        Assert.Equal(20_000, decoded.Length);
+        Assert.Equal("F195624B2FC5505FDBBD3473C58EAF6B22B4F376B57CED779A4357D8BD12BC4F",
+            Convert.ToHexString(SHA256.HashData(decoded)));
+    }
+
+    [Fact]
+    public void Decode_DecodesJbig2PageBufferRefinement()
+    {
+        byte[] encoded = Convert.FromBase64String(
+            "AAAAADAAAQAAABMAAAGPAAABkAAAAAAAAAAAQAAAAAAAASYAAQAAAQkAAAGPAAABkAAAAAAAAAAAAAAD//3/Av7+/qv2Wy+9zc/CFqS+f45b79/ni/72XS78UDJyVeI4t3qXwvM6GPiBOv1m+k8CwTR9IzrFqHLqM9c6lVFIhFclmgqxv6OEbqzRNXYkbOhw5jH/Tc7HaYR4ZztDp9vY6oXPBfkZkPoQ9k6qbnd8thySWF9kDiGvHCZX0HksURbZZbW5IE4n5eRYhp6KKlGiDZT/Sfczf/T/UbA6F0XvbWC/bxQuLc92xajnjQbtV0xb8qmgnmuhLVRH7/A3GSVMKvY7dyrVL5IsTL7J9ualRI3DXFORCPvdRJ6bvydmghEYAs/GUmiX5ZhBkof1fw+Uf/+sAAAAAioAAQAAADgAAABuAAABfAAAAAoAAAAUBAD/////q/1ziOPJEUs5v+yHEImiMf9//3//TemKyXBFDwNy6HP/rA==");
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("JBIG2Decode")));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream, 20_000);
+
+        Assert.Equal(20_000, decoded.Length);
+        Assert.Equal("F195624B2FC5505FDBBD3473C58EAF6B22B4F376B57CED779A4357D8BD12BC4F",
+            Convert.ToHexString(SHA256.HashData(decoded)));
+    }
+
+    [Fact]
+    public void Decode_DecodesJbig2ImageDataWithGlobalSegments()
+    {
+        byte[] globals = Convert.FromBase64String(
+            "AAAAAAABAAAAA6sAAAP//f8C/v7+AAAAKgAAACqUaqb/Lo/erhxQ1aqfI2lRqDbzVxH8KzDRZmZsUJ43oC3vqY7/fy0kgqQLZLeMgFGzTYuwokbUJTDeOr1Ft8VEXdtYH/avK0gueNsaZFF/XeMroHfvs97TxuFjdGGbdp5ItqsJnyd2T8X9SjqlZYlk9Yt17VI3iyYA7VOw6akdSsY5pgruvn2Oq4XHG9kmnBUJwZi1Yom4cBmRaUfu1EGUB1IAPaPrkrc8/1+j0DjhwlKlWnYgf+M/2MbiU3Kog2431bKtT4omDxrcfyW8wSQkzwhscgqIiWipxXXatDEI1/ytzezIGsUUMZ+hp1phypBZhA/m9uF0hNLBoCe0Of2A7YsD1Sgi/qZBFSPAZjqE5xbYZxmmSgH2TXM8D7sFwBOcvGoaUCv8wth3ewt89q9/2hQ1FZKDeoxb8Mx8Ih+Of3o62T9reUeHnCU38d35et4BeyeY4Dzkc7Bkt9z3/UZJPBY5+r7BHmh6fFk9RzhOu5JNePXgDeTBcCNIwSqDjvTe2ALa5xw82LDKVTKer4U9BEAPOeTa7u5V0vkheEETz1zppbVRa37nUboeqAdTHLZsaC8RWSwcJ3WbF8RPl1PA0yI8+4G2go87R0rGNVRYtM3V5vxB1Rl2V/h//AVZYRlTXGIEPUqWwcrVsX8MIXCrznHUsZqkvkqolsFJolxeiLTCcLJMvTcIlxmRWINgIGdlMIhZF7LcYUekCwr0kMr440pRBcBF3dMYlC6NvDDBfgZFLeKghIa1ugLfK5rCM9RtRUExHp/JkG9fuRgtWtAcz8XD3G47jynPnoydb8rv8d8Er4+rdlHd5gB5ijiqmtJ7Zm0dR+z9dMNkWuHn5u+wMU5X44iAB0MHKJqrPl/QPR9AH43RuuT3X7OpV5+x+4VI91V6tgIf3nwy2OxD9u9bTiwPFYy0Z6tLUgpxMc2bB50gPtS9X/4qD9gSU8O4qdlQ8RrTt0g8fwDhLWW5YfnDoM8MeS2+hi1RLvj4dzmyJZ7okJAilWTR1OCL/Bwmj2EY7dFglmdOBTqnzX8oduLIcCAWdxEoySXtqT8VzIMKkLvdmWpfSZQqvqNqjc9DavZ0cz1wWoHyjxjlXbK6sAorNeX9BeZL9fXisw0osFCovlP0oya2fr6UQFGEpnV7UOdeAIE1kq9H7J3aV/jsAMz/fX20cL1BEXAcGlGvGBacC1Upt92BoukKHr7WGi0ovJVkKO8IF4xH/6w=");
+        byte[] encoded = Convert.FromBase64String(
+            "AAAAATAAAQAAABMAAAkQAAAKcAAAAAAAAAAAQAAAAAAAAgYgAAEAAAEEAAAJEAAACnAAAAAAAAAAAAIAEAAAAHGN0fhKUK/bqCoKKRt0VWmWYApdnvtfE7vImFjXLUvvcSLh1GTu/dcrF/MItrblcCQyAZttAIgAae0UMkX6gmn06ykzjEBZ2wMSbzbuOeS831bbqrPYRVeGMB5aKp9wL6fOpjDkQRlsnSKX9nXJUnmlUahiTyuouJ9eEqJIEEfZi9tgasJBwkbfLTX5+nOUhq1gW6lq1qzVRgWUH/MAc2wz+ORIX6WadHZk4dnL44V9FPXHORJzGbLZ9O0wSx/T+XzyUP5paJtZTRU96aRPIHYpRiM/tlWQ1pMXPRgUKxJxr325vnQgYeiEtfIP/6w=");
+        PdfStream globalStream = Stream(globals);
+        PdfStream stream = Stream(encoded,
+            Pair("Filter", Name("JBIG2Decode")),
+            Pair("DecodeParms", Dictionary(
+                Pair("JBIG2Globals", new PdfIndirectReference(7, 0)))));
+
+        byte[] decoded = PdfStreamDecoder.Decode(stream,
+            reference => reference.ObjectNumber == 7 ? globalStream
+                : throw new InvalidOperationException(), 774_880);
+
+        Assert.Equal(774_880, decoded.Length);
+        Assert.Equal("3CFC9C001A2D44B2711378AD78C044F05C182121D24EF91C36AD285BFC5BB8C5",
+            Convert.ToHexString(SHA256.HashData(decoded)));
+    }
+
+    [Fact]
+    public void Decode_RejectsJbig2ImageBeforeUnboundedBitmapAllocation()
+    {
+        byte[] encoded = Convert.FromBase64String(
+            "l0pCMg0KGgoBAAAAAQAAAAAAAQAAAAAYAAEAAAABAAAAAenL9AAmrwS/8Hgv4ABAAAAAATAAAQAAABMAAABAAAAAOAAAAAAAAAAAAQAAAAAAAgABAQAAABwAAQAAAAIAAAAC5c34AHnghBCB8IIQhhB58ACAAAAAAwdCAAIBAAAAMQAAACUAAAAIAAAABAAAAAEADAkAEAAAAAUBEAAAAAAAAAAAAAAAAAAAAAxABwhwQdAAAAAEJwABAAAALAAAADYAAAAsAAAABAAAAAsAASagcc6n//////////////////////////jwAAAABRABAQAAAC0BBAQAAAAPINGEYRhF8vl8jxHDnkXy+X1ChQqqhGIv7uxEYiI1KgqDudzud4AAAAAGFyAFAQAAAFcAAAAgAAAAJAAAABAAAAAPAAEAAAAIAAAACQAAAAAAAAAABAAAAKqqqqqACACANtVVa1rUAEAELulS0tLSiqVKACACI+CVJLSSikqSVJLSSikqSUAEAEAAAAAHMQABAAAAAA==");
+        PdfStream stream = Stream(encoded, Pair("Filter", Name("JBIG2Decode")));
+
+        PdfFilterException error = Assert.Throws<PdfFilterException>(
+            () => PdfStreamDecoder.Decode(stream, 447));
+
+        Assert.Contains("safety limit", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decode_RejectsInvalidJpegColorTransform()
+    {
+        PdfStream stream = Stream([], Pair("Filter", Name("DCTDecode")),
+            Pair("DecodeParms", Dictionary(Pair("ColorTransform", new PdfInteger(2)))));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+    }
+
+    [Fact]
+    public void DecodeJpegImage_UsesOptionalDecoderOnlyForCompatibilityRecovery()
+    {
+        PdfStream stream = Stream([0xFF, 0xD8], Pair("Filter", Name("DCTDecode")));
+        var decoder = new TestJpegDecoder(new JpegDecodedImage([42], 1, 1, 1, 1, 1));
+
+        JpegDecodedImage recovered = PdfStreamDecoder.DecodeJpegImage(
+            stream, value => value, 1, 1, compatibilityRecovery: true, decoder);
+
+        Assert.Equal([42], recovered.Samples);
+        Assert.Equal(1, decoder.Calls);
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.DecodeJpegImage(
+            stream, value => value, 1, 1, compatibilityRecovery: false, decoder));
+        Assert.Equal(1, decoder.Calls);
+    }
+
+    [Fact]
+    public void DecodeJpegImage_InvalidOptionalResultFallsBackToEngine()
+    {
+        PdfStream stream = Stream([0xFF, 0xD8], Pair("Filter", Name("DCTDecode")));
+        var decoder = new TestJpegDecoder(new JpegDecodedImage([42, 43], 1, 1, 1, 1, 1));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.DecodeJpegImage(
+            stream, value => value, 2, 1, compatibilityRecovery: true, decoder));
+        Assert.Equal(1, decoder.Calls);
+    }
+
+    private sealed class TestJpegDecoder(JpegDecodedImage result) : IPdfJpegDecoder
+    {
+        internal int Calls { get; private set; }
+
+        public bool TryDecode(ReadOnlyMemory<byte> encoded, int maximumDecodedBytes,
+            int reduction, int? colorTransform, out JpegDecodedImage image)
+        {
+            Calls++;
+            image = result;
+            return true;
+        }
+    }
+
+    [Fact]
+    public void Decode_RejectsInvalidZlibData()
+    {
+        PdfStream stream = Stream("not zlib"u8.ToArray(), Pair("Filter", Name("FlateDecode")));
+
+        Assert.Throws<PdfFilterException>(() => PdfStreamDecoder.Decode(stream));
+    }
+
+    private static void AssertPixelNear(
+        byte[] pixels, int width, int x, int y, int red, int green, int blue)
+    {
+        int offset = (y * width + x) * 3;
+        Assert.InRange(pixels[offset], Math.Max(0, red - 25), Math.Min(255, red + 25));
+        Assert.InRange(pixels[offset + 1], Math.Max(0, green - 25), Math.Min(255, green + 25));
+        Assert.InRange(pixels[offset + 2], Math.Max(0, blue - 25), Math.Min(255, blue + 25));
+    }
+
+    private static byte[] Compress(byte[] source)
+    {
+        using var output = new MemoryStream();
+        using (var zlib = new ZLibStream(output, CompressionLevel.SmallestSize, leaveOpen: true))
+            zlib.Write(source);
+        return output.ToArray();
+    }
+
+    private static byte[] CompressBrotli(byte[] source)
+    {
+        using var output = new MemoryStream();
+        using (var brotli = new BrotliStream(output, CompressionLevel.SmallestSize, leaveOpen: true))
+            brotli.Write(source);
+        return output.ToArray();
+    }
+
+    private static byte[] ProgressiveGrayJpeg()
+    {
+        var jpeg = new List<byte> { 0xFF, 0xD8, 0xFF, 0xDB, 0x00, 0x43, 0x00 };
+        jpeg.AddRange(Enumerable.Repeat((byte)255, 64));
+        jpeg.AddRange([
+            0xFF, 0xC2, 0x00, 0x0B, 0x08, 0x00, 0x08, 0x00, 0x08,
+            0x01, 0x01, 0x11, 0x00,
+            0xFF, 0xC4, 0x00, 0x27,
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x10, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x01, 0x00,
+            0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
+            0x7F,
+            0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x00, 0x10,
+            0xFF, 0x00,
+            0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x01, 0x01, 0x01,
+            0x7F,
+            0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x01, 0x01, 0x10,
+            0xFF, 0x00, 0xFF, 0xD9
+        ]);
+        return [.. jpeg];
+    }
+
+    private static byte[] PackNineBitCodes(params int[] codes)
+    {
+        byte[] result = new byte[(codes.Length * 9 + 7) / 8];
+        int bitOffset = 0;
+        foreach (int code in codes)
+            for (int bit = 8; bit >= 0; bit--, bitOffset++)
+                result[bitOffset / 8] |= (byte)(((code >> bit) & 1) << (7 - bitOffset % 8));
+        return result;
+    }
+
+    private static PdfStream Stream(byte[] data, params KeyValuePair<PdfName, PdfObject>[] entries) =>
+        new(Dictionary(entries), data);
+
+    private static PdfDictionary Dictionary(params KeyValuePair<PdfName, PdfObject>[] entries) => new(entries);
+    private static KeyValuePair<PdfName, PdfObject> Pair(string name, PdfObject value) => new(Name(name), value);
+    private static PdfName Name(string value) => new(Encoding.ASCII.GetBytes(value));
+}

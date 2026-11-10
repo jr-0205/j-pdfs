@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static class ShortcutTogglePolicy
 {

@@ -5,7 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// Editing state and narrow shell-facing adapters owned by each viewer instance. Annotations,
@@ -216,7 +216,7 @@ namespace KillerPDF.Controls
         private void ShowShortcutsOverlayExclusive() => Host!.ShowShortcutsOverlayExclusive();
         private void FadeOverlayOut(UIElement el) => Host!.FadeOverlayOut(el);
         private void FadeOutAndRemoveBar(Border? bar) => Host!.FadeOutAndRemoveBar(bar);
-        private string WordsToText(IEnumerable<KillerPdf.Engine.Documents.PdfExtractedWord> src) => Host!.WordsToText(src);
+        private string WordsToText(IEnumerable<JPDFs.Engine.Documents.PdfExtractedWord> src) => Host!.WordsToText(src);
         private MenuItem MakeMenuItem(string header, RoutedEventHandler click,
                                       string? gesture = null, string? glyph = null)
             => Host!.MakeMenuItem(header, click, gesture, glyph);

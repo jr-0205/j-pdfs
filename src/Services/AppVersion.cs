@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace KillerPDF
+namespace JPDFs
 {
     /// <summary>One display version for the UI, CLI, diagnostics, and Windows registration.</summary>
     internal static class AppVersion

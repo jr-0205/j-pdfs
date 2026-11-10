@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Xml;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// Reads an external translation file (--lang-file) as data only. XamlReader would build any

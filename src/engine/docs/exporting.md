@@ -12,7 +12,7 @@ grid on one page. Select the whole table, including its outer borders, using
 unrotated, crop-relative PDF points with a bottom-left origin:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] ExportReviewedTable(PdfDocument document, PdfContentBounds region,
     CancellationToken cancellationToken = default)
@@ -95,7 +95,7 @@ Open and authenticate the source, select a format and page indices, and inspect
 the known losses before deciding whether to export:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfStructuredExportReport InspectFirstPageExport(byte[] source)
 {
@@ -159,7 +159,7 @@ other formats reject `images`. `--pages` and `--report` remain available.
 ## Export selected pages
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] ExportPages(byte[] source, PdfStructuredExportFormat format,
     int[] pages, CancellationToken cancellationToken = default)
@@ -193,7 +193,7 @@ HTML, DOCX, and PPTX accept `PdfStructuredExportFontSubstitutions` through their
 convenience methods or the `fontSubstitutions` argument on `Export`:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static byte[] ExportWithFontMap(byte[] source)
 {
@@ -220,7 +220,7 @@ OCR-assisted output, since a report on the original does not describe the added
 text. See [OCR](ocr.md) for review and searchable-text behavior.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 static PdfStructuredExportBatchReport ExportBatch(byte[] first, byte[] second,
     CancellationToken cancellationToken = default)

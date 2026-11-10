@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static class PageSizeFormatter
 {

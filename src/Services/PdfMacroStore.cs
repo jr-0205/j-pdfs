@@ -1,9 +1,9 @@
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>Stores validated PDF macros without allowing executable content.</summary>
 internal sealed class PdfMacroStore

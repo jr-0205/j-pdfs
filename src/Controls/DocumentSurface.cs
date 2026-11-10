@@ -8,9 +8,9 @@ using System.Windows.Automation.Provider;
 using System.Windows.Automation.Text;
 using System.Windows.Controls;
 using System.Windows.Input;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>What the reading surface needs from the viewer that shows the document.</summary>
     internal interface IDocumentReadingSource

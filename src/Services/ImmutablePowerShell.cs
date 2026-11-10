@@ -3,7 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal static class ImmutablePowerShell
     {

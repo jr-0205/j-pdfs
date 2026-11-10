@@ -1,7 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal sealed record DropImportLimits(int Entries = 10_000, int Depth = 64,
     long FileBytes = 1L << 30, long TotalBytes = 2L << 30);

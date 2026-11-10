@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls;
+namespace JPDFs.Controls;
 
 /// <summary>The body of a page job's progress overlay: its count and a button that stops it.</summary>
 internal static class BusyProgressPanel

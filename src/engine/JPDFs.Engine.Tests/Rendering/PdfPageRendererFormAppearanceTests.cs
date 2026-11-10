@@ -1,0 +1,503 @@
+using System.Text;
+using JPDFs.Engine.Authoring;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Objects;
+using JPDFs.Engine.Rendering;
+using JPDFs.Engine.Signing;
+using JPDFs.Engine.Writing;
+using Xunit;
+
+namespace JPDFs.Engine.Tests.Rendering;
+
+public sealed class PdfPageRendererFormAppearanceTests
+{
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void SigningPreservesTheRequestedCurrentFieldAppearance(bool choice, bool missing)
+    {
+        PdfDocument source = Create(true, "BT /F1 10 Tf 3 3 Td (OLD) Tj ET", false, choice,
+            missingAppearance: missing);
+        var options = new PdfRenderOptions(120, 40);
+        byte[] expected = new PdfPageRenderer(source).Render(0, options).Pixels.ToArray();
+
+        PdfDocument signed = PdfDocument.Open(PdfDetachedSignatureWriter.Sign(source, _ => [1],
+            new PdfSignatureOptions { ReservedSignatureSize = 16 }));
+
+        Assert.Equal(expected, new PdfPageRenderer(signed).Render(0, options).Pixels.ToArray());
+    }
+
+    [Fact]
+    public void SigningPreservesAnEmptyRequestedFieldWithoutASavedAppearance()
+    {
+        PdfDocument source = Create(true, "", false, false, textValue: "", missingAppearance: true);
+        var options = new PdfRenderOptions(120, 40);
+        byte[] expected = new PdfPageRenderer(source).Render(0, options).Pixels.ToArray();
+
+        PdfDocument signed = PdfDocument.Open(PdfDetachedSignatureWriter.Sign(source, _ => [1],
+            new PdfSignatureOptions { ReservedSignatureSize = 16 }));
+
+        Assert.True(Assert.Single(PdfSignatureReader.Read(signed)).IsSigned);
+        Assert.Equal(expected, new PdfPageRenderer(signed).Render(0, options).Pixels.ToArray());
+    }
+
+    [Fact]
+    public void SigningRefusesAnUnsupportedRequestedAppearanceBeforeUsingTheKey()
+    {
+        PdfDocument source = Create(true, "BT /F1 10 Tf 3 3 Td (OLD) Tj ET", false, false,
+            defaultAppearance: "0 g /MissingFont 10 Tf");
+        byte[] original = PdfDocumentWriter.Write(source);
+        int calls = 0;
+
+        Assert.Throws<InvalidOperationException>(() => PdfDetachedSignatureWriter.Sign(source,
+            _ => { calls++; return [1]; }, new PdfSignatureOptions { ReservedSignatureSize = 16 }));
+
+        Assert.Equal(0, calls);
+        Assert.Equal(original, PdfDocumentWriter.Write(source));
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void RequestedTextReplacesStaleSectionAndRetainsBackground(bool recovery, bool choice)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        PdfDocument blank = Create(true, "", recovery, choice);
+        byte[] before = PdfDocumentWriter.Write(blank);
+        var renderer = new PdfPageRenderer(blank);
+        PdfRenderedPage result = renderer.Render(0, options);
+        PdfRenderedPage stale = new PdfPageRenderer(Create(true,
+            "BT /F1 10 Tf 3 3 Td (OLD) Tj ET", recovery, choice)).Render(0, options);
+        Assert.Equal(result.Pixels.ToArray(), stale.Pixels.ToArray());
+        Assert.Contains("A requested form-field text appearance was regenerated.", result.Diagnostics);
+        Assert.Contains(result.Pixels.ToArray(), pixel => pixel == 0);
+        Assert.NotEqual(new PdfPageRenderer(Create(false, "", recovery, choice))
+            .Render(0, options).Pixels.ToArray(), result.Pixels.ToArray());
+        Assert.Equal(before, PdfDocumentWriter.Write(blank));
+        Assert.Equal(result.Pixels.ToArray(), renderer.Render(0, options).Pixels.ToArray());
+        Assert.All(renderer.Render(0, new PdfRenderOptions(120, 40, includeFormFields: false))
+            .Pixels.ToArray(), pixel => Assert.Equal(255, pixel));
+        // The yellow saved background remains outside the regenerated text interior.
+        Assert.Equal(new byte[] { 0, 255, 255, 255 }, result.Pixels.Span[..4].ToArray());
+    }
+
+    [Fact]
+    public void ChoiceUsesDisplayLabelAndInheritedDefaultAppearance()
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var text = new PdfPageRenderer(Create(true, "", false, false)).Render(0, options);
+        var choice = new PdfPageRenderer(Create(true, "", false, true)).Render(0, options);
+        Assert.Equal(text.Pixels.ToArray(), choice.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void ListBoxHonorsTopIndexAndSelectedOptionLayout()
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var scrolled = new PdfPageRenderer(Create(true, "", false, true,
+            choiceOptions: ["Zero", "One", "Two"], selectedChoiceIndex: 2, topIndex: 1))
+            .Render(0, options);
+        var equivalent = new PdfPageRenderer(Create(true, "", false, true,
+            choiceOptions: ["One", "Two"], selectedChoiceIndex: 1))
+            .Render(0, options);
+
+        Assert.Equal(equivalent.Pixels.ToArray(), scrolled.Pixels.ToArray());
+        Assert.Contains("A requested form-field text appearance was regenerated.", scrolled.Diagnostics);
+        Assert.Contains(BluePixels(), value => value);
+
+        IEnumerable<bool> BluePixels()
+        {
+            for (int offset = 0; offset < scrolled.Pixels.Length; offset += 4)
+                yield return scrolled.Pixels.Span[offset] > 180
+                    && scrolled.Pixels.Span[offset + 1] is > 80 and < 180
+                    && scrolled.Pixels.Span[offset + 2] < 40;
+        }
+    }
+
+    [Fact]
+    public void MultilineTextRegeneratesSeparateVisibleLines()
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var actual = new PdfPageRenderer(Create(true, "", false, false, 1 << 12,
+            defaultAppearance: "0 g /F1 10 Tf", textValue: "One\nTwo")).Render(0, options);
+
+        Assert.Contains("A requested form-field text appearance was regenerated.", actual.Diagnostics);
+        Assert.True(BlackPixels(0, 20) > 0);
+        Assert.True(BlackPixels(20, 40) > 0);
+
+        int BlackPixels(int top, int bottom)
+        {
+            int count = 0;
+            for (int y = top; y < bottom; y++)
+                for (int x = 0; x < 120; x++)
+                {
+                    int offset = (y * 120 + x) * 4;
+                    if (actual.Pixels.Span[offset] < 64 && actual.Pixels.Span[offset + 1] < 64
+                        && actual.Pixels.Span[offset + 2] < 64) count++;
+                }
+            return count;
+        }
+    }
+
+    [Fact]
+    public void InvalidRegenerationDataRetainsAppearanceOnlyInRecovery()
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var recovered = new PdfPageRenderer(Create(true, "", true, false,
+            defaultAppearance: "/F1 (invalid) Tf")).Render(0, options);
+        var saved = new PdfPageRenderer(Create(false, "", false, false)).Render(0, options);
+        Assert.Equal(saved.Pixels.ToArray(), recovered.Pixels.ToArray());
+        Assert.Contains("Invalid form-field regeneration data retained the saved appearance.", recovered.Diagnostics);
+        Assert.Throws<FormatException>(() => new PdfPageRenderer(Create(true, "", false, false,
+            defaultAppearance: "/F1 (invalid) Tf")).Render(0, options));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RegenerationPreservesExistingOrInheritedArtworkFont(bool inheritedResources)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var actual = new PdfPageRenderer(Create(true, "", false, false,
+            artwork: true, inheritedResources: inheritedResources)).Render(0, options);
+        var saved = new PdfPageRenderer(Create(false, "", false, false,
+            artwork: true, inheritedResources: inheritedResources)).Render(0, options);
+        Assert.Equal(saved.Pixels.Span[..(120 * 10 * 4)].ToArray(),
+            actual.Pixels.Span[..(120 * 10 * 4)].ToArray());
+        Assert.NotEqual(saved.Pixels.ToArray(), actual.Pixels.ToArray());
+        Assert.DoesNotContain(actual.Diagnostics, text => text.Contains("not implemented"));
+    }
+
+    [Fact]
+    public void RegenerationAddsMissingTextSectionWithoutRemovingArtwork()
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var expected = new PdfPageRenderer(Create(true, "", false, false, artwork: true))
+            .Render(0, options);
+        var actual = new PdfPageRenderer(Create(true, "", false, false, artwork: true,
+            missingTextSection: true)).Render(0, options);
+
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+        Assert.Contains("A requested form-field text appearance was regenerated.", actual.Diagnostics);
+        Assert.DoesNotContain(actual.Diagnostics, text => text.Contains("not implemented"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MissingAppearanceUsesWidgetGeometryAndBackground(bool recovery)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var expected = new PdfPageRenderer(Create(true, "", recovery, false)).Render(0, options);
+        PdfDocument source = Create(true, "", recovery, false, missingAppearance: true);
+        byte[] original = PdfDocumentWriter.Write(source);
+        var actual = new PdfPageRenderer(source).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+        Assert.Equal(original, PdfDocumentWriter.Write(source));
+        Assert.Contains("A requested form-field text appearance was regenerated.", actual.Diagnostics);
+        Assert.All(new PdfPageRenderer(Create(false, "", recovery, false, missingAppearance: true))
+            .Render(0, options).Pixels.ToArray(), value => Assert.Equal(255, value));
+    }
+
+    [Fact]
+    public void MissingComboAppearanceDrawsArrowButton()
+    {
+        var result = new PdfPageRenderer(Create(true, "", false, true,
+            missingAppearance: true)).Render(0, new PdfRenderOptions(120, 40));
+
+        Assert.Contains("A requested form-field text appearance was regenerated.", result.Diagnostics);
+        Assert.True(BlackPixels(80, 120) > BlackPixels(40, 80));
+
+        int BlackPixels(int left, int right)
+        {
+            int count = 0;
+            for (int y = 0; y < 40; y++)
+                for (int x = left; x < right; x++)
+                {
+                    int offset = (y * 120 + x) * 4;
+                    if (result.Pixels.Span[offset] < 32 && result.Pixels.Span[offset + 1] < 32
+                        && result.Pixels.Span[offset + 2] < 32) count++;
+                }
+            return count;
+        }
+    }
+
+    [Theory]
+    [InlineData("S")]
+    [InlineData("D")]
+    [InlineData("U")]
+    [InlineData("B")]
+    [InlineData("I")]
+    public void MissingAppearanceMatchesExplicitBorderArtwork(string borderStyle)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var expected = new PdfPageRenderer(Create(true, "", false, false,
+            borderStyle: borderStyle)).Render(0, options);
+        var actual = new PdfPageRenderer(Create(true, "", false, false,
+            missingAppearance: true, borderStyle: borderStyle)).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Theory]
+    [InlineData("S")]
+    [InlineData("D")]
+    public void MissingAppearanceHonorsLegacyBorderArray(string borderStyle)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var expected = new PdfPageRenderer(Create(true, "", false, false,
+            borderStyle: borderStyle)).Render(0, options);
+        var actual = new PdfPageRenderer(Create(true, "", false, false,
+            missingAppearance: true, borderStyle: borderStyle, legacyBorder: true)).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(32)]
+    public void MissingAppearanceDoesNotExposeHiddenWidget(int annotationFlags)
+    {
+        var renderer = new PdfPageRenderer(Create(true, "", false, false,
+            missingAppearance: true, annotationFlags: annotationFlags));
+        Assert.All(renderer.Render(0, new PdfRenderOptions(120, 40)).Pixels.ToArray(),
+            value => Assert.Equal(255, value));
+    }
+
+    [Fact]
+    public void EmptyMissingAppearanceDoesNotRequireTextDefaultsToPaintItsBorder()
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var expected = new PdfPageRenderer(Create(false, "", false, false,
+            borderStyle: "S", textValue: "")).Render(0, options);
+        var actual = new PdfPageRenderer(Create(true, "", false, false,
+            defaultAppearance: "", missingAppearance: true, borderStyle: "S", textValue: ""))
+            .Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+        Assert.Contains("A requested empty form-field appearance was regenerated.", actual.Diagnostics);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 0)]
+    [InlineData(1, 0, 1)]
+    [InlineData(5, 0, 5)]
+    [InlineData(0, 1, 50.275)]
+    [InlineData(1, 1, 50.275)]
+    [InlineData(5, 1, 50.275)]
+    [InlineData(0, 2, 100.55)]
+    [InlineData(1, 2, 99.55)]
+    [InlineData(5, 2, 95.55)]
+    public void RequestedTextUsesBorderInteriorForAlignment(double inset, int alignment, double x)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        string content = FormattableString.Invariant(
+            $"q {inset} {inset} {120 - 2 * inset} {40 - 2 * inset} re W n BT 0 g /F1 10 Tf 1 0 0 1 {x} 16.533203125 Tm (Man) Tj ET Q");
+        var expected = new PdfPageRenderer(Create(false, content, false, false,
+            widgetBorderWidth: inset, alignment: alignment)).Render(0, options);
+        var actual = new PdfPageRenderer(Create(true, "", false, false,
+            defaultAppearance: "0 g /F1 10 Tf", widgetBorderWidth: inset,
+            alignment: alignment)).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Fact]
+    public void LargeTextIsClippedToTheBorderInterior()
+    {
+        var options = new PdfRenderOptions(120, 40);
+        const string expectedContent = "q 8 8 104 24 re W n BT 0 g /F1 40 Tf 1 0 0 1 8 6.1328125 Tm (Man) Tj ET Q";
+        var expected = new PdfPageRenderer(Create(false, expectedContent, false, false))
+            .Render(0, options);
+        var actual = new PdfPageRenderer(Create(true, "", false, false,
+            defaultAppearance: "0 g /F1 40 Tf", widgetBorderWidth: 8)).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(20)]
+    [InlineData(60)]
+    public void InvalidBorderInteriorRetainsTheSavedAppearance(double width)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        const string content = "BT 0 g /F1 10 Tf 3 3 Td (OLD) Tj ET";
+        var expected = new PdfPageRenderer(Create(false, content, false, false,
+            widgetBorderWidth: width)).Render(0, options);
+        var actual = new PdfPageRenderer(Create(true, content, false, false,
+            widgetBorderWidth: width)).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+        Assert.Contains(actual.Diagnostics, text => text.Contains("not implemented"));
+    }
+
+    [Theory]
+    [InlineData(false, 0, 12.97, 42.47)]
+    [InlineData(true, 0, 12.97, 42.47)]
+    [InlineData(false, 1, 42.47, 71.97)]
+    [InlineData(true, 1, 42.47, 71.97)]
+    [InlineData(false, 2, 71.97, 101.47)]
+    [InlineData(true, 2, 71.97, 101.47)]
+    public void CombFieldsCenterCharactersInAlignedCells(bool missing, int alignment,
+        double firstX, double secondX)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        string content = FormattableString.Invariant(
+            $"q 1 1 118 38 re W n BT 0 g /F1 10 Tf 1 0 0 1 {firstX} 16.533203125 Tm (1) Tj 1 0 0 1 {secondX} 16.533203125 Tm (2) Tj ET Q");
+        var expected = new PdfPageRenderer(Create(false, content, false, false)).Render(0, options);
+        var source = Create(true, "", false, false, flags: 1 << 24,
+            defaultAppearance: "0 g /F1 10 Tf", missingAppearance: missing,
+            textValue: "12", alignment: alignment, maximumLength: 4);
+        byte[] original = PdfDocumentWriter.Write(source);
+        var actual = new PdfPageRenderer(source).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+        Assert.Equal(original, PdfDocumentWriter.Write(source));
+    }
+
+    [Fact]
+    public void CombFieldDisplaysOnlyTheDeclaredNumberOfCellsWithoutEditingItsValue()
+    {
+        var options = new PdfRenderOptions(120, 40);
+        var expected = new PdfPageRenderer(Create(true, "", false, false,
+            flags: 1 << 24, textValue: "12", maximumLength: 2)).Render(0, options);
+        var source = Create(true, "", false, false,
+            flags: 1 << 24, textValue: "123", maximumLength: 2);
+        byte[] original = PdfDocumentWriter.Write(source);
+        var actual = new PdfPageRenderer(source).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+        Assert.Equal(original, PdfDocumentWriter.Write(source));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(32769)]
+    public void InvalidCombCellCountRetainsSavedAppearance(int maximumLength)
+    {
+        var options = new PdfRenderOptions(120, 40);
+        const string content = "BT 0 g /F1 10 Tf 3 3 Td (OLD) Tj ET";
+        var expected = new PdfPageRenderer(Create(false, content, false, false)).Render(0, options);
+        var actual = new PdfPageRenderer(Create(true, content, false, false,
+            flags: 1 << 24, maximumLength: maximumLength)).Render(0, options);
+        Assert.Equal(expected.Pixels.ToArray(), actual.Pixels.ToArray());
+        Assert.Contains(actual.Diagnostics, text => text.Contains("comb"));
+    }
+
+    [Fact]
+    public void CompositeFontFieldTextUsesExistingUnicodeMapping()
+    {
+        var result = new PdfPageRenderer(Create(true, "", false, false,
+            compositeFont: true)).Render(0, new PdfRenderOptions(120, 40));
+
+        Assert.Contains("A requested form-field text appearance was regenerated.", result.Diagnostics);
+        Assert.DoesNotContain(result.Diagnostics, text => text.Contains("not implemented"));
+        Assert.Contains(result.Pixels.ToArray(), value => value == 0);
+    }
+
+    private static PdfDocument Create(bool requested, string previousText, bool recovery,
+        bool choice, int flags = 0, string defaultAppearance = "0 g /F1 11 Tf",
+        bool artwork = false, bool inheritedResources = false, bool missingAppearance = false,
+        string? borderStyle = null, int annotationFlags = 0, string textValue = "Man",
+        double? widgetBorderWidth = null, int alignment = 0, int? maximumLength = null,
+        bool missingTextSection = false, bool legacyBorder = false,
+        string[]? choiceOptions = null, int selectedChoiceIndex = 0, int topIndex = 0,
+        bool compositeFont = false)
+    {
+        PdfDocument source = PdfDocument.Open(new PdfDocumentBuilder().AddBlankPage(120, 40).Build());
+        PdfPageTree tree = PdfPageTree.Read(source);
+        var update = new PdfIncrementalUpdateBuilder(source);
+        var box = new PdfArray([new PdfInteger(0), new PdfInteger(0), new PdfInteger(120), new PdfInteger(40)]);
+        PdfDictionary font;
+        if (compositeFont)
+        {
+            var unicode = update.AddObject(new PdfStream(D(), Encoding.ASCII.GetBytes(
+                "1 begincodespacerange <0000> <FFFF> endcodespacerange " +
+                "3 beginbfchar <0001> <004D> <0002> <0061> <0003> <006E> endbfchar")));
+            var cidFont = D(("Type", N("Font")), ("Subtype", N("CIDFontType2")),
+                ("BaseFont", N("Helvetica")),
+                ("CIDSystemInfo", D(("Registry", S("Adobe")), ("Ordering", S("Identity")),
+                    ("Supplement", new PdfInteger(0)))), ("DW", new PdfInteger(500)),
+                ("W", new PdfArray([new PdfInteger(1), new PdfArray([
+                    new PdfInteger(833), new PdfInteger(556), new PdfInteger(500)])])));
+            font = D(("Type", N("Font")), ("Subtype", N("Type0")), ("BaseFont", N("Helvetica")),
+                ("Encoding", N("Identity-H")), ("DescendantFonts", new PdfArray([cidFont])),
+                ("ToUnicode", unicode));
+        }
+        else
+            font = D(("Type", N("Font")), ("Subtype", N("Type1")), ("BaseFont", N("Helvetica")),
+                ("Encoding", N("WinAnsiEncoding")));
+        var resources = D(("Font", D(("F1", font))));
+        var artworkResources = artwork ? D(("Font", D(("F1", D(("Type", N("Font")),
+            ("Subtype", N("Type1")), ("BaseFont", N("Courier"))))))) : resources;
+        PdfDictionary appearanceDictionary = inheritedResources
+            ? D(("Subtype", N("Form")), ("BBox", box))
+            : D(("Subtype", N("Form")), ("BBox", box), ("Resources", artworkResources));
+        string outsideText = artwork ? "0 g BT /F1 4 Tf 90 34 Td (Art) Tj ET" : "";
+        string borderContent = borderStyle switch
+        {
+            "S" => "q 0 G 2 w 1 1 118 38 re S Q",
+            "D" => "q 0 G 2 w [3 2] 0 d 1 1 118 38 re S Q",
+            "U" => "q 0 G 2 w 0 1 m 120 1 l S Q",
+            "B" => "q 1 g 0 0 2 40 re 0 38 120 2 re f 0.5 g 0 0 120 2 re 118 0 2 40 re f Q",
+            "I" => "q 0.5 g 0 0 2 40 re 0 38 120 2 re f 1 g 0 0 120 2 re 118 0 2 40 re f Q",
+            _ => ""
+        };
+        string textSection = missingTextSection ? "" : $"/Tx BMC {previousText} EMC";
+        var appearance = update.AddObject(new PdfStream(appearanceDictionary, Encoding.ASCII.GetBytes(
+            $"1 1 0 rg 0 0 120 40 re f {borderContent} {outsideText} {textSection}")));
+        PdfArray optionArray = choiceOptions is null
+            ? new PdfArray([new PdfArray([S("export"), S("Man")])])
+            : new PdfArray(choiceOptions.Select(value => (PdfObject)S(value)));
+        string choiceValue = choiceOptions is null ? "export" : choiceOptions[selectedChoiceIndex];
+        var parentDictionary = D(("FT", N(choice ? "Ch" : "Tx")),
+            ("Q", new PdfInteger(alignment)),
+            ("V", S(choice ? choiceValue : textValue)), ("DA", S(defaultAppearance)),
+            ("Ff", new PdfInteger(choice && choiceOptions is null ? 131072 : flags)),
+            ("Opt", optionArray));
+        if (choiceOptions is not null)
+            parentDictionary = new PdfDictionary(parentDictionary
+                .Append(new KeyValuePair<PdfName, PdfObject>(N("I"),
+                    new PdfArray([new PdfInteger(selectedChoiceIndex)])))
+                .Append(new KeyValuePair<PdfName, PdfObject>(N("TI"), new PdfInteger(topIndex))));
+        if (maximumLength.HasValue)
+            parentDictionary = new PdfDictionary(parentDictionary.Append(
+                new KeyValuePair<PdfName, PdfObject>(N("MaxLen"), new PdfInteger(maximumLength.Value))));
+        var parent = update.AddObject(parentDictionary);
+        var characteristics = D(("BG", new PdfArray([new PdfInteger(1),
+            new PdfInteger(1), new PdfInteger(0)])));
+        if (borderStyle is not null)
+            characteristics = new PdfDictionary(characteristics.Append(
+                new KeyValuePair<PdfName, PdfObject>(N("BC"), new PdfArray([new PdfInteger(0)]))));
+        var widgetDictionary = D(("Subtype", N("Widget")), ("Parent", parent),
+            ("Rect", box), ("MK", characteristics), ("F", new PdfInteger(annotationFlags)));
+        if (legacyBorder)
+            widgetDictionary = new PdfDictionary(widgetDictionary.Append(
+                new KeyValuePair<PdfName, PdfObject>(N("Border"), new PdfArray([
+                    new PdfInteger(0), new PdfInteger(0), new PdfReal(widgetBorderWidth ?? 2),
+                    borderStyle == "D" ? new PdfArray([new PdfInteger(3), new PdfInteger(2)]) : new PdfArray([])]))));
+        else if (borderStyle is not null || widgetBorderWidth.HasValue)
+            widgetDictionary = new PdfDictionary(widgetDictionary.Append(
+                new KeyValuePair<PdfName, PdfObject>(N("BS"), D(("S", N(borderStyle ?? "S")),
+                    ("W", new PdfReal(widgetBorderWidth ?? 2)), ("D", new PdfArray([new PdfInteger(3), new PdfInteger(2)]))))));
+        if (!missingAppearance)
+            widgetDictionary = new PdfDictionary(widgetDictionary.Append(
+                new KeyValuePair<PdfName, PdfObject>(N("AP"), D(("N", appearance)))));
+        var widget = update.AddObject(widgetDictionary);
+        var page = tree.Pages[0];
+        update.ReplaceObject(page.Reference.ObjectNumber, new PdfDictionary(page.Dictionary
+            .Where(entry => !entry.Key.Equals(N("Resources")))
+            .Append(new KeyValuePair<PdfName, PdfObject>(N("Resources"), artworkResources))
+            .Append(new KeyValuePair<PdfName, PdfObject>(N("Annots"), new PdfArray([widget])))));
+        var root = (PdfIndirectReference)source.Trailer[N("Root")];
+        update.ReplaceObject(root.ObjectNumber, new PdfDictionary(tree.Catalog.Append(
+            new KeyValuePair<PdfName, PdfObject>(N("AcroForm"), D(("Fields", new PdfArray([parent])),
+                ("NeedAppearances", new PdfBoolean(requested)), ("DR", resources))))));
+        byte[] bytes = update.Build();
+        return recovery ? PdfDocument.OpenWithCompatibilityRecovery(bytes) : PdfDocument.Open(bytes);
+    }
+
+    private static PdfName N(string value) => new(Encoding.ASCII.GetBytes(value));
+    private static PdfString S(string value) => new(Encoding.ASCII.GetBytes(value), PdfStringForm.Literal);
+    private static PdfDictionary D(params (string Name, PdfObject Value)[] values) =>
+        new(values.Select(value => new KeyValuePair<PdfName, PdfObject>(N(value.Name), value.Value)));
+}

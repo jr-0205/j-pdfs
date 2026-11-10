@@ -1,8 +1,8 @@
 using System.IO;
 using System.Windows;
-using KillerPDF.Controls;
+using JPDFs.Controls;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>
     /// The final-command check for dialogs that write a new file (Sign, Protect): ask before an
@@ -15,7 +15,7 @@ namespace KillerPDF.Services
         {
             approved = FileRevision.Capture(path);
             if (approved is null && !File.Exists(path)) return true;
-            return KillerDialog.Show(owner,
+            return JpdfsDialog.Show(owner,
                 string.Format(Loc("Str_Dlg_OverwriteMsg"), Path.GetFileName(path)), Loc("Str_Dlg_AppTitle"),
                 MessageBoxButton.YesNo, MessageBoxImage.Warning, defaultResult: MessageBoxResult.No)
                 == MessageBoxResult.Yes;

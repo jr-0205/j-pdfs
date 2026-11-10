@@ -14,7 +14,7 @@ import textwrap
 import numpy as np
 
 source = (Path(__file__).resolve().parents[1] /
-          "engine/KillerPdf.Engine/Rendering/PdfDeviceCmyk.cs").read_text(encoding="utf-8")
+          "engine/JPDFs.Engine/Rendering/PdfDeviceCmyk.cs").read_text(encoding="utf-8")
 
 def samples(name):
     encoded = re.search(r'byte\[\] ' + name + r' = Convert.FromBase64String\("""(.*?)"""\)', source, re.S)[1]

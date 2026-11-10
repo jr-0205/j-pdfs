@@ -1,8 +1,8 @@
-# KillerPDF 1.8.90 corpus benchmark
+# JPDFs 1.8.90 corpus benchmark
 
 Test date: 2026-10-13
 
-KillerPDF 1.8.90 reproduced every 1.8.80 file outcome and diagnostic detail across all three normal collections. The build received one warmup and five measured passes per collection, alternating with a second build in the same session. Every pass agreed on every file's path, status, diagnostic detail, and exit code. The damaged-file gate had zero crashes and zero timeouts.
+JPDFs 1.8.90 reproduced every 1.8.80 file outcome and diagnostic detail across all three normal collections. The build received one warmup and five measured passes per collection, alternating with a second build in the same session. Every pass agreed on every file's path, status, diagnostic detail, and exit code. The damaged-file gate had zero crashes and zero timeouts.
 
 ## Results
 
@@ -35,7 +35,7 @@ Process CPU time per regression pass was 119.4 seconds for 1.8.80 and 119.7 seco
 ## Builds and method
 
 - Source commit: `860646ee6336e29274a18cfb89740992a2cdec09`.
-- Build: KillerPDF 1.8.90 Release, win-x64.
+- Build: JPDFs 1.8.90 Release, win-x64.
 - Executable SHA-256: `427BBC7DB4ADC9019A694EFC13831BBDDFA0BE6A84206D042347C4072320B927`.
 - Mode: batch resave of each collection with a per-file CSV log and quiet output.
 - One warmup and five measured passes per collection. Odd pairs ran 1.8.90 first and even pairs ran it second. Each pass used a fresh process, and the frozen build files were hashed before each pass.
@@ -44,6 +44,6 @@ Process CPU time per regression pass was 119.4 seconds for 1.8.80 and 119.7 seco
 - Input identity: file counts and byte totals match the recorded corpus identity for all four collections. After the series every input was rehashed against the published manifests: 16,696 of 16,696 regression entries, 552 of 552 standards entries (97 local standards files are not in the manifest), and 80 of 80 damaged-file entries matched. The private stress set has no published manifest and was verified by file count and byte total.
 - Full per-file logs remain outside the application repository at `C:\Users\steve\scratch\kp-bench-render\release-1.8.90-vs-1.9-alternating-20261013`.
 
-The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the release-level measurements. The previous published corpus record is [KillerPDF 1.8.80](../1.8.80/CORPUS.md). The same session also measured the 1.9.0 development build; see the [1.9.0 record](../1.9.0/CORPUS.md).
+The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the release-level measurements. The previous published corpus record is [JPDFs 1.8.80](../1.8.80/CORPUS.md). The same session also measured the 1.9.0 development build; see the [1.9.0 record](../1.9.0/CORPUS.md).
 
 This run tests batch opening and saving plus malformed-input process safety. It does not replace interactive rendering checks or a separate qpdf/veraPDF before-and-after conformance sweep.

@@ -11,7 +11,7 @@ APIs simulate a press proof.
 Open an authenticated document and inspect it without changing it:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 PdfDocument document = PdfDocument.Open(sourceBytes);
 PdfSeparationReport report = PdfSeparationInspection.Inspect(document);
@@ -42,7 +42,7 @@ selection for all pages or a unique subset:
 ```csharp
 PdfSeparationPreview preview = PdfSeparationPreview.Create(
     document,
-    plateNames: ["Black", "Killer Orange"],
+    plateNames: ["Black", "Jpdfs Orange"],
     pageIndexes: [0, 2]);
 
 string text = preview.ToText();

@@ -1,13 +1,13 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerPDF.Services;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     /// <summary>
     /// Transitional forwards used by the moved render pipeline while the remaining bridge surface

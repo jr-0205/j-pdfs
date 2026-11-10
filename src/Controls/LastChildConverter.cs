@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // In its own file so an app whose picker has no FolderTree.cs can still build Controls.xaml,
     // which declares it.

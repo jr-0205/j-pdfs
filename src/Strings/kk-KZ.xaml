@@ -301,21 +301,9 @@ Windows параметрлері - Әдепкі қолданбалар ашыл�
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Қараңғы</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Ашық</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Қара</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Қан</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Ашкөздік</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Цианоз</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat ашық</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Эктоплазма</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Ыдырау</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Аза</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat ашық</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat қараңғы</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Пленка түйіршігі</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Кесене</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Сандырақ</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Науқастық</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">Еніне сыйғызу</sys:String>
@@ -1594,7 +1582,6 @@ J-PDF's жөндеуге әрекет жасасын ба? Жөнделген к
     <sys:String x:Key="Str_KS_DisabledStatus">Пернелер тіркесімі өшірулі. Қосу үшін Ctrl+Shift+K басыңыз.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Іске қосылғанда жаңартуларды тексеру</sys:String>
     <sys:String x:Key="Str_PasswordProtected">«{0}» құпиясөзбен қорғалған.</sys:String>
-    <sys:String x:Key="Str_About_Aka">Басқа аты</sys:String>
     <sys:String x:Key="Str_Btn_Run">Іске қосу</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Макростар</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Сақталған макростар</sys:String>

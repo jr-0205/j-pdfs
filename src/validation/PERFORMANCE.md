@@ -1,6 +1,6 @@
 # Performance validation results
 
-## KillerPDF 1.9.0 isolated broad render comparison
+## JPDFs 1.9.0 isolated broad render comparison
 
 Measured September 24, 2026, against the current 1.8.x branch. All 649 PDFs in
 the conformance collection were rendered one file per process at 1024 pixels,
@@ -29,7 +29,7 @@ The builds were 1.8.x commit `259c5f8` with application DLL SHA256
 Raw per-file logs and retained PNGs are archived locally in
 `C:/Users/steve/scratch/kp-bench-render/broad-regression-isolated-20260924`.
 
-## KillerPDF 1.9.0 expanded visual comparison
+## JPDFs 1.9.0 expanded visual comparison
 
 Measured September 24, 2026, with the same fresh 1.8.x and 1.9.0 builds. The
 comparison now records dimensions, mean RGB channel delta, root mean square
@@ -68,7 +68,7 @@ Raw metrics and PNGs are archived locally in
 `C:/Users/steve/scratch/kp-bench-render/visual-multipage-isolated-20260924`, and
 `C:/Users/steve/scratch/kp-bench-render/visual-targeted-isolated-20260924`.
 
-## KillerPDF 1.9.0 expanded PDFjs audit
+## JPDFs 1.9.0 expanded PDFjs audit
 
 Measured September 24, 2026, at 2048 pixels and up to three pages per file.
 The retained source list contains 979 PDF paths and the current corpus correctly
@@ -145,7 +145,7 @@ recovery evidence is in
 `C:/Users/steve/scratch/kp-bench-render/ccitt-recovery-20260924` and
 `C:/Users/steve/scratch/kp-bench-render/mask-recovery-20260924`.
 
-## KillerPDF 1.9.0 exact-output speed follow-up
+## JPDFs 1.9.0 exact-output speed follow-up
 
 September 8, 2026. Six engine and app commits (`d92dc82` through `f8b9343`) speed
 up rendering without changing any output pixel: all 74 difficult-set pages at 2048 and
@@ -189,7 +189,7 @@ Application DLL SHA256 after `18DD0EDBD19E3020C56716C79FFA87FF79F4EB49757F3605F7
 before `5B036623B3043B216A638ACCE98D90EA03227AEEC71441895B916A725017F10B`. Memory was not
 sampled in these runs.
 
-## KillerPDF 1.9.0 image-memory follow-up
+## JPDFs 1.9.0 image-memory follow-up
 
 September 8, 2026: invisible images now stop before codec and mask decoding.
 Four 1024-pixel RGBA regressions allocated 4,217,088 to 7,372,408 bytes before
@@ -197,7 +197,7 @@ the change; each now allocates less than 262,144 bytes. Coverage includes
 off-page, clipped, transparent, and singular placements, plus visible reuse.
 All 74 difficult-set app outputs at 2048 pixels remain byte-identical to the
 available-intent checkpoint. Raw outputs are in
-`C:\Users\steve\scratch\kp-bench-render\legacy-killerpdf-benchmark\cmyk-compositing-20260907\invisible-images-20260908`.
+`C:\Users\steve\scratch\kp-bench-render\legacy-jpdfs-benchmark\cmyk-compositing-20260907\invisible-images-20260908`.
 
 Reduced soft masks now retain only the needed resolution when the full mask
 was decoded solely for reduction. The 1024-pixel thumbnail regression reduces
@@ -213,7 +213,7 @@ outputs are in the sibling `reduced-mask-cache-20260908` directory. The full
 engine suite passes 3,682 tests, the app suite passes 342, and Release builds
 with zero warnings or errors.
 
-## KillerPDF 1.9.0 difficult-page speed follow-up
+## JPDFs 1.9.0 difficult-page speed follow-up
 
 Measured September 8, 2026, on the 40-file, 74-page difficult set at 2048 pixels
 with three pages per file, three alternating runs per pair, using the app's
@@ -252,7 +252,7 @@ Tuned application DLL SHA256
 `5E6713D0A28EB874B7FE6465FBB092192F13E1AA82E557D1AD31A50A04AC96D1`. Memory was
 not sampled in these runs.
 
-## KillerPDF 1.9.0 batch memory target
+## JPDFs 1.9.0 batch memory target
 
 Three rotating comparisons put median engine peak working set at 259.2 MiB
 versus PDFium's 269.1 MiB on the difficult 74-page sample, and 477.3 versus
@@ -304,7 +304,7 @@ identical for both defaults on both sets. Another session was building on the ma
 some shared-set runs, so those wall times are noisier than the difficult-set runs. Raw data:
 `C:/Users/steve/scratch/kp-bench-render/render-parallel-20261016`.
 
-## KillerPDF 1.9.0 memory ownership follow-up
+## JPDFs 1.9.0 memory ownership follow-up
 
 Bounded surfaces, compact clips, explicit scratch lifetimes, shared immutable
 stream storage, and reusable batch pixels reduce allocation pressure. The latest
@@ -322,7 +322,7 @@ references on disposal. An actual app-boundary check on the 74-page sample kept
 all pixels identical and reduced render-call allocation volume by 26.2%. This is
 not a further batch peak-memory result or proof of interactive parity.
 
-## KillerPDF 1.9.0 correctness and memory follow-up
+## JPDFs 1.9.0 correctness and memory follow-up
 
 The observed outer soft-mask reset defect is fixed, and unprofiled CMYK
 conversion preserves photograph shadow detail. Profile-dependent color
@@ -344,7 +344,7 @@ because native UI control was unavailable.
 See the correctness and memory record (archived locally: `C:/Users/steve/scratch/kp-bench-render/repo-cleanup-20260908-final/1.9.0-render-correctness/README.md`)
 for the implementation, profile, raw results, and remaining measurement limits.
 
-## KillerPDF 1.9.0 rendering validation follow-up
+## JPDFs 1.9.0 rendering validation follow-up
 
 Measured September 7, 2026, using the retained tuning payload and PDFium 1.8.5.
 The same 600 successful first-page inputs were supplied to both builds at 1024
@@ -379,7 +379,7 @@ for raw timings, startup results, build hashes, visual findings, and limitations
 The band-parallel rendering plan remains a proposal, archived outside this
 repository. Correctness and memory work take priority over enabling it.
 
-## KillerPDF 1.9.0 engine tuning checkpoint
+## JPDFs 1.9.0 engine tuning checkpoint
 
 Measured September 7, 2026, after the glyph mask cache, compiled calculator
 functions, rectangular-clip fast paths, pooled raster and Flate buffers, and the
@@ -410,7 +410,7 @@ about one eighth of a pixel of coverage; every other change in this checkpoint
 was verified pixel-identical on 190 sampled files. Run-to-run variation on this
 machine is about five percent, so a single run cannot separate the two builds.
 
-## KillerPDF 1.9.0 development checkpoint
+## JPDFs 1.9.0 development checkpoint
 
 Measured September 7, 2026, using page one at a maximum dimension of 1024 pixels
 on the same 649-file conformance collection. Each build had one warmup and three
@@ -438,11 +438,11 @@ parity. Broader multipage coverage, color and font differences, OCR accuracy,
 memory use and performance remain ongoing work. Internal run logs and
 investigation notes are maintained outside the application repository.
 
-## KillerPDF 1.8.2 through 1.9.0 open/save benchmarks
+## JPDFs 1.8.2 through 1.9.0 open/save benchmarks
 
-KillerPDF 1.8.71 and 1.8.80 received one warmup and five measured open/save passes
+JPDFs 1.8.71 and 1.8.80 received one warmup and five measured open/save passes
 per collection in the same session, with run order alternated. Earlier releases were
-measured in separate release sessions. KillerPDF 1.8.90 and the 1.9.0 development build
+measured in separate release sessions. JPDFs 1.8.90 and the 1.9.0 development build
 received one warmup and five measured passes per collection on 2026-10-13, in the same
 session with run order alternated.
 
@@ -461,10 +461,10 @@ diagnostic detail across all passes. In the 2026-10-13 run, version 1.9.0 saved 
 files than 1.8.90 (109 newly saved and one newly failed). That stress input saves in the
 2026-10-15 follow-up, so 1.9.0 now saves 109 more files and loses none. All recorded builds had zero crashes and timeouts in the separate damaged-file safety
 collection. See the
-[1.8.2 release record](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.2.md)
-and the reports and measured runs for [1.8.3](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.3.md) and
-[1.8.4](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.4.md), [1.8.6](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.6.md),
-[1.8.70](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.70.md), [1.8.80](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/killerpdf-v1.8.80.md), [1.8.90](benchmarks/1.8.90/CORPUS.md), and [1.9.0](benchmarks/1.9.0/CORPUS.md).
+[1.8.2 release record](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.2.md)
+and the reports and measured runs for [1.8.3](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.3.md) and
+[1.8.4](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.4.md), [1.8.6](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.6.md),
+[1.8.70](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.70.md), [1.8.80](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/jpdfs-v1.8.80.md), [1.8.90](benchmarks/1.8.90/CORPUS.md), and [1.9.0](benchmarks/1.9.0/CORPUS.md).
 
 Compared directly with 1.8.71 in the alternating session, the 1.8.80 medians were
 0.90% longer for regression, 0.35% longer for standards, and 0.59% shorter for
@@ -496,24 +496,24 @@ check on a quiet host, with 1.8.80 and 1.8.90 built the same way and alternating
 5.999 for standards (2.05% shorter), with equal CPU time and identical per-file logs.
 1.8.90 has no timing regression. See the [1.8.90 report](benchmarks/1.8.90/CORPUS.md).
 
-## KillerPDF 1.8.1 compared with 1.8.0
+## JPDFs 1.8.1 compared with 1.8.0
 
 Benchmark date: 2026-08-29
 
-KillerPDF 1.8.1 completed the shared 2,236-file batch-resave workload in a median
-7.057 seconds, compared with 7.015 seconds for KillerPDF 1.8.0. The 0.6% throughput
+JPDFs 1.8.1 completed the shared 2,236-file batch-resave workload in a median
+7.057 seconds, compared with 7.015 seconds for JPDFs 1.8.0. The 0.6% throughput
 difference is within ordinary run-to-run variation and far below the 10% slowdown
 threshold that requires investigation.
 
-This is a regression benchmark for KillerPDF's real batch-resave path. It is not a
+This is a regression benchmark for JPDFs's real batch-resave path. It is not a
 claim that one PDF engine will be faster for every document or workload.
 
 ### Builds under test
 
 | Version | Build | SHA-256 |
 |---|---|---|
-| KillerPDF 1.8.0 | Installed final release | `3D3C53B66A165C9BD26F1DCC1679AF131E69FB0305FF84BB52F53412EA657FCF` |
-| KillerPDF 1.8.1 | Release candidate built from the current source | `B80687668D9ADA6DF4E01D7772E909B90CA8DA9A4B4ACEAC37702AE5FF43F4E9` |
+| JPDFs 1.8.0 | Installed final release | `3D3C53B66A165C9BD26F1DCC1679AF131E69FB0305FF84BB52F53412EA657FCF` |
+| JPDFs 1.8.1 | Release candidate built from the current source | `B80687668D9ADA6DF4E01D7772E909B90CA8DA9A4B4ACEAC37702AE5FF43F4E9` |
 
 Both executables reported their expected product versions. The 1.8.1 candidate used
 the same installed-payload build shape as the official 1.8.0 application.
@@ -554,20 +554,20 @@ Every measured run processed all 2,236 files and returned exit code 0.
 
 | Version | Runs | Median time | Minimum | Maximum | Median files per second |
 |---|---:|---:|---:|---:|---:|
-| KillerPDF 1.8.0 | 5 | 7.015 seconds | 6.916 seconds | 7.217 seconds | 318.73 |
-| KillerPDF 1.8.1 | 5 | 7.057 seconds | 6.815 seconds | 7.326 seconds | 316.86 |
+| JPDFs 1.8.0 | 5 | 7.015 seconds | 6.916 seconds | 7.217 seconds | 318.73 |
+| JPDFs 1.8.1 | 5 | 7.057 seconds | 6.815 seconds | 7.326 seconds | 316.86 |
 
 The raw measurements are preserved in
-[`benchmarks/1.8.1/benchmark-results.csv`](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/shared-subset/1.8.1/benchmark-results.csv),
+[`benchmarks/1.8.1/benchmark-results.csv`](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/shared-subset/1.8.1/benchmark-results.csv),
 with the calculated medians in
-[`benchmarks/1.8.1/benchmark-summary.csv`](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/shared-subset/1.8.1/benchmark-summary.csv).
+[`benchmarks/1.8.1/benchmark-summary.csv`](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/shared-subset/1.8.1/benchmark-summary.csv).
 
-## KillerPDF 1.8.0 compared with 1.7.5
+## JPDFs 1.8.0 compared with 1.7.5
 
 Benchmark date: 2026-08-28
 
-KillerPDF 1.8.0 completed the shared 2,236-file batch-resave workload in a median
-10.013 seconds, compared with 16.167 seconds for KillerPDF 1.7.5. That is a 38.1%
+JPDFs 1.8.0 completed the shared 2,236-file batch-resave workload in a median
+10.013 seconds, compared with 16.167 seconds for JPDFs 1.7.5. That is a 38.1%
 reduction in elapsed time. Median throughput increased from 138.31 to 223.32 files
 per second.
 
@@ -575,44 +575,44 @@ per second.
 
 | Version | Build | SHA-256 |
 |---|---|---|
-| KillerPDF 1.7.5 | Official GitHub release executable | `C53B34C5847ABE24228226656C00EFF5F76396D2BD8AD1BE8FDBAC56B153B136` |
-| KillerPDF 1.8.0 | Installed final release | `3D3C53B66A165C9BD26F1DCC1679AF131E69FB0305FF84BB52F53412EA657FCF` |
+| JPDFs 1.7.5 | Official GitHub release executable | `C53B34C5847ABE24228226656C00EFF5F76396D2BD8AD1BE8FDBAC56B153B136` |
+| JPDFs 1.8.0 | Installed final release | `3D3C53B66A165C9BD26F1DCC1679AF131E69FB0305FF84BB52F53412EA657FCF` |
 
 The downloaded 1.7.5 executable matched the digest published for the v1.7.5 GitHub
 release asset. Both executables reported their expected final product versions.
 
 ### Corpus note
 
-KillerPDF 1.7.5 could not process the PDF 2.0 files in the full 2,907-file corpus,
+JPDFs 1.7.5 could not process the PDF 2.0 files in the full 2,907-file corpus,
 so those files were excluded from both runs to keep the comparison equivalent.
 
 ### Results
 
 | Version | Runs | Median time | Minimum | Maximum | Median files per second |
 |---|---:|---:|---:|---:|---:|
-| KillerPDF 1.7.5 | 5 | 16.167 seconds | 15.675 seconds | 16.687 seconds | 138.31 |
-| KillerPDF 1.8.0 | 5 | 10.013 seconds | 9.451 seconds | 11.518 seconds | 223.32 |
+| JPDFs 1.7.5 | 5 | 16.167 seconds | 15.675 seconds | 16.687 seconds | 138.31 |
+| JPDFs 1.8.0 | 5 | 10.013 seconds | 9.451 seconds | 11.518 seconds | 223.32 |
 
 The raw measurements are preserved in
-[`benchmarks/1.8.0/benchmark-results.csv`](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/shared-subset/1.8.0/benchmark-results.csv),
+[`benchmarks/1.8.0/benchmark-results.csv`](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/shared-subset/1.8.0/benchmark-results.csv),
 with the calculated medians in
-[`benchmarks/1.8.0/benchmark-summary.csv`](https://github.com/SteveTheKiller/KillerPDF-Corpus/blob/main/benchmarks/shared-subset/1.8.0/benchmark-summary.csv).
+[`benchmarks/1.8.0/benchmark-summary.csv`](https://github.com/JPDFs/JPDFs-Corpus/blob/main/benchmarks/shared-subset/1.8.0/benchmark-summary.csv).
 
 ## Reproducing the benchmark
 
 [`Benchmark-Versions.ps1`](../tools/validation/Benchmark-Versions.ps1) runs the complete warmup,
 alternating measurement, logging, cleanup, and summary process. Run it from
-PowerShell with two KillerPDF executables and one shared input tree:
+PowerShell with two JPDFs executables and one shared input tree:
 
 ```powershell
 ..\tools\validation\Benchmark-Versions.ps1 `
-    -BaselineExe 'C:\path\to\KillerPDF-previous.exe' `
-    -CandidateExe 'C:\path\to\KillerPDF-current.exe' `
+    -BaselineExe 'C:\path\to\JPDFs-previous.exe' `
+    -CandidateExe 'C:\path\to\JPDFs-current.exe' `
     -InputDirectory 'C:\path\to\shared-corpus' `
     -OutputDirectory "$env:USERPROFILE\scratch\kp-bench-render\measured" `
     -Runs 5 `
-    -BaselineLabel 'KillerPDF previous' `
-    -CandidateLabel 'KillerPDF current'
+    -BaselineLabel 'JPDFs previous' `
+    -CandidateLabel 'JPDFs current'
 ```
 
 The output directory must be inside the current user's profile. The script creates

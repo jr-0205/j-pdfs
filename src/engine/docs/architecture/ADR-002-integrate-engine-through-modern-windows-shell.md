@@ -2,11 +2,11 @@
 
 **Status:** Accepted
 **Date:** 2026-08-24
-**Decider:** Steve the Killer
+**Decider:** J-PDF's
 
 ## Context
 
-KillerPdf.Engine targets .NET 10 so it can use current cross-platform runtime APIs and expose a reusable library without inheriting the desktop application's historical constraints. The KillerPDF Windows application still targets .NET Framework 4.8 and therefore cannot reference the engine directly.
+JPDFs.Engine targets .NET 10 so it can use current cross-platform runtime APIs and expose a reusable library without inheriting the desktop application's historical constraints. The JPDFs Windows application still targets .NET Framework 4.8 and therefore cannot reference the engine directly.
 
 The application currently relies on PdfSharpCore for document state, page manipulation, drawing, annotations, forms, OCR output, command-line workflows, and several preservation fallbacks. Removing that dependency in one change would combine a platform migration, a document-model replacement, and dozens of user-facing behavior changes.
 
@@ -14,7 +14,7 @@ The engine has reached the point where integration should begin, but preservatio
 
 ## Decision
 
-Retarget the KillerPDF Windows application and its application test project to `net10.0-windows`. Add a direct project reference from the application to KillerPdf.Engine while retaining PdfSharpCore temporarily.
+Retarget the JPDFs Windows application and its application test project to `net10.0-windows`. Add a direct project reference from the application to JPDFs.Engine while retaining PdfSharpCore temporarily.
 
 Replace PdfSharpCore through tested vertical slices. Each slice must move a coherent operation to the engine, preserve or improve its existing behavior, and leave the solution buildable. Remove the vendored PdfSharpCore project only after no production or application-test code references it.
 
@@ -40,7 +40,7 @@ This creates the direct library boundary immediately while keeping behavior chan
 
 ## Consequences
 
-- KillerPDF 1.8 requires the .NET 10 toolchain and a corresponding deployment strategy.
+- JPDFs 1.8 requires the .NET 10 toolchain and a corresponding deployment strategy.
 - The engine becomes a real application dependency before it becomes the sole document engine.
 - PdfSharpCore remains temporarily, with its usage expected to decrease after every migration slice.
 - Packaging scripts and documentation that assume `net48` must be updated for the modern shell.

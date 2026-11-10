@@ -3,10 +3,10 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Redact tool: drag areas on the page (or mark the current search results), then remove
     // everything under them for good. Marks are kept in unrotated, crop-relative page points so they
@@ -153,8 +153,8 @@ namespace KillerPDF.Controls
 
         private static byte ToByte(double component) => (byte)Math.Round(Math.Clamp(component, 0, 1) * 255);
 
-        private static KillerPdf.Engine.Authoring.PdfRgbColor? PdfFill(Color? fill) =>
-            fill is Color color ? new KillerPdf.Engine.Authoring.PdfRgbColor(color.R / 255.0, color.G / 255.0, color.B / 255.0) : null;
+        private static JPDFs.Engine.Authoring.PdfRgbColor? PdfFill(Color? fill) =>
+            fill is Color color ? new JPDFs.Engine.Authoring.PdfRgbColor(color.R / 255.0, color.G / 255.0, color.B / 255.0) : null;
 
         private static PdfRedactionRegion ToRegion(RedactionMark mark) =>
             new(mark.PageIndex, new PdfContentBounds(mark.Left, mark.Bottom, mark.Right, mark.Top), null, mark.OverlayText)
@@ -446,7 +446,7 @@ namespace KillerPDF.Controls
             }
             string skipped = Search.SkippedPagesMessage(unreadable);
             SetStatus(marked + " " + skipped);
-            KillerDialog.Show(Window.GetWindow(this), skipped, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
+            JpdfsDialog.Show(Window.GetWindow(this), skipped, "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         // The Redact bar's Find: words, phrases or patterns across the whole document, reviewed in a
@@ -496,14 +496,14 @@ namespace KillerPDF.Controls
             if (_doc is null) return;
             PdfEngineDocumentSession session = EnsureEngineDocumentSession();
             Window? owner = Window.GetWindow(this);
-            string? range = KillerDialog.PromptText(owner, Loc("Str_Redact_MarkPages"), Loc("Str_Redact_MarkPagesPrompt"),
+            string? range = JpdfsDialog.PromptText(owner, Loc("Str_Redact_MarkPages"), Loc("Str_Redact_MarkPagesPrompt"),
                 (CurrentPageIndex + 1).ToString(System.Globalization.CultureInfo.CurrentCulture), Loc("Str_Redact_MarkPagesConfirm"));
             if (range is null) return;
             List<int>? pages = string.IsNullOrWhiteSpace(range) ? null
                 : Features.CliRunner.CliParsePageRange(range, session.PageCount, out _);
             if (pages is null || pages.Count == 0)
             {
-                KillerDialog.Show(owner, Loc("Str_InvalidRange"), "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
+                JpdfsDialog.Show(owner, Loc("Str_InvalidRange"), "J-PDF's", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             int added = 0;
@@ -719,7 +719,7 @@ namespace KillerPDF.Controls
                 string[] labels = more
                     ? [Loc("Str_Redact_ConvertPage"), Loc("Str_Redact_ConvertAll"), Loc("Str_Redact_SkipPage"), Loc("Str_Btn_Cancel")]
                     : [Loc("Str_Redact_ConvertPage"), Loc("Str_Redact_SkipPage"), Loc("Str_Btn_Cancel")];
-                int choice = KillerDialog.ShowChoices(owner,
+                int choice = JpdfsDialog.ShowChoices(owner,
                     string.Format(Loc("Str_Redact_RasterPrompt"), page + 1), labels, 0, Loc("Str_Lbl_Redact"));
                 if (!more && choice >= 1) choice++;   // align the two-button layout with the four-button one
                 switch (choice)

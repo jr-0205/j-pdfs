@@ -2,10 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPdf.Engine.Documents;
-using KillerPdf.Engine.Rendering;
+using JPDFs.Engine.Documents;
+using JPDFs.Engine.Rendering;
 
-namespace KillerPDF;
+namespace JPDFs;
 
 internal sealed class ProductionPreviewDialog : Window
 {
@@ -51,7 +51,7 @@ internal sealed class ProductionPreviewDialog : Window
             catch (Exception error)
             {
                 save.IsEnabled = false;
-                KillerDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + error.Message);
+                JpdfsDialog.Show(this, L("Str_DocumentTools_Failed") + "\n" + error.Message);
             }
         };
         Content = DialogFrame.Frame(this, owner, Title, Close, body);

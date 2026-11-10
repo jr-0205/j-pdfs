@@ -32,9 +32,9 @@ internal static class Program
             return File.Exists(dll) ? AssemblyLoadContext.Default.LoadFromAssemblyPath(dll) : null;
         };
         Assembly assembly = Assembly.LoadFrom(app);
-        Type type = assembly.GetType("KillerPDF.Services.PdfPageRenderSession", true)!;
+        Type type = assembly.GetType("JPDFs.Services.PdfPageRenderSession", true)!;
         // Builds since 1.9.2 take the protection of the tab whose file it is; a corpus file is no tab's.
-        Type? protection = assembly.GetType("KillerPDF.Services.OpenedProtection");
+        Type? protection = assembly.GetType("JPDFs.Services.OpenedProtection");
         var open = type.GetMethod("OpenEngineFirst", Flags, [typeof(string), typeof(int), typeof(int)])
             ?? type.GetMethod("OpenEngineFirst", Flags, [typeof(string), typeof(int), typeof(int), typeof(bool)])
             ?? (protection is null ? null

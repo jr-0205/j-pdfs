@@ -1,7 +1,7 @@
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 using Tesseract;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     internal sealed class TesseractOcrFallback : IDisposable
     {

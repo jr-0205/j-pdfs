@@ -11,10 +11,10 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
-using KillerFamily.Accessibility;
+using JPDFs.Services;
+using JpdfsUi.Accessibility;
 
-namespace KillerPDF.Shell
+namespace JPDFs.Shell
 {
     public partial class MainWindow
     {
@@ -81,7 +81,7 @@ namespace KillerPDF.Shell
                 bar.BeginAnimation(UIElement.OpacityProperty, null);
                 // Release the 98SE scroller inset before the bar leaves its area, so the document
                 // slides back up to the pane top when the band disappears.
-                if (bar.Parent is Grid area) SyncSe98BarInset(bar, area, removing: true);
+                if (bar.Parent is Grid area) SyncBarInset(bar, area, removing: true);
                 (bar.Parent as Panel)?.Children.Remove(bar);
             };
             bar.BeginAnimation(UIElement.OpacityProperty, anim);
@@ -366,9 +366,9 @@ namespace KillerPDF.Shell
             RefreshOpenAnnotationBars(active);
         }
 
-        private void RefreshOpenAnnotationBars(KillerPDF.Controls.PdfViewer viewer)
+        private void RefreshOpenAnnotationBars(JPDFs.Controls.PdfViewer viewer)
         {
-            ((KillerPDF.Features.IViewerHost)this).RunWithViewerContext(viewer, () =>
+            ((JPDFs.Features.IViewerHost)this).RunWithViewerContext(viewer, () =>
             {
                 var tool = _annotBarTool;
                 if (tool == EditTool.Text)
@@ -423,7 +423,7 @@ namespace KillerPDF.Shell
         }
 
         // ── Toolbar appearance ────────────────────────────────────────────
-        // The engine is the family one (Shell/ToolbarStyle.cs); KillerPDF's buttons, drawn glyphs,
+        // The engine is the family one (Shell/ToolbarStyle.cs); JPDFs's buttons, drawn glyphs,
         // picker rows, split buttons and caption shed order are in Shell/ToolbarStyle.Extras.cs.
 
         // #215: a reading view without the toolbar, while the window stays a normal window the

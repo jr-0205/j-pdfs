@@ -10,11 +10,11 @@ if(Test-Path -LiteralPath $EvidenceRoot){throw 'Use a fresh evidence directory.'
 $publish=Join-Path $EvidenceRoot 'publish'
 [IO.Directory]::CreateDirectory((Join-Path $publish 'release-validation'))|Out-Null
 $head='1111111111111111111111111111111111111111'
-foreach($name in @('KillerPDF.exe','KillerPDF-Portable.exe','KillerPDF-Store.exe','KillerPDF-1.9.2-src.zip','SHA256SUMS.txt')){
+foreach($name in @('JPDFs.exe','JPDFs-Portable.exe','JPDFs-Store.exe','JPDFs-1.9.2-src.zip','SHA256SUMS.txt')){
     [IO.File]::WriteAllText((Join-Path $publish $name),'original '+$name)
 }
 foreach($suite in @('engine','desktop')){
-    $assembly=if($suite -eq 'engine'){'KillerPdf.Engine.Tests.dll'}else{'KillerPDF.Tests.dll'}
+    $assembly=if($suite -eq 'engine'){'JPDFs.Engine.Tests.dll'}else{'JPDFs.Tests.dll'}
     $trx='<TestRun><TestDefinitions><UnitTest storage="C:/fixture/'+$assembly+'" /></TestDefinitions><Results><UnitTestResult outcome="Passed" /></Results><ResultSummary outcome="Completed"><Counters total="1" executed="1" passed="1" failed="0" notExecuted="0" /></ResultSummary></TestRun>'
     [IO.File]::WriteAllText((Join-Path $publish ('release-validation/'+$suite+'.trx')),$trx)
 }
@@ -31,7 +31,7 @@ $receipt=Join-Path $publish 'release-validation.json'
 $receiptBytes=[IO.File]::ReadAllBytes($receipt)
 Reject {Read-ReleaseDryRun $publish '1.9.2' ('2'*40)} 'source/version changed'
 Reject {Read-ReleaseDryRun $publish '1.9.3' $head} 'source/version changed'
-foreach($name in @('KillerPDF.exe','KillerPDF-Portable.exe','KillerPDF-Store.exe','KillerPDF-1.9.2-src.zip','SHA256SUMS.txt','release-validation/engine.trx','release-validation/desktop.trx')){
+foreach($name in @('JPDFs.exe','JPDFs-Portable.exe','JPDFs-Store.exe','JPDFs-1.9.2-src.zip','SHA256SUMS.txt','release-validation/engine.trx','release-validation/desktop.trx')){
     $file=Join-Path $publish $name
     $bytes=[IO.File]::ReadAllBytes($file)
     try{
@@ -50,7 +50,7 @@ foreach($bad in @(
     $original.Replace('outcome="Passed"','outcome="Failed"'),
     $original.Replace('total="1"','total="0"'),
     $original.Replace('notExecuted="0"','notExecuted="1"'),
-    $original.Replace('KillerPDF.Tests.dll','Other.Tests.dll')
+    $original.Replace('JPDFs.Tests.dll','Other.Tests.dll')
 )){
     [IO.File]::WriteAllText($desktop,$bad)
     Reject {Save-ReleaseDryRun $publish '1.9.2' $head $true} 'complete, nonempty passing'

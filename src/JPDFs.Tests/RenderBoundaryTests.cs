@@ -1,0 +1,394 @@
+using System.IO;
+using Xunit;
+
+namespace JPDFs.Tests;
+
+public sealed class RenderBoundaryTests
+{
+    [Fact]
+    public void RenderingIsOwnedByTheEngineBoundary()
+    {
+        string root = FindRepositoryRoot();
+        string boundary = Path.GetFullPath(Path.Combine(root, "Services", "PdfPageRenderSession.cs"));
+        string thisTest = Path.GetFullPath(Path.Combine(root, "JPDFs.Tests", "RenderBoundaryTests.cs"));
+        string[] forbidden =
+        [
+            "using Docnet.",
+            "DocLib.Instance.GetDocReader",
+            "DocnetRenderFallback",
+            "PdfiumInterop",
+            "FPDF_"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories))
+        {
+            string fullPath = Path.GetFullPath(file);
+            if (fullPath.StartsWith(Path.Combine(root, "bin"), StringComparison.OrdinalIgnoreCase)
+                || fullPath.StartsWith(Path.Combine(root, "obj"), StringComparison.OrdinalIgnoreCase)
+                || fullPath.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                || fullPath.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                || fullPath.Equals(thisTest, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            string source = File.ReadAllText(fullPath);
+            foreach (string text in forbidden)
+                Assert.DoesNotContain(text, source, StringComparison.Ordinal);
+        }
+
+        string boundarySource = File.ReadAllText(boundary);
+        Assert.DoesNotContain("using Docnet.", boundarySource, StringComparison.Ordinal);
+        Assert.DoesNotContain("IDocReader", boundarySource, StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfiumInterop", boundarySource, StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfPageRenderSession Open(", boundarySource,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheEngineIsTheOnlyApplicationPdfRenderBackend()
+    {
+        Assert.Equal(new[] { Services.PdfRenderBackend.Engine }, Enum.GetValues<Services.PdfRenderBackend>());
+    }
+
+    [Fact]
+    public void NativePdfRenderingDependenciesAreRemoved()
+    {
+        string root = FindRepositoryRoot();
+        Assert.False(File.Exists(Path.Combine(root, "Services", "DocnetRenderFallback.cs")));
+        Assert.False(File.Exists(Path.Combine(root, "Services", "PdfiumInterop.cs")));
+        Assert.DoesNotContain("Docnet.Core", File.ReadAllText(
+            Path.Combine(root, "JPDFs.csproj")), StringComparison.Ordinal);
+        Assert.DoesNotContain("pdfium", File.ReadAllText(
+            Path.Combine(root, "FodyWeavers.xml")), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Docnet.Core.dll", File.ReadAllText(
+            Path.Combine(root, "build", "payload-files.txt")), StringComparison.Ordinal);
+        Assert.DoesNotContain("pdfium.dll", File.ReadAllText(
+            Path.Combine(root, "build", "payload-files.txt")), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("pdfium.dll", File.ReadAllText(
+            Path.Combine(root, "build", "build-portable.ps1")), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void PageThumbnailsUseTheEngineBeforeTheNativeFallback()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(Path.Combine(root, "Models", "PageThumbnailVm.cs"));
+
+        Assert.Contains("PdfPageRenderSession.OpenEngineFirst(", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ExactComparisonPagesUseTheEngine()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(
+            Path.Combine(root, "Services", "PdfPageRenderSession.cs"));
+        int methodStart = source.IndexOf("RenderExactPage(", StringComparison.Ordinal);
+        int methodEnd = source.IndexOf("public void Dispose", methodStart,
+            StringComparison.Ordinal);
+        string method = source[methodStart..methodEnd];
+
+        Assert.Contains("OpenDocument(path, protection)", method, StringComparison.Ordinal);
+        Assert.Contains("EngineDocument.OpenWithCompatibilityRecovery(", source,
+            StringComparison.Ordinal);
+        Assert.Contains("RenderOwnedPage(renderer,", method, StringComparison.Ordinal);
+        Assert.DoesNotContain("Fallback", method, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ExactComparisonRenderingPassesCancellationIntoTheEngineBoundary()
+    {
+        string root = FindRepositoryRoot();
+        string boundary = File.ReadAllText(
+            Path.Combine(root, "Services", "PdfPageRenderSession.cs"));
+        string comparison = File.ReadAllText(
+            Path.Combine(root, "Shell", "PdfComparison.cs"));
+
+        Assert.Contains("includeFormFields), cancellationToken)", boundary,
+            StringComparison.Ordinal);
+        Assert.Equal(2, Count(comparison, "cancellationToken: token"));
+    }
+
+    [Fact]
+    public void ImageExportUsesTheEngineFirstRenderSession()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(
+            Path.Combine(root, "Features", "Cli", "CliRunner.cs"));
+        int methodStart = source.IndexOf("private static int CliToImage(",
+            StringComparison.Ordinal);
+        int methodEnd = source.IndexOf("private static int CliFlatten(", methodStart,
+            StringComparison.Ordinal);
+        string method = source[methodStart..methodEnd];
+
+        Assert.Contains("PdfPageRenderSession.OpenEngineFirst(", method,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", method,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FlatteningUsesTheEngineFirstRenderSession()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(
+            Path.Combine(root, "Features", "Cli", "CliRunner.cs"));
+        int methodStart = source.IndexOf("private static int CliFlatten(",
+            StringComparison.Ordinal);
+        int methodEnd = source.IndexOf("private static int ParseBoundedIntOption(",
+            methodStart, StringComparison.Ordinal);
+        string method = source[methodStart..methodEnd];
+
+        Assert.Contains("PdfPageRenderSession.OpenEngineFirst(", method,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", method,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GuiFlattenAndImageExportUseTheEngineFirstRenderSession()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(
+            Path.Combine(root, "Services", "PdfRasterize.cs"));
+
+        Assert.Equal(1, Count(source, "PdfPageRenderSession.OpenEngineFirst("));
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("using Docnet.", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OcrConsumesEnginePreparedPixelsWithoutAPngRoundTrip()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(Path.Combine(root, "Services", "OcrService.cs"));
+        string fallback = File.ReadAllText(
+            Path.Combine(root, "Services", "TesseractOcrFallback.cs"));
+
+        Assert.Contains("PdfOcrImagePreprocessor.PrepareBgra(", source,
+            StringComparison.Ordinal);
+        Assert.Contains("Pix.Create(image.Width, image.Height, 8)", fallback,
+            StringComparison.Ordinal);
+        Assert.Contains("FallbackRasterOptions, cancellationToken)", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("Pix.Load", fallback, StringComparison.Ordinal);
+        Assert.DoesNotContain("PngBitmapEncoder", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("BitmapSource.Create", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OcrUsesAnInstalledEngineModelBeforeLoadingTesseract()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(Path.Combine(root, "Services", "OcrService.cs"));
+
+        Assert.Contains("PdfOcrRecognitionModelFiles.TryCreateCatalog(", source,
+            StringComparison.Ordinal);
+        Assert.Contains("tessDataPath ?? OcrNativeBootstrap.TessDataDir", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("tessDataPath ?? OcrNativeBootstrap.EnsureLanguageData()", source,
+            StringComparison.Ordinal);
+        Assert.Contains("_engineProvider.RecognizeBgra(", source, StringComparison.Ordinal);
+        Assert.Contains("removeBackground: true", source, StringComparison.Ordinal);
+        Assert.Contains("removeNoise: true", source, StringComparison.Ordinal);
+        Assert.Contains("removeNoise: true, detectPageSegments: true", source,
+            StringComparison.Ordinal);
+        Assert.Contains("_engineRasterOptions, characterWhitelist, cancellationToken", source,
+            StringComparison.Ordinal);
+        Assert.Contains("_ => _engineLanguageModel", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfOcrRecognizer.RecognizeBgra(", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfOcrRecognitionModel.Load(", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfOcrRecognitionModel.Combine(", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("language.Contains('+', StringComparison.Ordinal)",
+            source, StringComparison.Ordinal);
+        Assert.Contains("private TesseractOcrFallback NativeFallback()", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("using Tesseract", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("TesseractEngine", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TesseractTypesStayInsideTheNativeOcrFallback()
+    {
+        string root = FindRepositoryRoot();
+        string fallback = Path.GetFullPath(
+            Path.Combine(root, "Services", "TesseractOcrFallback.cs"));
+        string thisTest = Path.GetFullPath(
+            Path.Combine(root, "JPDFs.Tests", "RenderBoundaryTests.cs"));
+
+        foreach (string file in Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories))
+        {
+            string fullPath = Path.GetFullPath(file);
+            if (fullPath.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}",
+                    StringComparison.OrdinalIgnoreCase)
+                || fullPath.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}",
+                    StringComparison.OrdinalIgnoreCase)
+                || fullPath.Equals(fallback, StringComparison.OrdinalIgnoreCase)
+                || fullPath.Equals(thisTest, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            string source = File.ReadAllText(fullPath);
+            Assert.DoesNotContain("using Tesseract", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("TesseractEngine", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("PageIteratorLevel", source, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void OcrWorkflowsUseTheEngineFirstRenderSession()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(
+            Path.Combine(root, "Features", "Ocr", "OcrController.cs"));
+
+        Assert.Equal(6, Count(source, "PdfPageRenderSession.OpenEngineFirst("));
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", source,
+            StringComparison.Ordinal);
+
+        string boundary = File.ReadAllText(
+            Path.Combine(root, "Services", "PdfPageRenderSession.cs"));
+        int methodStart = boundary.IndexOf("RenderBasePage(", StringComparison.Ordinal);
+        int methodEnd = boundary.IndexOf("internal PdfRenderedPage RenderPage(", methodStart,
+            StringComparison.Ordinal);
+        string method = boundary[methodStart..methodEnd];
+        Assert.Contains("RenderEnginePage(", method, StringComparison.Ordinal);
+        Assert.Contains("includeAnnotations: false", method, StringComparison.Ordinal);
+        Assert.Contains("includeFormFields: false", method, StringComparison.Ordinal);
+        Assert.DoesNotContain("NativeFallback", method, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PrintWorkflowsUseTheEngineFirstRenderSession()
+    {
+        string root = FindRepositoryRoot();
+        string cli = File.ReadAllText(
+            Path.Combine(root, "Features", "Cli", "CliRunner.cs"));
+        int printStart = cli.IndexOf("private static int CliPrint(",
+            StringComparison.Ordinal);
+        int printEnd = cli.IndexOf("private static int CliOcr(", printStart,
+            StringComparison.Ordinal);
+        string print = cli[printStart..printEnd];
+        string preview = File.ReadAllText(
+            Path.Combine(root, "Controls", "PrintPreviewWindow.cs"));
+
+        string printSession = File.ReadAllText(
+            Path.Combine(root, "Services", "PrintPermission.cs"));
+
+        Assert.Contains("PrintPermission.OpenRenderSession(", print,
+            StringComparison.Ordinal);
+        Assert.Contains("PdfPageRenderSession.OpenEngineFirst(", printSession,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", print,
+            StringComparison.Ordinal);
+        Assert.Contains("PdfPageRenderSession.OpenEngineFirst(", preview,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", preview,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RasterRepairUsesTheEngineFirstRenderSession()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(Path.Combine(root, "Services", "PdfImport.cs"));
+
+        Assert.Contains("RepairViaRasterizeToFile", source, StringComparison.Ordinal);
+        Assert.Contains("PdfPageRenderSession.OpenEngineFirst(", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("using Docnet.", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LiveViewerUsesTheEngineRenderSession()
+    {
+        string root = FindRepositoryRoot();
+        string viewer = File.ReadAllText(
+            Path.Combine(root, "Controls", "Viewer", "PdfViewer.Viewport.cs"));
+        string boundary = File.ReadAllText(
+            Path.Combine(root, "Services", "PdfPageRenderSession.cs"));
+
+        Assert.DoesNotContain("PdfPageRenderSession.OpenEngineFirst(", viewer, StringComparison.Ordinal);
+        Assert.DoesNotContain("_primaryRenderSession.Render(", viewer, StringComparison.Ordinal);
+        Assert.Contains("await _viewportRenderQueue.Enqueue(", viewer, StringComparison.Ordinal);
+        Assert.DoesNotContain("PdfPageRenderSession.Open(", viewer,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("NativeFallback", boundary, StringComparison.Ordinal);
+        Assert.Contains("includeAnnotations: false, includeFormFields: false", boundary,
+            StringComparison.Ordinal);
+        Assert.Contains("includeAnnotations: true, includeFormFields", boundary,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CancellableRenderWorkflowsPassTheirTokensIntoTheEngineBoundary()
+    {
+        string root = FindRepositoryRoot();
+        string boundary = File.ReadAllText(
+            Path.Combine(root, "Services", "PdfPageRenderSession.cs"));
+        string rasterize = File.ReadAllText(
+            Path.Combine(root, "Services", "PdfRasterize.cs"));
+        string ocr = File.ReadAllText(
+            Path.Combine(root, "Features", "Ocr", "OcrController.cs"));
+        string viewer = File.ReadAllText(
+            Path.Combine(root, "Controls", "Viewer", "PdfViewer.Viewport.cs"));
+
+        Assert.Contains("includeFormFields), cancellationToken)", boundary,
+            StringComparison.Ordinal);
+        Assert.Contains("exception is not OperationCanceledException", boundary,
+            StringComparison.Ordinal);
+        Assert.Equal(2, Count(rasterize, "cancellationToken: ct"));
+        Assert.Contains("RenderBasePage(pages[i], ct)", ocr, StringComparison.Ordinal);
+        Assert.Contains("RenderBasePage(pageIdx, ct)", ocr, StringComparison.Ordinal);
+        Assert.Equal(2, Count(ocr, "RenderBasePage(i, ct)"));
+        Assert.Contains("session.RenderBasePage(pageIndex, ct)", ocr, StringComparison.Ordinal);
+        Assert.Contains("session.RenderBasePage(pageIndex, size.Width, size.Height, ct)", ocr, StringComparison.Ordinal);
+        Assert.Contains("lease.Render(i, renderW, renderW * 2, token)", viewer);
+        Assert.Contains("lease.Render(i, secondaryMax, secondaryMax, token)", viewer);
+        Assert.Contains("lease.Render(target, scaledMax, scaledMax, token)", viewer);
+        string refinement = File.ReadAllText(Path.Combine(root, "Controls", "Viewer", "PdfViewer.Refinement.cs"));
+        Assert.Contains("region.Left, region.Top, region.Width, region.Height, workToken)", refinement);
+    }
+
+    [Fact]
+    public void RenderResultsIdentifyTheEngineAndPreserveDiagnostics()
+    {
+        string root = FindRepositoryRoot();
+        string boundary = File.ReadAllText(
+            Path.Combine(root, "Services", "PdfPageRenderSession.cs"));
+        Assert.Contains("PdfRenderBackend.Engine, Diagnostics(diagnostics)", boundary,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("NativeFallback", boundary, StringComparison.Ordinal);
+        Assert.Contains("string? EngineFailure", boundary, StringComparison.Ordinal);
+    }
+
+    private static int Count(string source, string value)
+    {
+        int count = 0;
+        for (int index = source.IndexOf(value, StringComparison.Ordinal);
+            index >= 0;
+            index = source.IndexOf(value, index + value.Length,
+                StringComparison.Ordinal))
+            count++;
+        return count;
+    }
+
+    private static string FindRepositoryRoot([System.Runtime.CompilerServices.CallerFilePath] string sourceFile = "")
+    {
+        var directory = new DirectoryInfo(Path.GetDirectoryName(sourceFile) ?? AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "JPDFs.csproj")))
+                return directory.FullName;
+            directory = directory.Parent;
+        }
+        throw new DirectoryNotFoundException("Could not locate the JPDFs repository root.");
+    }
+}

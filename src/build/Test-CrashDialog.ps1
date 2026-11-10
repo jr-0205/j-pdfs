@@ -1,4 +1,4 @@
-# Run with PowerShell 7 on .NET 10 after a normal or KillerPayloadBuild release build.
+# Run with PowerShell 7 on .NET 10 after a normal or JpdfsPayloadBuild release build.
 # Loads the actual app resources and picker handlers with preferences redirected to owned evidence.
 [CmdletBinding()]
 param(
@@ -35,22 +35,21 @@ $assembly = [Reflection.Assembly]::LoadFrom($AssemblyPath)
 $static = [Reflection.BindingFlags]'Static,Public,NonPublic'
 $instance = [Reflection.BindingFlags]'Instance,Public,NonPublic'
 [Windows.Application].GetField('_resourceAssembly', $static).SetValue($null, $assembly)
-$paths = $assembly.GetType('KillerPDF.Services.AppDataPaths', $true)
+$paths = $assembly.GetType('JPDFs.Services.AppDataPaths', $true)
 $paths.GetProperty('StartupSmokeRoot', $static).SetValue($null, (Join-Path $EvidenceDirectory 'data'))
-$app = [Activator]::CreateInstance($assembly.GetType('KillerPDF.App', $true))
+$app = [Activator]::CreateInstance($assembly.GetType('JPDFs.App', $true))
 $app.ShutdownMode = [Windows.ShutdownMode]::OnExplicitShutdown
 $app.InitializeComponent()
-$manager = $assembly.GetType('KillerPDF.Services.ThemeManager', $true)
-$themes = $assembly.GetType('KillerPDF.Services.Theme', $true)
-$accents = $assembly.GetType('KillerPDF.Services.DarkAccent', $true)
+$manager = $assembly.GetType('JPDFs.Services.ThemeManager', $true)
+$themes = $assembly.GetType('JPDFs.Services.Theme', $true)
 foreach ($service in @('ThemeManager', 'LocaleManager', 'FilmGrain')) {
-    $assembly.GetType("KillerPDF.Services.$service", $true).GetMethod('Initialize', $static).Invoke($null, $null) | Out-Null
+    $assembly.GetType("JPDFs.Services.$service", $true).GetMethod('Initialize', $static).Invoke($null, $null) | Out-Null
 }
 
-$appType = $assembly.GetType('KillerPDF.App', $true)
+$appType = $assembly.GetType('JPDFs.App', $true)
 $appType.GetMethod('EnsureCrashPreviewGrain', $static).Invoke($null, $null) | Out-Null
 $create = $appType.GetMethod('CreateCrashDialog', $static)
-$grain = $assembly.GetType('KillerPDF.Services.FilmGrain', $true)
+$grain = $assembly.GetType('JPDFs.Services.FilmGrain', $true)
 $rows = [Collections.Generic.List[object]]::new()
 function Descendants($element) {
     for ($i = 0; $i -lt [Windows.Media.VisualTreeHelper]::GetChildrenCount($element); $i++) {
@@ -121,11 +120,11 @@ try {
                         $scroll.ScrollToRightEnd()
                         $dialog.Content.UpdateLayout()
                         if ($scroll.VerticalOffset -le 0 -or $scroll.HorizontalOffset -le 0) { throw 'Scrolling did not move the report.' }
-                        $cards = @($children | Where-Object { $_.GetType().FullName -eq 'KillerPDF.Controls.PickerBorder' })
+                        $cards = @($children | Where-Object { $_.GetType().FullName -eq 'JPDFs.Controls.PickerBorder' })
                         if ($cards.Count -lt 3 -or @($cards | Where-Object { $null -eq $_.Child.Clip }).Count -ne 0) { throw 'Card content is not clipped.' }
                         $continue = @($children | Where-Object { $_ -is [Windows.Controls.Button] -and $_.Content -eq $app.Resources['Str_Crash_Continue'] })[0]
                         if ($continue.IsEnabled -eq $fatal) { throw 'Fatal report Continue state changed.' }
-                        if ($width -eq 760 -and !$fatal -and $themeName -in @('Dark','Light','SE98','Malaise')) {
+                        if ($width -eq 760 -and !$fatal) {
                             Render-Preview $dialog "$themeName-grain-$enabled"
                         }
                         $actionLabels = @('Str_Crash_Copy','Str_Crash_OpenLogs','Str_Crash_Report','Str_Crash_Continue','Str_Crash_Quit') | ForEach-Object { $app.Resources[$_] }
@@ -135,15 +134,15 @@ try {
                             $caption = [Windows.Media.FormattedText]::new([string]$action.Content, [Globalization.CultureInfo]::CurrentCulture, [Windows.FlowDirection]::LeftToRight,
                                 [Windows.Media.Typeface]::new($action.FontFamily, $action.FontStyle, $action.FontWeight, $action.FontStretch), $action.FontSize, $action.Foreground, 1.0)
                             if ($caption.WidthIncludingTrailingWhitespace + $action.Padding.Left + $action.Padding.Right -gt $action.ActualWidth) { throw "Crash action caption is clipped: $themeName/$($action.Content)." }
-                            $faceKey = if ($themeName -eq 'SE98') { 'ChipFaceBrush' } else { 'OutlineFaceBrush' }
-                            $textKey = if ($themeName -eq 'SE98') { 'TextBrush' } else { 'OutlineTextBrush' }
+                            $faceKey = 'OutlineFaceBrush'
+                            $textKey = 'OutlineTextBrush'
                             if ($action.Background.ToString() -ne $app.Resources[$faceKey].ToString() -or $action.Foreground.ToString() -ne $app.Resources[$textKey].ToString()) {
                                 throw "Crash action does not match the family button: $themeName/$($action.Content)."
                             }
                             $enter = [Windows.Input.MouseEventArgs]::new([Windows.Input.Mouse]::PrimaryDevice, 0)
                             $enter.RoutedEvent = [Windows.Input.Mouse]::MouseEnterEvent
                             $action.RaiseEvent($enter)
-                            $hoverKey = if ($themeName -eq 'SE98') { 'ChipFaceBrush' } else { 'OutlineHoverBrush' }
+                            $hoverKey = 'OutlineHoverBrush'
                             if (-not [object]::ReferenceEquals($action.Background, $app.Resources[$hoverKey])) { throw "Crash action hover mismatch: $themeName/$($action.Content)." }
                             $leave = [Windows.Input.MouseEventArgs]::new([Windows.Input.Mouse]::PrimaryDevice, 0)
                             $leave.RoutedEvent = [Windows.Input.Mouse]::MouseLeaveEvent

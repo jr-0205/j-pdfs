@@ -31,7 +31,7 @@
     <sys:String x:Key="Str_TT_StrikeTool">Üstü çizili - metin boyunca sürükle</sys:String>
     <sys:String x:Key="Str_TT_UnderlineTool">Altı çizili - metin boyunca sürükle</sys:String>
     <sys:String x:Key="Str_TT_DrawTool">Çizim Aracı - serbest çizim (D)</sys:String>
-    <sys:String x:Key="Str_TT_ShapeTool">Şekiller - dikdörtgen, elips veya serbest çokgen</sys:String>
+    <sys:String x:Key="Str_TT_ShapeTool">Şejpdfs - dikdörtgen, elips veya serbest çokgen</sys:String>
     <sys:String x:Key="Str_TT_SignatureTool">İmza - imza oluştur ve yerleştir (G)</sys:String>
     <sys:String x:Key="Str_TT_ImageTool">Görsel Aracı - sayfaya görsel eklemek için tıkla (I)</sys:String>
     <sys:String x:Key="Str_TT_CropTool">Kırpma Aracı - kırpma alanını belirlemek için sürükle, ardından sayfa(lar)a uygula (C)</sys:String>
@@ -315,21 +315,9 @@ Desteklenen bir boyuta ölçeklensin mi? Sayfaların görünümü ve oranları k
 
 
     <!-- ── Tema adları ───────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Koyu</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Açık</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Siyah</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Kan</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Hırs</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Siyanotik</sys:String>
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat açık</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ektoplazma</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Çürüme</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Yas</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat açık</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat koyu</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Film greni</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Kabir</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Hezeyan</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Halsizlik</sys:String>
 
     <!-- ── Yakınlaştırma açılır listesi ──────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">Genişliğe Sığdır</sys:String>
@@ -363,7 +351,7 @@ Desteklenen bir boyuta ölçeklensin mi? Sayfaların görünümü ve oranları k
     <sys:String x:Key="Str_Lbl_Bold">Kalın</sys:String>
     <sys:String x:Key="Str_Lbl_Italic">İtalik</sys:String>
     <sys:String x:Key="Str_Lbl_Draw">Çiz</sys:String>
-    <sys:String x:Key="Str_Lbl_Shape">Şekiller</sys:String>
+    <sys:String x:Key="Str_Lbl_Shape">Şejpdfs</sys:String>
     <sys:String x:Key="Str_Bar_ShapeFill">Dolgu</sys:String>
     <sys:String x:Key="Str_Lbl_Crop">Kırp</sys:String>
     <sys:String x:Key="Str_Lbl_Measure">Ölç</sys:String>
@@ -952,7 +940,7 @@ Desteklenen bir boyuta ölçeklensin mi? Sayfaların görünümü ve oranları k
     <sys:String x:Key="Str_St_NoTextOnPage">Bu sayfada metin bulunamadı</sys:String>
     <sys:String x:Key="Str_St_NoTextSelected">Metin seçilmedi - metin seçmek için sürükleyin</sys:String>
     <sys:String x:Key="Str_St_NoTextInSelection">Seçimde metin bulunamadı</sys:String>
-    <sys:String x:Key="Str_St_NoTextUseShapes">Burada metin yok - Şekiller O'da</sys:String>
+    <sys:String x:Key="Str_St_NoTextUseShapes">Burada metin yok - Şejpdfs O'da</sys:String>
     <sys:String x:Key="Str_St_SignaturePlaced">İmza yerleştirildi - yeniden konumlandırmak için sürükleyin, boyutlandırmak için köşe tutamacını kullanın</sys:String>
     <sys:String x:Key="Str_St_FieldCleared">Alan temizlendi</sys:String>
     <sys:String x:Key="Str_St_FieldSigned">Alan imzalandı</sys:String>
@@ -1571,7 +1559,6 @@ Desteklenen bir boyuta ölçeklensin mi? Sayfaların görünümü ve oranları k
     <sys:String x:Key="Str_KS_DisabledStatus">Klavye kısayolları devre dışı. Etkinleştirmek için Ctrl+Shift+K tuşlarına basın.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Başlangıçta güncellemeleri denetle</sys:String>
     <sys:String x:Key="Str_PasswordProtected">“{0}” parola korumalıdır.</sys:String>
-    <sys:String x:Key="Str_About_Aka">Diğer adıyla</sys:String>
     <sys:String x:Key="Str_Btn_Run">Çalıştır</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Makrolar</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Kaydedilmiş makrolar</sys:String>

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 internal static partial class NativeWicJpegDecoder
 {

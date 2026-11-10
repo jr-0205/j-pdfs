@@ -1,8 +1,8 @@
-# KillerPDF 1.8.6 corpus benchmark
+# JPDFs 1.8.6 corpus benchmark
 
 Test date: 2026-09-22
 
-KillerPDF 1.8.6 produced the same result as the 1.8.4 baseline for every input. No previously successful input became a skip or failure. All five measured passes agreed on every file's status and diagnostic detail. The damaged-file gate had zero crashes and zero timeouts.
+JPDFs 1.8.6 produced the same result as the 1.8.4 baseline for every input. No previously successful input became a skip or failure. All five measured passes agreed on every file's status and diagnostic detail. The damaged-file gate had zero crashes and zero timeouts.
 
 ## Results
 
@@ -32,13 +32,13 @@ Every path, status, and diagnostic detail matches 1.8.4 across the warmup and fi
 - Source commit: `37e080884c841c701c57d90e361304cbbf7518a2`.
 - Version: 1.8.6 Release, win-x64.
 - Executable SHA-256: `43B4B79B34DBBEB61B0AB7886271A42A0538DA8893D140FD065BEF9B0A95F983`.
-- Runner: `KillerPDF-Corpus/scripts/benchmark_corpus.ps1`, existing local collections, downloads disabled.
+- Runner: `JPDFs-Corpus/scripts/benchmark_corpus.ps1`, existing local collections, downloads disabled.
 - One warmup and five measured passes per normal collection, run sequentially.
 - All 80 damaged inputs tested individually with a 30-second timeout.
 - Backups were paused and no other builds or test jobs ran during measured passes.
 - Full per-file logs remain outside the application repository at `C:\Users\steve\scratch\kp-bench-render\release-1.8.6-preflight-clean-20260921-2333`.
 
-The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the release-level measurements. The comparison baseline is [KillerPDF 1.8.4](../1.8.4/CORPUS.md).
+The committed [run data](benchmark-runs.csv) and [summary](benchmark-summary.csv) preserve the release-level measurements. The comparison baseline is [JPDFs 1.8.4](../1.8.4/CORPUS.md).
 
 This run tests batch opening and saving plus malformed-input process safety. It does not replace interactive rendering checks or a separate qpdf/veraPDF before-and-after conformance sweep.
 

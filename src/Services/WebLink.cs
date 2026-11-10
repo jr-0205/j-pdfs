@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     /// <summary>Hands a URL to the default browser.</summary>
     internal static class WebLink

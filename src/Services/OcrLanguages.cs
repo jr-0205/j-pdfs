@@ -2,12 +2,12 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KillerPDF.Services
+namespace JPDFs.Services
 {
     // ============================================================
     // OCR languages - the catalog, install checks and traineddata
     // downloads. Pure helpers over files, settings and HTTP; no
-    // window state. Split out of Ocr.cs (KillerUI refactor).
+    // window state. Split out of Ocr.cs (JpdfsUiKit refactor).
     // ============================================================
     internal static class OcrLanguages
     {
@@ -62,7 +62,7 @@ namespace KillerPDF.Services
         {
             // Timeout covers connect + headers; the body is bounded by the cancellation token instead.
             var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(100) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("KillerPDF-OCR");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("JPDFs-OCR");
             return http;
         }
 

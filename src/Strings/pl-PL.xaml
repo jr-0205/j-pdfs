@@ -379,12 +379,8 @@ Przeskalować je do obsługiwanego rozmiaru? Strony zachowują swój wygląd i p
 
 
     <!-- ── Theme names ────────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Theme_Dark">Ciemny</sys:String>
-    <sys:String x:Key="Str_Theme_Light">Jasny</sys:String>
-    <sys:String x:Key="Str_Theme_Black">Czarny</sys:String>
-    <sys:String x:Key="Str_Theme_Blood">Krew</sys:String>
-    <sys:String x:Key="Str_Theme_Greed">Chciwość</sys:String>
-    <sys:String x:Key="Str_Theme_Cyanotic">Sinica</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatLight">Acrobat jasny</sys:String>
+    <sys:String x:Key="Str_Theme_AcrobatDark">Acrobat ciemny</sys:String>
 
     <!-- ── Zoom dropdown ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Zoom_FitWidth">Dopasuj szerokość</sys:String>
@@ -1163,15 +1159,7 @@ Przeskalować je do obsługiwanego rozmiaru? Strony zachowują swój wygląd i p
     <sys:String x:Key="Str_Tf_UseJpeg">Kompresja JPEG</sys:String>
     <!-- Theme names missed when pl-PL landed alongside the seven new themes in 1.7.2.
          Proper nouns, untranslated by family convention (matches de-DE et al). -->
-    <sys:String x:Key="Str_Theme_98SE">98SE</sys:String>
-    <sys:String x:Key="Str_Theme_Word">Acrobat jasny</sys:String>
-    <sys:String x:Key="Str_Theme_Ectoplasm">Ektoplazma</sys:String>
-    <sys:String x:Key="Str_Theme_Decay">Rozkład</sys:String>
-    <sys:String x:Key="Str_Theme_Mourning">Żałoba</sys:String>
     <sys:String x:Key="Str_Theme_FilmGrain">Ziarno filmowe</sys:String>
-    <sys:String x:Key="Str_Theme_Sepulchre">Grobowiec</sys:String>
-    <sys:String x:Key="Str_Theme_Delirium">Delirium</sys:String>
-    <sys:String x:Key="Str_Theme_Malaise">Marazm</sys:String>
 
     <!-- 1.7.4 hardcoded-string sweep (#227) -->
     <sys:String x:Key="Str_Color_Name">Kolor</sys:String>
@@ -1579,7 +1567,6 @@ Przeskalować je do obsługiwanego rozmiaru? Strony zachowują swój wygląd i p
     <sys:String x:Key="Str_KS_DisabledStatus">Skróty klawiaturowe wyłączone. Naciśnij Ctrl+Shift+K, aby je włączyć.</sys:String>
     <sys:String x:Key="Str_StartupUpdateCheck">Sprawdzaj aktualizacje przy uruchamianiu</sys:String>
     <sys:String x:Key="Str_PasswordProtected">Plik „{0}” jest chroniony hasłem.</sys:String>
-    <sys:String x:Key="Str_About_Aka">Znany także jako</sys:String>
     <sys:String x:Key="Str_Btn_Run">Uruchom</sys:String>
     <sys:String x:Key="Str_DocumentTools_Macros">Makra</sys:String>
     <sys:String x:Key="Str_Macro_Saved">Zapisane makra</sys:String>

@@ -1,9 +1,9 @@
 using System.IO;
 using System.Windows;
-using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using JPDFs.Engine.Documents;
+using JPDFs.Services;
 
-namespace KillerPDF.Shell;
+namespace JPDFs.Shell;
 
 public partial class MainWindow
 {
@@ -21,7 +21,7 @@ public partial class MainWindow
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException
             or ArgumentException or System.Text.Json.JsonException)
         {
-            KillerDialog.Show(owner, WatchedFolderDialog.ErrorText(error.Message), Loc("Str_Watch_Title"),
+            JpdfsDialog.Show(owner, WatchedFolderDialog.ErrorText(error.Message), Loc("Str_Watch_Title"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }

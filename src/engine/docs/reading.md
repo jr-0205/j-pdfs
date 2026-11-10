@@ -10,7 +10,7 @@ Read the file into memory, choose strict parsing or compatibility recovery, then
 create the reader for the operation you need:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 byte[] source = File.ReadAllBytes("input.pdf");
 PdfDocument document = PdfDocument.Open(source);
@@ -120,7 +120,7 @@ password attempt; it is useful for owner-password-only files with an empty user
 password. It does not bypass a nonempty user password.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 byte[] source = File.ReadAllBytes("input.pdf");
 PdfDocument document = PdfDocument.OpenWithCompatibilityRecovery(source, string.Empty);
@@ -170,7 +170,7 @@ Authenticate first when needed. A reader's constructor checks page-content acces
 and reads the page tree; these steps can fail before extraction begins.
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 PdfDocument document = PdfDocument.Open(File.ReadAllBytes("input.pdf"), string.Empty);
 var reader = new PdfPageContentReader(document);
@@ -217,7 +217,7 @@ check visual content, and validate OCR separately on held-out data.
 failures while continuing to later pages:
 
 ```csharp
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Documents;
 
 PdfDocument document = PdfDocument.Open(File.ReadAllBytes("input.pdf"), string.Empty);
 foreach (PdfPageContentBatchResult result in PdfPageContentBatch.Read(document))
@@ -254,10 +254,10 @@ update have different preservation and signature implications; choose the writer
 for that operation rather than treating rendering success as a save check.
 
 The public API's XML comments accompany the source. Relevant entry points are
-[PdfDocument](../KillerPdf.Engine/Documents/PdfDocument.cs),
-[PdfPageInformation](../KillerPdf.Engine/Documents/PdfPageInformation.cs),
-[PdfPageContentReader](../KillerPdf.Engine/Documents/PdfPageContentReader.cs), and
-[PdfPageContentBatch](../KillerPdf.Engine/Documents/PdfPageContentBatch.cs).
+[PdfDocument](../JPDFs.Engine/Documents/PdfDocument.cs),
+[PdfPageInformation](../JPDFs.Engine/Documents/PdfPageInformation.cs),
+[PdfPageContentReader](../JPDFs.Engine/Documents/PdfPageContentReader.cs), and
+[PdfPageContentBatch](../JPDFs.Engine/Documents/PdfPageContentBatch.cs).
 See the [rendering guide](rendering.md) for pixel output and the
 [validation history](../../validation/PERFORMANCE.md) for measured coverage and
 known differences. The broader authoring, editing, security, and validation APIs

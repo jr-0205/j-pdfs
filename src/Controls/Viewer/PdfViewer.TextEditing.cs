@@ -1,4 +1,4 @@
-using KillerPDF.Shell;
+using JPDFs.Shell;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -13,11 +13,11 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using KillerPDF.Services;
-using ContentDoc = KillerPDF.Services.PdfContentDocument;
-using EngineDocs = KillerPdf.Engine.Documents;
+using JPDFs.Services;
+using ContentDoc = JPDFs.Services.PdfContentDocument;
+using EngineDocs = JPDFs.Engine.Documents;
 
-namespace KillerPDF.Controls
+namespace JPDFs.Controls
 {
     // Moved from Shell/TextEditing.cs; the namespace and class line are the only changes. Window
     // members spelled bare here resolve through PdfViewer.Bridge.cs.
@@ -746,7 +746,7 @@ namespace KillerPDF.Controls
                 UseSubstitute = restyled && substitute is not null,
                 FontSize = resized ? fontSize : null,
                 FillColor = recolored
-                    ? new KillerPdf.Engine.Authoring.PdfRgbColor(color.R / 255d, color.G / 255d, color.B / 255d) : null,
+                    ? new JPDFs.Engine.Authoring.PdfRgbColor(color.R / 255d, color.G / 255d, color.B / 255d) : null,
                 CharacterSpacing = spaced ? letterSpacing : null,
                 Underline = underline,
                 Strike = strike
@@ -1349,7 +1349,7 @@ namespace KillerPDF.Controls
                 string family = Services.FontCoverage.PickFamily(want, ta.Content);
                 string missing = Services.FontCoverage.UncoveredChars(family, ta.Content);
                 if (missing.Length == 0) return;
-                KillerDialog.Show(Host!.Window, string.Format(Loc("Str_Font_NoGlyphs"), missing), "J-PDF's",
+                JpdfsDialog.Show(Host!.Window, string.Format(Loc("Str_Font_NoGlyphs"), missing), "J-PDF's",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch { /* the warning must never be the thing that breaks placing text */ }

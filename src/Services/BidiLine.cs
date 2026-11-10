@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace KillerPDF.Services;
+namespace JPDFs.Services;
 
 /// <summary>A piece of one line in visual order. Right-to-left text stays in logical order, so the
 /// caller places its text elements from the right and draws each one's <see cref="BidiLine.Mirrored"/>

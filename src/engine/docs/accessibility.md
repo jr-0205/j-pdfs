@@ -12,8 +12,8 @@ Open and authenticate the PDF before inspection. A null password makes no
 authentication attempt; an empty string attempts the empty password.
 
 ```csharp
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
 
 static PdfAccessibilityReport InspectAccessibility(byte[] source, string? password = null)
 {
@@ -49,7 +49,7 @@ Marked content associates painted content with a page-local marked-content ID
 This example creates both parts:
 
 ```csharp
-using KillerPdf.Engine.Authoring;
+using JPDFs.Engine.Authoring;
 
 static byte[] CreateTaggedExample()
 {
@@ -81,8 +81,8 @@ descriptions, structure relationships, and validation described in
 ## Read and review logical order
 
 ```csharp
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
 
 static PdfAccessibilityReadingOrderReport ReadLogicalOrder(byte[] source)
 {
@@ -133,8 +133,8 @@ This helper corrects a missing or invalid language in an unencrypted PDF using a
 language already selected by the caller:
 
 ```csharp
-using KillerPdf.Engine.Diagnostics;
-using KillerPdf.Engine.Documents;
+using JPDFs.Engine.Diagnostics;
+using JPDFs.Engine.Documents;
 
 static byte[] RepairMissingLanguage(byte[] source, string reviewedLanguage)
 {
