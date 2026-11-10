@@ -20,7 +20,7 @@
     <Version>1.0.0</Version>
 
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <Authors>J-PDF's</Authors>
+    <Authors>Carlos Eduardo Martínez Morales</Authors>
     <Copyright>GPLv3. Copyright (c) 2026 J-PDF's.</Copyright>
     <FileVersion>1.0.0.0</FileVersion>
     <!-- Shown in the About card beside the version so a user can tell how old their build.
