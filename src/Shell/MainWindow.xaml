@@ -3200,6 +3200,40 @@
                     </Border>
                     <Control Panel.ZIndex="20" Style="{StaticResource PaneBevelOverlay}"/>
                     </Grid>
+                    <!-- Developer credit: available to every desktop user without requiring GitHub. -->
+                    <Border Margin="0,12,0,0"
+                            Width="{Binding ActualWidth, ElementName=AboutInfoGrid}"
+                            Background="{DynamicResource AboutPanelBrush}"
+                            BorderBrush="{DynamicResource OverlayEdgeBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource ControlCornerRadius}">
+                        <StackPanel Margin="14,10,14,11">
+                            <TextBlock Text="{DynamicResource Str_About_Developer}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontFamily="{DynamicResource UiFont}"
+                                       FontSize="11"
+                                       Margin="0,0,0,4"/>
+                            <TextBlock Text="Carlos Eduardo Martínez Morales"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       FontFamily="{DynamicResource UiFont}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="{DynamicResource Str_About_DeveloperRole}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontFamily="{DynamicResource UiFont}"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Margin="0,3,0,7"/>
+                            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="11">
+                                <Hyperlink NavigateUri="https://github.com/jr-0205"
+                                           RequestNavigate="AboutLink_Navigate"
+                                           TextDecorations="None"
+                                           Cursor="Hand">
+                                    <Run Text="{DynamicResource Str_About_GitHub}"/>
+                                </Hyperlink>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
                     <!-- Update notice: shown only when a newer release is found (set in code-behind) -->
                     <Button x:Name="AboutUpdateButton" Visibility="Collapsed"
                             Margin="0,14,0,0" HorizontalAlignment="Left"
